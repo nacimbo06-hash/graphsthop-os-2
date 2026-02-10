@@ -62,14 +62,115 @@ export interface AlgerianCalendarEvent {
 
 // ===== ALGERIAN CALENDAR =====
 
-// Get Hijri date approximation (simplified)
-function getApproximateHijriMonth(date: Date): number {
-    // Simplified calculation - in production use a proper Hijri library
-    const hijriEpoch = new Date(622, 6, 16);
-    const daysSinceEpoch = Math.floor((date.getTime() - hijriEpoch.getTime()) / (24 * 60 * 60 * 1000));
-    const hijriDays = daysSinceEpoch * (33 / 32); // Approximate conversion
-    const hijriMonth = Math.floor((hijriDays % 354) / 29.5) + 1;
-    return hijriMonth;
+/**
+ * Islamic holidays shift ~10-12 days earlier each Gregorian year.
+ * These are pre-calculated approximate Gregorian dates for key Islamic events.
+ * Source: astronomical calculations for 1 Ramadan, 1 Shawwal, 10 Dhul Hijjah, 12 Rabi al-Awwal.
+ */
+const ISLAMIC_DATES: Record<number, {
+    ramadanStart: [number, number]; // [month (0-indexed), day]
+    ramadanEnd: [number, number];
+    eidFitrStart: [number, number];
+    eidFitrEnd: [number, number];
+    eidAdhaStart: [number, number];
+    eidAdhaEnd: [number, number];
+    mawlid: [number, number];
+}> = {
+    2024: {
+        ramadanStart: [2, 11],  // March 11
+        ramadanEnd: [3, 9],     // April 9
+        eidFitrStart: [3, 10],  // April 10
+        eidFitrEnd: [3, 12],
+        eidAdhaStart: [5, 16],  // June 16
+        eidAdhaEnd: [5, 19],
+        mawlid: [8, 15],       // September 15
+    },
+    2025: {
+        ramadanStart: [1, 28],  // February 28
+        ramadanEnd: [2, 29],    // March 29
+        eidFitrStart: [2, 30],  // March 30
+        eidFitrEnd: [3, 1],
+        eidAdhaStart: [5, 6],   // June 6
+        eidAdhaEnd: [5, 9],
+        mawlid: [8, 4],        // September 4
+    },
+    2026: {
+        ramadanStart: [1, 18],  // February 18
+        ramadanEnd: [2, 19],    // March 19
+        eidFitrStart: [2, 20],  // March 20
+        eidFitrEnd: [2, 22],
+        eidAdhaStart: [4, 27],  // May 27
+        eidAdhaEnd: [4, 30],
+        mawlid: [7, 25],       // August 25
+    },
+    2027: {
+        ramadanStart: [1, 7],   // February 7
+        ramadanEnd: [2, 8],     // March 8
+        eidFitrStart: [2, 9],   // March 9
+        eidFitrEnd: [2, 11],
+        eidAdhaStart: [4, 16],  // May 16
+        eidAdhaEnd: [4, 19],
+        mawlid: [7, 14],       // August 14
+    },
+    2028: {
+        ramadanStart: [0, 27],  // January 27
+        ramadanEnd: [1, 25],    // February 25
+        eidFitrStart: [1, 26],  // February 26
+        eidFitrEnd: [1, 28],
+        eidAdhaStart: [4, 4],   // May 4
+        eidAdhaEnd: [4, 7],
+        mawlid: [7, 3],        // August 3
+    },
+    2029: {
+        ramadanStart: [0, 16],  // January 16
+        ramadanEnd: [1, 14],    // February 14
+        eidFitrStart: [1, 15],  // February 15
+        eidFitrEnd: [1, 17],
+        eidAdhaStart: [3, 24],  // April 24
+        eidAdhaEnd: [3, 27],
+        mawlid: [6, 24],       // July 24
+    },
+    2030: {
+        ramadanStart: [0, 5],   // January 5
+        ramadanEnd: [1, 3],     // February 3
+        eidFitrStart: [1, 4],   // February 4
+        eidFitrEnd: [1, 6],
+        eidAdhaStart: [3, 13],  // April 13
+        eidAdhaEnd: [3, 16],
+        mawlid: [6, 13],       // July 13
+    },
+};
+
+/**
+ * Get Islamic dates for a given year.
+ * Falls back to an approximate shift from the nearest known year.
+ */
+function getIslamicDates(year: number) {
+    if (ISLAMIC_DATES[year]) return ISLAMIC_DATES[year];
+
+    // Fallback: find nearest known year and shift by ~11 days/year
+    const knownYears = Object.keys(ISLAMIC_DATES).map(Number).sort((a, b) => a - b);
+    const nearest = knownYears.reduce((prev, curr) =>
+        Math.abs(curr - year) < Math.abs(prev - year) ? curr : prev
+    );
+    const diff = year - nearest;
+    const shiftDays = diff * -11; // Hijri shifts ~11 days earlier per Gregorian year
+
+    const base = ISLAMIC_DATES[nearest];
+    const shift = (m: number, d: number): [number, number] => {
+        const date = new Date(year, m, d + shiftDays);
+        return [date.getMonth(), date.getDate()];
+    };
+
+    return {
+        ramadanStart: shift(base.ramadanStart[0], base.ramadanStart[1]),
+        ramadanEnd: shift(base.ramadanEnd[0], base.ramadanEnd[1]),
+        eidFitrStart: shift(base.eidFitrStart[0], base.eidFitrStart[1]),
+        eidFitrEnd: shift(base.eidFitrEnd[0], base.eidFitrEnd[1]),
+        eidAdhaStart: shift(base.eidAdhaStart[0], base.eidAdhaStart[1]),
+        eidAdhaEnd: shift(base.eidAdhaEnd[0], base.eidAdhaEnd[1]),
+        mawlid: shift(base.mawlid[0], base.mawlid[1]),
+    };
 }
 
 // Product category demand multipliers for Ramadan
@@ -108,61 +209,92 @@ const SALARY_PERIOD_MULTIPLIERS: Record<string, number> = {
     'default': 1.15,
 };
 
-// ===== CALENDAR EVENTS 2024 =====
+// ===== ALGERIAN CALENDAR EVENTS =====
 
 function getAlgerianCalendarEvents(year: number): AlgerianCalendarEvent[] {
+    const hijri = getIslamicDates(year);
+
     return [
-        // Ramadan 2024 (approximate)
+        // ── Islamic Holidays (shift every year) ──
         {
             name: 'Ramadan',
             nameAr: 'رمضان',
-            startDate: new Date(year, 2, 10), // March 10
-            endDate: new Date(year, 3, 9), // April 9
+            startDate: new Date(year, hijri.ramadanStart[0], hijri.ramadanStart[1]),
+            endDate: new Date(year, hijri.ramadanEnd[0], hijri.ramadanEnd[1]),
             type: 'religious',
             demandMultipliers: RAMADAN_MULTIPLIERS,
         },
-        // Eid el-Fitr
         {
             name: 'Eid el-Fitr',
             nameAr: 'عيد الفطر',
-            startDate: new Date(year, 3, 10), // April 10
-            endDate: new Date(year, 3, 12),
+            startDate: new Date(year, hijri.eidFitrStart[0], hijri.eidFitrStart[1]),
+            endDate: new Date(year, hijri.eidFitrEnd[0], hijri.eidFitrEnd[1]),
             type: 'religious',
             demandMultipliers: { sweets: 3.0, clothes: 2.5, gifts: 2.0, default: 1.5 },
         },
-        // Eid el-Adha
         {
             name: 'Eid el-Adha',
             nameAr: 'عيد الأضحى',
-            startDate: new Date(year, 5, 16), // June 16 (approximate)
-            endDate: new Date(year, 5, 19),
+            startDate: new Date(year, hijri.eidAdhaStart[0], hijri.eidAdhaStart[1]),
+            endDate: new Date(year, hijri.eidAdhaEnd[0], hijri.eidAdhaEnd[1]),
             type: 'religious',
             demandMultipliers: { meat: 3.5, spices: 2.0, charcoal: 2.5, default: 1.4 },
         },
-        // Date Harvest
+        {
+            name: 'Mawlid',
+            nameAr: 'المولد النبوي',
+            startDate: new Date(year, hijri.mawlid[0], hijri.mawlid[1]),
+            type: 'religious',
+            demandMultipliers: { sweets: 2.0, candles: 1.8, default: 1.2 },
+        },
+
+        // ── Fixed Algerian National Holidays ──
+        {
+            name: 'Yennayer',
+            nameAr: 'يناير',
+            startDate: new Date(year, 0, 12), // January 12
+            type: 'national',
+            demandMultipliers: { couscous: 2.0, chicken: 1.8, sweets: 1.5, fruits: 1.5, default: 1.1 },
+        },
+        {
+            name: 'Independence Day',
+            nameAr: 'عيد الاستقلال',
+            startDate: new Date(year, 6, 5), // July 5
+            type: 'national',
+            demandMultipliers: { beverages: 1.5, snacks: 1.4, meat: 1.3, default: 1.1 },
+        },
+        {
+            name: 'Revolution Day',
+            nameAr: 'عيد الثورة',
+            startDate: new Date(year, 10, 1), // November 1
+            type: 'national',
+            demandMultipliers: { default: 1.05 },
+        },
+
+        // ── Seasonal Events ──
         {
             name: 'Date Harvest Season',
             nameAr: 'موسم جني التمور',
-            startDate: new Date(year, 8, 1), // September
-            endDate: new Date(year, 10, 30), // November
+            startDate: new Date(year, 8, 1),  // September
+            endDate: new Date(year, 10, 30),  // November
             type: 'seasonal',
-            demandMultipliers: { dates: 0.8, default: 1.0 }, // Lower prices = different demand
+            demandMultipliers: { dates: 0.8, default: 1.0 },
         },
-        // Olive Harvest
         {
             name: 'Olive Harvest',
             nameAr: 'موسم الزيتون',
-            startDate: new Date(year, 9, 15), // October
-            endDate: new Date(year, 11, 15), // December
+            startDate: new Date(year, 9, 15),  // October
+            endDate: new Date(year, 11, 15),   // December
             type: 'seasonal',
             demandMultipliers: { oil: 0.85, olives: 0.9, default: 1.0 },
         },
-        // Back to School
+
+        // ── Economic Events ──
         {
             name: 'Back to School',
             nameAr: 'الدخول المدرسي',
-            startDate: new Date(year, 8, 1), // September 1
-            endDate: new Date(year, 8, 15),
+            startDate: new Date(year, 7, 25),  // August 25 (prep starts early)
+            endDate: new Date(year, 8, 15),    // September 15
             type: 'economic',
             demandMultipliers: { stationery: 3.0, bags: 2.5, snacks: 1.5, default: 1.2 },
         },
@@ -180,12 +312,16 @@ function isFriday(date: Date): boolean {
     return date.getDay() === 5;
 }
 
-// Get active events for a date
+// Get active events for a date (also checks previous year for year-straddling events)
 function getActiveEvents(date: Date): AlgerianCalendarEvent[] {
-    const events = getAlgerianCalendarEvents(date.getFullYear());
+    const year = date.getFullYear();
+    const events = [
+        ...getAlgerianCalendarEvents(year),
+        ...getAlgerianCalendarEvents(year - 1), // catch events that started last year
+    ];
     return events.filter(event => {
         const start = event.startDate;
-        const end = event.endDate || event.startDate;
+        const end = event.endDate || new Date(start.getTime() + 24 * 60 * 60 * 1000); // single-day events
         return date >= start && date <= end;
     });
 }
