@@ -30,6 +30,9 @@
       "@shared/*": [
         "../../packages/shared/*"
       ],
+      "@bonilo/shared/*": [
+        "../../packages/shared/*"
+      ],
       "@asgard/shared/*": [
         "../../packages/shared/*"
       ]

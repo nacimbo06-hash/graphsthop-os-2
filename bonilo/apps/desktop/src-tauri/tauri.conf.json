@@ -37,16 +37,16 @@
       "icons/icon.ico"
     ],
     "category": "Business",
-    "shortDescription": "Logiciel de gestion commerciale pour supermarchés",
-    "longDescription": "IGO est un logiciel de gestion commerciale complet pour les supermarchés algériens. Il offre une gestion des stocks, un point de vente rapide, une gestion de trésorerie et des rapports détaillés.",
-    "copyright": "© 2026 IGO Team",
+    "shortDescription": "Bonilo POS — Neighborhood Grocery OS",
+    "longDescription": "Bonilo est un système de gestion de point de vente complet pour les supermarchés de quartier. Gestion des stocks, caisse rapide, trésorerie et rapports intelligents.",
+    "copyright": "© 2026 Bonilo",
     "externalBin": [],
     "resources": []
   },
   "plugins": {
     "sql": {
       "preload": [
-        "sqlite:igo-desktop.db"
+        "sqlite:bonilo.db"
       ]
     }
   }

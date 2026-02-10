@@ -1,26 +1,25 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { Product, PriceHistoryEntry } from '@shared/types/product';
+import { Product } from '@bonilo/shared/types/product';
+import { productsRepo } from '../db';
 
 export type { Product };
 
-
-
-
-// Initial data - Start empty for a fresh OS
-const initialProducts: Product[] = [];
-
 interface ProductsState {
     products: Product[];
+    isLoading: boolean;
+    isHydrated: boolean;
+
+    // Lifecycle
+    hydrate: () => Promise<void>;
 
     // Actions
-    addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Product;
-    updateProduct: (id: string, updates: Partial<Product>) => void;
-    deleteProduct: (id: string) => void;
-    toggleFavorite: (id: string) => void;
-    updateStock: (id: string, quantity: number, type: 'add' | 'remove' | 'set') => void;
+    addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Product>;
+    updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
+    deleteProduct: (id: string) => Promise<void>;
+    toggleFavorite: (id: string) => Promise<void>;
+    updateStock: (id: string, quantity: number, type: 'add' | 'remove' | 'set') => Promise<void>;
 
-    // Getters
+    // Getters (synchronous, from in-memory cache)
     getProductById: (id: string) => Product | undefined;
     getProductByBarcode: (barcode: string) => Product | undefined;
     getProductsBySKU: (sku: string) => Product | undefined;
@@ -32,129 +31,144 @@ interface ProductsState {
 }
 
 export const useProductsStore = create<ProductsState>()(
-    persist(
-        (set, get) => ({
-            products: initialProducts,
+    (set, get) => ({
+        products: [],
+        isLoading: false,
+        isHydrated: false,
 
-            // Add a new product
-            addProduct: (productData) => {
-                const newProduct: Product = {
-                    ...productData,
-                    id: `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                };
+        // Load products from SQLite into memory on app start
+        hydrate: async () => {
+            if (get().isHydrated) return;
+            set({ isLoading: true });
+            try {
+                const products = await productsRepo.loadAll();
+                set({ products, isHydrated: true, isLoading: false });
+                console.log(`[ProductsStore] ✅ Hydrated ${products.length} products from DB`);
+            } catch (error) {
+                console.error('[ProductsStore] ❌ Failed to hydrate:', error);
+                set({ isLoading: false });
+            }
+        },
 
-                set((state) => ({
-                    products: [...state.products, newProduct],
-                }));
+        // Add a new product — write to DB first, then update memory
+        addProduct: async (productData) => {
+            const newProduct: Product = {
+                ...productData,
+                id: `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            };
 
-                return newProduct;
-            },
+            await productsRepo.create(newProduct);
 
-            // Update an existing product
-            updateProduct: (id, updates) => {
-                set((state) => ({
-                    products: state.products.map((p) =>
-                        p.id === id
-                            ? { ...p, ...updates, updatedAt: new Date() }
-                            : p
-                    ),
-                }));
-            },
+            set((state) => ({
+                products: [...state.products, newProduct],
+            }));
 
-            // Delete a product
-            deleteProduct: (id) => {
-                set((state) => ({
-                    products: state.products.filter((p) => p.id !== id),
-                }));
-            },
+            return newProduct;
+        },
 
-            // Toggle favorite status
-            toggleFavorite: (id) => {
-                set((state) => ({
-                    products: state.products.map((p) =>
-                        p.id === id ? { ...p, isFavorite: !p.isFavorite } : p
-                    ),
-                }));
-            },
+        // Update an existing product
+        updateProduct: async (id, updates) => {
+            await productsRepo.update(id, updates);
 
-            // Update stock quantity
-            updateStock: (id, quantity, type) => {
-                set((state) => ({
-                    products: state.products.map((p) => {
-                        if (p.id !== id) return p;
+            set((state) => ({
+                products: state.products.map((p) =>
+                    p.id === id
+                        ? { ...p, ...updates, updatedAt: new Date().toISOString() }
+                        : p
+                ),
+            }));
+        },
 
-                        let newStock: number;
-                        switch (type) {
-                            case 'add':
-                                newStock = p.stock + quantity;
-                                break;
-                            case 'remove':
-                                newStock = Math.max(0, p.stock - quantity);
-                                break;
-                            case 'set':
-                                newStock = quantity;
-                                break;
-                            default:
-                                newStock = p.stock;
-                        }
+        // Delete a product (soft delete)
+        deleteProduct: async (id) => {
+            await productsRepo.softDelete(id);
 
-                        return { ...p, stock: newStock, updatedAt: new Date() };
-                    }),
-                }));
-            },
+            set((state) => ({
+                products: state.products.filter((p) => p.id !== id),
+            }));
+        },
 
-            // Get product by ID
-            getProductById: (id) => {
-                return get().products.find((p) => p.id === id);
-            },
+        // Toggle favorite status
+        toggleFavorite: async (id) => {
+            const product = get().products.find(p => p.id === id);
+            if (!product) return;
 
-            // Get product by barcode
-            getProductByBarcode: (barcode) => {
-                return get().products.find((p) => p.barcode === barcode);
-            },
+            const newFav = !product.isFavorite;
+            await productsRepo.update(id, { isFavorite: newFav });
 
-            // Get product by SKU
-            getProductsBySKU: (sku) => {
-                return get().products.find((p) => p.sku === sku);
-            },
+            set((state) => ({
+                products: state.products.map((p) =>
+                    p.id === id ? { ...p, isFavorite: newFav } : p
+                ),
+            }));
+        },
 
-            // Get low stock products
-            getLowStockProducts: () => {
-                return get().products.filter(
-                    (p) => p.stock > 0 && p.stock <= p.minStock
-                );
-            },
+        // Update stock with DB transaction + inventory movement
+        updateStock: async (id, quantity, type) => {
+            const product = get().products.find(p => p.id === id);
+            if (!product) return;
 
-            // Get out of stock products
-            getOutOfStockProducts: () => {
-                return get().products.filter((p) => p.stock === 0);
-            },
+            let newStock: number;
+            let qtyChange: number;
+            let movementType: 'restock' | 'correction' | 'sale' = 'correction';
 
-            // Get favorite products
-            getFavoriteProducts: () => {
-                return get().products.filter((p) => p.isFavorite);
-            },
+            switch (type) {
+                case 'add':
+                    newStock = product.stock + quantity;
+                    qtyChange = quantity;
+                    movementType = 'restock';
+                    break;
+                case 'remove':
+                    newStock = Math.max(0, product.stock - quantity);
+                    qtyChange = -(product.stock - newStock);
+                    movementType = 'sale';
+                    break;
+                case 'set':
+                    newStock = quantity;
+                    qtyChange = quantity - product.stock;
+                    movementType = 'correction';
+                    break;
+                default:
+                    newStock = product.stock;
+                    qtyChange = 0;
+            }
 
-            // Get products by category
-            getProductsByCategory: (category) => {
-                if (category === 'Toutes' || category === 'all') {
-                    return get().products;
-                }
-                return get().products.filter((p) => p.category === category);
-            },
+            await productsRepo.updateStock(id, newStock, qtyChange, movementType);
 
-            // Get all SKUs (for validation)
-            getAllSKUs: () => {
-                return get().products.map((p) => p.sku);
-            },
-        }),
-        {
-            name: 'products-storage',
-            partialize: (state) => ({ products: state.products }),
-        }
-    )
+            set((state) => ({
+                products: state.products.map((p) =>
+                    p.id === id ? { ...p, stock: newStock, updatedAt: new Date().toISOString() } : p
+                ),
+            }));
+        },
+
+        // ============================================
+        // Synchronous Getters (from in-memory cache)
+        // ============================================
+
+        getProductById: (id) => get().products.find((p) => p.id === id),
+
+        getProductByBarcode: (barcode) => get().products.find((p) => p.barcode === barcode),
+
+        getProductsBySKU: (sku) => get().products.find((p) => p.sku === sku),
+
+        getLowStockProducts: () => get().products.filter((p) => p.stock > 0 && p.stock <= p.minStock),
+
+        getOutOfStockProducts: () => get().products.filter((p) => p.stock === 0),
+
+        getFavoriteProducts: () => get().products.filter((p) => p.isFavorite),
+
+        getProductsByCategory: (category) => {
+            if (category === 'Toutes' || category === 'all') {
+                return get().products;
+            }
+            return get().products.filter((p) => p.category === category);
+        },
+
+        getAllSKUs: () => get().products.map((p) => p.sku),
+    })
 );
 
 export default useProductsStore;

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useProductsStore, useSalesStore, useCustomersStore } from '@asgard/shared/stores';
+import { useProductsStore, useSalesStore } from '@asgard/shared/stores';
 
 interface DBContextType {
     isReady: boolean;
@@ -23,66 +23,29 @@ export const DBProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                 console.log('[DBProvider] Checking Tauri environment...');
 
                 if (!isTauri()) {
-                    console.log('[DBProvider] Not running in Tauri, skipping SQLite init');
+                    console.log('[DBProvider] Not in Tauri — using in-memory stores only');
                     setIsReady(true);
                     return;
                 }
 
-                console.log('[DBProvider] Initializing Tauri SQLite...');
+                console.log('[DBProvider] Initializing Bonilo Database...');
 
-                // Dynamic import to avoid issues in browser
-                const { default: Database } = await import('@tauri-apps/plugin-sql');
-                const db = await Database.load('sqlite:igo-desktop.db');
+                // Import and init the new migration-based database service
+                const { db } = await import('@bonilo/shared/db');
+                await db.init();
 
-                // Create tables
-                const collections = [
-                    'products', 'sales', 'customers', 'suppliers',
-                    'goods_receipts', 'purchase_orders', 'inventory_movements',
-                    'treasury_movements', 'expenses', 'safe_transactions',
-                    'sinking_funds', 'users', 'settings', 'store_settings'
-                ];
-
-                for (const collection of collections) {
-                    await db.execute(`
-                        CREATE TABLE IF NOT EXISTS ${collection} (
-                            id TEXT PRIMARY KEY,
-                            data TEXT NOT NULL,
-                            updated_at INTEGER NOT NULL,
-                            deleted INTEGER DEFAULT 0
-                        )
-                    `);
-                }
-
-                // Load initial data into Zustand stores
-                const loadCollection = async (name: string) => {
-                    const rows: any[] = await db.select(
-                        `SELECT data FROM ${name} WHERE deleted = 0`
-                    );
-                    return rows.map((r: any) => JSON.parse(r.data));
-                };
-
-                const products = await loadCollection('products');
-                if (products.length > 0) {
-                    useProductsStore.setState({ products });
-                }
-
-                const sales = await loadCollection('sales');
-                if (sales.length > 0) {
-                    useSalesStore.setState({ sales });
-                }
-
-                const customers = await loadCollection('customers');
-                if (customers.length > 0) {
-                    useCustomersStore.setState({ customers });
-                }
+                // Hydrate Zustand stores from SQLite
+                console.log('[DBProvider] Hydrating stores from SQLite...');
+                await useProductsStore.getState().hydrate();
+                await useSalesStore.getState().hydrate();
 
                 setIsReady(true);
-                console.log('[DBProvider] Database ready');
+                console.log('[DBProvider] ✅ Database ready, stores hydrated');
             } catch (err) {
                 const errorMsg = err instanceof Error ? err.message : String(err);
-                console.error('[DBProvider] Failed to initialize database:', errorMsg);
+                console.error('[DBProvider] ❌ Database init failed:', errorMsg);
 
-                // Still mark as ready to allow the app to function (Zustand has localStorage persistence)
+                // Still mark as ready — stores will work from empty state
                 setError(errorMsg);
                 setIsReady(true);
             }
@@ -100,20 +63,20 @@ export const DBProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                    color: 'white',
-                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                    background: '#FDFBF7',
+                    color: '#2C2C2C',
+                    fontFamily: "'Nunito', system-ui, -apple-system, sans-serif"
                 }}>
                     <div style={{
                         width: '40px',
                         height: '40px',
-                        border: '3px solid #334155',
+                        border: '3px solid #E8E2D9',
                         borderTopColor: '#3D7C4F',
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite'
                     }} />
-                    <div style={{ marginTop: '16px', fontSize: '16px' }}>
-                        Chargement de la base de données...
+                    <div style={{ marginTop: '16px', fontSize: '16px', fontWeight: 600 }}>
+                        Chargement de Bonilo...
                     </div>
                     <style>{`
                         @keyframes spin {

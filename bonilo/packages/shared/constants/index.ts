@@ -4,7 +4,7 @@
 
 // ===== APPLICATION =====
 
-export const APP_NAME = 'IGO';
+export const APP_NAME = 'bonilo';
 export const APP_VERSION = '1.0.0';
 
 // ===== LOCALIZATION =====

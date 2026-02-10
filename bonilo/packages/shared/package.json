@@ -9,7 +9,8 @@
         ".": "./index.ts",
         "./types": "./types/index.ts",
         "./stores": "./stores/index.ts",
-        "./constants": "./constants/index.ts"
+        "./constants": "./constants/index.ts",
+        "./db": "./db/index.ts"
     },
     "peerDependencies": {
         "zustand": "^5.0.0"

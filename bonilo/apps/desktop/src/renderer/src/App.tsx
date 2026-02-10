@@ -1,6 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { seedMockData } from './data/mockData';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // i18n must be imported before any component that uses translations
@@ -148,14 +147,6 @@ const AppContent: React.FC = () => {
 };
 
 function App() {
-  // Seed mock data on app startup (only runs once, checks if stores are empty)
-  // DISABLED FOR PRODUCTION BUILD - NO MOCK DATA
-  /* 
-  useEffect(() => {
-    seedMockData();
-  }, []);
-  */
-
   return (
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
