@@ -1,9 +1,9 @@
 {
-  "name": "igo-desktop",
+  "name": "@bonilo/desktop",
   "version": "1.0.0",
-  "description": "IGO - Votre partenaire intelligent de gestion commerciale",
-  "author": "IGO Team",
-  "homepage": "https://igo.dz",
+  "description": "Bonilo POS - Neighborhood Grocery OS",
+  "author": "Bonilo Team",
+  "homepage": "https://bonilo.com",
   "type": "module",
   "scripts": {
     "clean": "rm -rf out dist src-tauri/target",

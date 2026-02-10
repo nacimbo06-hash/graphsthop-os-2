@@ -1,20 +1,20 @@
 {
-  "name": "asgard-unified",
+  "name": "bonilo-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "ASGARD Unified - IGO Retail Management Ecosystem",
-  "author": "IGO Team",
+  "description": "Bonilo POS - Neighborhood Grocery OS",
+  "author": "Bonilo Team",
   "license": "MIT",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev:desktop": "npm run dev --workspace=apps/desktop-os",
+    "dev:desktop": "npm run dev --workspace=apps/desktop",
     "dev:print": "npm run dev --workspace=apps/print-studio",
-    "build:desktop:win": "npm run build:win --workspace=apps/desktop-os",
-    "build:desktop:linux": "npm run build:linux --workspace=apps/desktop-os",
-    "build:desktop:mac": "npm run build:mac --workspace=apps/desktop-os",
+    "build:desktop:win": "npm run build:win --workspace=apps/desktop",
+    "build:desktop:linux": "npm run build:linux --workspace=apps/desktop",
+    "build:desktop:mac": "npm run build:mac --workspace=apps/desktop",
     "build:print": "npm run build --workspace=apps/print-studio",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
