@@ -1,0 +1,1203 @@
+/* ============================================
+   Goods Receipt Page Styles
+   Bonilo Design System
+   ============================================ */
+
+.goodsReceipt {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ===========================================
+   HEADER
+   =========================================== */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.headerLeft h1 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+}
+
+.receiptNumber {
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-primary-bg);
+    color: var(--color-primary);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-mono);
+}
+
+.headerRight {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.resetBtn,
+.saveBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.resetBtn {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.resetBtn:hover {
+    background: var(--color-border-light);
+}
+
+.saveBtn {
+    background: var(--color-primary);
+    border: none;
+    color: white;
+}
+
+.saveBtn:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+}
+
+.saveBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ===========================================
+   RECEIPT INFO
+   =========================================== */
+
+.receiptInfo {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--glass-bg-light);
+    backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--glass-border-light);
+}
+
+.infoField {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.infoField label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.infoField input,
+.infoField select {
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-base);
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.infoField input:focus,
+.infoField select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+.paymentField {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.paymentField label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.paymentToggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--color-background);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+}
+
+.paymentToggle button {
+    padding: var(--space-2);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.paymentToggle button.active {
+    background: var(--color-surface);
+    color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.paymentSourceBox {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.paymentSourceBox label {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+    text-transform: uppercase;
+}
+
+.sourceToggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+}
+
+.sourceToggle button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.sourceToggle button.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-bg);
+    color: var(--color-primary);
+}
+
+.sourceToggle button:hover:not(.active) {
+    background: var(--color-background);
+}
+
+/* ===========================================
+   SCANNER SECTION
+   =========================================== */
+
+.scannerSection {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: linear-gradient(135deg, var(--color-primary-bg), rgba(61, 124, 79, 0.05));
+    border: 2px dashed var(--color-primary);
+    border-radius: var(--radius-xl);
+    transition: all var(--transition-fast);
+}
+
+.scannerSection.scanning {
+    border-style: solid;
+    background: linear-gradient(135deg, rgba(61, 124, 79, 0.2), rgba(61, 124, 79, 0.1));
+}
+
+.scannerSection.success {
+    border-color: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary-bg), rgba(61, 124, 79, 0.05));
+}
+
+.scannerIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: var(--color-primary);
+    border-radius: var(--radius-lg);
+    color: white;
+}
+
+.scannerSection.success .scannerIcon {
+    background: var(--color-primary);
+}
+
+.scannerForm {
+    display: flex;
+    flex: 1;
+    gap: var(--space-2);
+}
+
+.barcodeInput {
+    flex: 1;
+    padding: var(--space-4);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-lg);
+    font-family: var(--font-mono);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    letter-spacing: 2px;
+    transition: border-color var(--transition-fast);
+}
+
+.barcodeInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.barcodeInput::placeholder {
+    letter-spacing: normal;
+    font-family: var(--font-primary);
+}
+
+.scanBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: white;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.scanBtn:hover {
+    background: var(--color-primary-dark);
+}
+
+.searchProductBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color var(--transition-fast);
+}
+
+.searchProductBtn:hover {
+    background: var(--color-border-light);
+}
+
+.lastScanned {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-primary);
+    color: white;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ===========================================
+   MAIN CONTENT
+   =========================================== */
+
+.mainContent {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: var(--space-4);
+}
+
+.productsList {
+    background: var(--glass-bg-light);
+    backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--glass-border-light);
+    overflow: hidden;
+}
+
+.listHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.listHeader h2 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+}
+
+.itemCount {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    padding: var(--space-1) var(--space-3);
+    background: var(--color-background);
+    border-radius: var(--radius-full);
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-12);
+    color: var(--color-text-muted);
+    gap: var(--space-4);
+}
+
+.emptyState p {
+    margin: 0;
+}
+
+/* ===========================================
+   LINES TABLE
+   =========================================== */
+
+.linesTable {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.tableHeader {
+    display: grid;
+    grid-template-columns: 2fr 130px 100px 250px 120px 40px;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-background);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+}
+
+.lineRow {
+    display: grid;
+    grid-template-columns: 2fr 130px 100px 250px 120px 40px;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border-light);
+    align-items: center;
+    transition: background-color var(--transition-fast);
+}
+
+.lineRow:hover {
+    background: var(--color-background);
+}
+
+.productInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.emoji {
+    font-size: 1.5rem;
+}
+
+.productName {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.barcode {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+}
+
+.qtyField {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.qtyField button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 28px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.qtyField button:hover {
+    background: var(--color-border-light);
+}
+
+.qtyField input {
+    width: 40px;
+    padding: var(--space-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    transition: border-color var(--transition-fast);
+}
+
+.qtyField input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.priceField {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.priceField input {
+    width: 70px;
+    padding: var(--space-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    text-align: right;
+    font-size: var(--font-size-sm);
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    transition: border-color var(--transition-fast);
+}
+
+.priceField span {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.lineTotal {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+}
+
+/* Expiry Field */
+.expiryField {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.statusBadge.complete {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-dark);
+}
+
+.statusBadge.partial {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-dark);
+}
+
+.statusBadge.excess {
+    background: var(--color-primary-bg);
+    color: var(--color-primary);
+}
+
+.statusBadge.pending {
+    background: var(--color-border-light);
+    color: var(--color-text-muted);
+}
+
+.removeBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-lg);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.removeBtn:hover {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+/* Receive As Selector (Units/Cartons) */
+.receiveAsSelect {
+    padding: 4px 6px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    min-width: 90px;
+    transition: border-color var(--transition-fast);
+}
+
+.receiveAsSelect:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.totalUnitsInfo {
+    font-size: var(--font-size-xs);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    background: var(--color-primary-bg);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+}
+
+/* ===========================================
+   SUMMARY
+   =========================================== */
+
+.summary {
+    background: var(--glass-bg-light);
+    backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--glass-border-light);
+    padding: var(--space-4);
+    height: fit-content;
+    position: sticky;
+    top: var(--space-4);
+}
+
+.summary h3 {
+    margin: 0 0 var(--space-4);
+    font-size: var(--font-size-lg);
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+}
+
+.summaryRow .complete {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.summaryTotal {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-4);
+    margin-top: var(--space-3);
+    background: var(--color-primary);
+    border-radius: var(--radius-lg);
+    color: white;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-lg);
+}
+
+.supplierInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-background);
+    border-radius: var(--radius-lg);
+}
+
+.supplierInfo div {
+    display: flex;
+    flex-direction: column;
+}
+
+.supplierInfo strong {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+.supplierInfo span {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+/* ===========================================
+   MODALS
+   =========================================== */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-modal);
+    padding: var(--space-4);
+}
+
+.modal {
+    width: 100%;
+    max-width: 500px;
+    background: var(--glass-bg-light);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border-light);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.modalHeader h2 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+}
+
+.modalHeader button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.modalHeader button:hover {
+    background: var(--color-border-light);
+}
+
+.modalBody {
+    padding: var(--space-5);
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--color-border-light);
+    background: var(--color-background);
+}
+
+/* Search Box */
+.searchBox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+    transition: border-color var(--transition-fast);
+}
+
+.searchBox input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+}
+
+.searchBox input:focus {
+    outline: none;
+}
+
+.searchResults {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.productResult {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.productResult:hover {
+    background: var(--color-background);
+}
+
+.productDetails {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.productDetails .name {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.productDetails .meta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.productResult .price {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+}
+
+/* Confirm Modal */
+.confirmSummary {
+    padding: var(--space-4);
+    background: var(--color-background);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+}
+
+.confirmSummary p {
+    margin: var(--space-2) 0;
+    color: var(--color-text-secondary);
+}
+
+.totalHighlight {
+    font-size: var(--font-size-xl);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+.stockUpdateNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--color-warning-bg);
+    border-radius: var(--radius-lg);
+    color: var(--color-warning-dark);
+}
+
+.stockUpdateNotice p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+}
+
+.cancelBtn,
+.confirmBtn {
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.cancelBtn {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.confirmBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--color-primary);
+    border: none;
+    color: white;
+}
+
+.confirmBtn:hover {
+    background: var(--color-primary-dark);
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+@media (max-width: 1024px) {
+    .mainContent {
+        grid-template-columns: 1fr;
+    }
+
+    .summary {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .receiptInfo {
+        grid-template-columns: 1fr;
+    }
+
+    .scannerSection {
+        flex-wrap: wrap;
+    }
+
+    .tableHeader,
+    .lineRow {
+        grid-template-columns: 1fr;
+        gap: var(--space-2);
+    }
+
+    .tableHeader {
+        display: none;
+    }
+
+    .lineRow {
+        padding: var(--space-4);
+        gap: var(--space-3);
+    }
+}
+
+/* ===========================================
+   LOT & EXPIRY FIELDS
+   =========================================== */
+
+.lotExpiryField {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    background: var(--color-background);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-light);
+}
+
+.lotInput {
+    flex: 1;
+    min-width: 60px;
+    padding: var(--space-2);
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    font-family: var(--font-mono);
+}
+
+.lotInput:focus {
+    outline: none;
+}
+
+.expiryInput {
+    flex: 2;
+    min-width: 120px;
+    padding: var(--space-2);
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    cursor: pointer;
+}
+
+.expiryInput:focus {
+    outline: none;
+}
+
+/* ===========================================
+   HISTORY SECTION
+   =========================================== */
+
+.historySection {
+    background: var(--glass-bg-light);
+    backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--glass-border-light);
+    padding: var(--space-5);
+    margin-top: var(--space-4);
+}
+
+.historyHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
+.historyHeader h3 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+}
+
+.historyCount {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.emptyHistory {
+    text-align: center;
+    padding: var(--space-6);
+    color: var(--color-text-muted);
+}
+
+.historyTable {
+    display: flex;
+    flex-direction: column;
+}
+
+.historyTableHeader {
+    display: grid;
+    grid-template-columns: 1fr 100px 1.5fr 120px 80px 100px 80px;
+    padding: var(--space-3);
+    background: var(--color-background);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.historyRow {
+    display: grid;
+    grid-template-columns: 1fr 100px 1.5fr 120px 80px 100px 80px;
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--color-border-light);
+    font-size: var(--font-size-sm);
+    align-items: center;
+    transition: background var(--transition-fast);
+}
+
+.historyRow:hover {
+    background: rgba(61, 124, 79, 0.02);
+}
+
+.receiptNum {
+    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-mono);
+    color: var(--color-primary);
+}
+
+.historyTotal {
+    font-weight: var(--font-weight-bold);
+}
+
+.paid {
+    color: var(--color-primary);
+    background: var(--color-primary-bg);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+}
+
+.unpaid {
+    color: var(--color-warning-dark);
+    background: var(--color-warning-bg);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.clickable:hover {
+    background: rgba(61, 124, 79, 0.06) !important;
+}
+
+/* Receipt Details Modal */
+.receiptDetails {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    background: var(--color-background);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+}
+
+.detailRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-sm);
+}
+
+.detailRow span {
+    color: var(--color-text-muted);
+}
+
+.detailRow strong {
+    color: var(--color-text-primary);
+}
+
+.receiptItemsList {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: var(--space-4);
+}
+
+.receiptItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border-light);
+    transition: background-color var(--transition-fast);
+}
+
+.receiptItem:last-child {
+    border-bottom: none;
+}
+
+.itemInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.itemEmoji {
+    font-size: 1.25rem;
+}
+
+.itemName {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+}
+
+.itemBarcode {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+}
+
+.itemQty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: var(--font-size-sm);
+}
+
+.itemPrice {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.itemTotal {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
+    min-width: 80px;
+    text-align: right;
+}
+
+.receiptTotal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4);
+    background: var(--color-primary-bg);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-lg);
+}
+
+.receiptTotal span {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary-dark);
+}
+
+.receiptTotal strong {
+    font-size: var(--font-size-xl);
+    color: var(--color-primary-dark);
+}

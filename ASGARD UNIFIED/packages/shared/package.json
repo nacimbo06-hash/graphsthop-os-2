@@ -1,0 +1,17 @@
+{
+    "name": "@asgard/shared",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Shared types, stores, and constants for ASGARD ecosystem",
+    "main": "./index.ts",
+    "types": "./index.ts",
+    "exports": {
+        ".": "./index.ts",
+        "./types": "./types/index.ts",
+        "./stores": "./stores/index.ts",
+        "./constants": "./constants/index.ts"
+    },
+    "peerDependencies": {
+        "zustand": "^5.0.0"
+    }
+}

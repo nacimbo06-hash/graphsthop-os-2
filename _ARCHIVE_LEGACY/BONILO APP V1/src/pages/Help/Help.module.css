@@ -1,0 +1,823 @@
+/* ============================================
+   Help Page Styles
+   Bonilo Design System
+   ============================================ */
+
+.help {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-background);
+    overflow: hidden;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.backBtn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-border-light);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.backBtn:hover {
+    background: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.header p {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 0.25rem 0 0;
+}
+
+/* Tab Navigation */
+.tabNav {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.tab:hover {
+    background: var(--color-border-light);
+    color: var(--color-text-primary);
+}
+
+.tab.active {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+/* Content */
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+/* FAQ Section */
+.faqSection {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.searchBar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.5rem;
+    transition: border-color var(--transition-fast);
+}
+
+.searchBar:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+.searchBar svg {
+    color: var(--color-text-muted);
+}
+
+.searchBar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    background: transparent;
+}
+
+.searchBar input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.faqList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.faqCategory {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.categoryHeader {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition-fast);
+}
+
+.categoryHeader:hover {
+    background: var(--color-background);
+}
+
+.categoryIcon {
+    font-size: 1.5rem;
+}
+
+.categoryName {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.questionCount {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    background: var(--color-border-light);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+}
+
+.categoryHeader svg {
+    color: var(--color-text-muted);
+}
+
+.questionsList {
+    border-top: 1px solid var(--color-border);
+}
+
+.faqItem {
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.faqItem:last-child {
+    border-bottom: none;
+}
+
+.questionHeader {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition-fast);
+}
+
+.questionHeader:hover {
+    background: var(--color-background);
+}
+
+.questionHeader svg:first-child {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.questionHeader span {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+}
+
+.questionHeader svg:last-child {
+    color: var(--color-text-muted);
+}
+
+.answer {
+    padding: 0 1.25rem 1rem 3rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    background: var(--color-background);
+    margin: 0 0.5rem 0.5rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+}
+
+/* Guides Section */
+.guidesSection {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.guidesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.guideCard {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    transition: all var(--transition-normal);
+}
+
+.guideCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.08);
+    border-color: var(--guide-color);
+}
+
+.guideHeader {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.guideIcon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--guide-color);
+    border-radius: var(--radius-lg);
+    color: #fff;
+}
+
+.guideHeader h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.guideHeader p {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin: 0.25rem 0 0;
+}
+
+.guideSteps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+}
+
+.stepNumber {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-border-light);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.guideAction {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--guide-color);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #fff;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    opacity: 0.9;
+}
+
+.guideAction:hover {
+    opacity: 1;
+    transform: scale(1.02);
+}
+
+/* Shortcuts Section */
+.shortcutsSection {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.shortcutCategory h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-primary);
+    display: inline-block;
+}
+
+.shortcutsList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+}
+
+.shortcutItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.keys {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.keys kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 28px;
+    padding: 0 0.5rem;
+    background: linear-gradient(180deg, var(--color-background) 0%, var(--color-border) 100%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    box-shadow: 0 2px 0 var(--color-border);
+}
+
+.keys span {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+}
+
+.action {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+/* Contact Section */
+.contactSection {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.contactGrid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2rem;
+}
+
+.contactForm {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+}
+
+.contactForm h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 1.5rem;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.formGroup {
+    margin-bottom: 1rem;
+}
+
+.formGroup label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+    box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+.formGroup textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.submitBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #3D7C4F, #4A8F5E);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.submitBtn:hover {
+    background: linear-gradient(135deg, #4A8F5E, #5A9A6B);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-primary);
+}
+
+.successMessage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.successMessage svg {
+    color: var(--color-success);
+    margin-bottom: 1rem;
+}
+
+.successMessage h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 0.5rem;
+}
+
+.successMessage p {
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.contactInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contactInfo h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 0.5rem;
+}
+
+.contactCard {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.contactCard svg {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.contactCard h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 0.25rem;
+}
+
+.contactCard a {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.contactCard a:hover {
+    text-decoration: underline;
+}
+
+.contactCard p {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin: 0.25rem 0 0;
+}
+
+.emergencyCard {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--color-accent-bg);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-lg);
+}
+
+.emergencyCard svg {
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+.emergencyCard h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-accent-dark);
+    margin: 0 0 0.25rem;
+}
+
+.emergencyCard p {
+    font-size: 0.8rem;
+    color: var(--color-accent-dark);
+    margin: 0;
+}
+
+/* About Section */
+.aboutSection {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.aboutHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.appLogo {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3D7C4F 0%, #5A9A6B 100%);
+    border-radius: 20px;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 24px rgba(61, 124, 79, 0.3);
+}
+
+.aboutHeader h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.version {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin: 0.5rem 0 0;
+}
+
+.aboutGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.aboutCard {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+}
+
+.aboutCard h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.aboutCard p {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.aboutCard ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.aboutCard li {
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+}
+
+.sysInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sysRow {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.sysRow:last-child {
+    border-bottom: none;
+}
+
+.sysRow span {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.sysRow strong {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.linksList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.linkItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--color-background);
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.linkItem:hover {
+    background: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.linkItem svg:first-child {
+    color: var(--color-text-secondary);
+}
+
+.linkItem svg:last-child {
+    margin-left: auto;
+    color: var(--color-text-muted);
+}
+
+.copyright {
+    text-align: center;
+    padding: 2rem 0;
+    border-top: 1px solid var(--color-border);
+}
+
+.copyright p {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin: 0.25rem 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .contactGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .aboutGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .header {
+        padding: 1rem;
+    }
+
+    .tabNav {
+        padding: 0.75rem 1rem;
+        overflow-x: auto;
+    }
+
+    .tab span:last-child {
+        display: none;
+    }
+
+    .content {
+        padding: 1rem;
+    }
+
+    .guidesGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .formRow {
+        grid-template-columns: 1fr;
+    }
+
+    .shortcutsList {
+        grid-template-columns: 1fr;
+    }
+}

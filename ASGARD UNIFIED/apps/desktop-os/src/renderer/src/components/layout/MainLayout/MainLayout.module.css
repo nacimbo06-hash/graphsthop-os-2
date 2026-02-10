@@ -1,0 +1,96 @@
+/* ============================================
+   MainLayout Component Styles
+   GrocerEase Design System
+   ============================================ */
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--color-background);
+}
+
+.main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    transition: margin-left var(--transition-normal);
+}
+
+.main.sidebarCollapsed {
+    margin-left: var(--sidebar-collapsed-width);
+}
+
+.content {
+    flex: 1;
+    padding: var(--space-6);
+    overflow-y: auto;
+}
+
+/* ===========================================
+   MOBILE OVERLAY
+   =========================================== */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: calc(var(--z-sticky) - 1);
+    animation: fadeIn var(--transition-fast);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ===========================================
+   RTL SUPPORT
+   =========================================== */
+
+[dir="rtl"] .main {
+    margin-left: 0;
+    margin-right: var(--sidebar-width);
+}
+
+[dir="rtl"] .main.sidebarCollapsed {
+    margin-right: var(--sidebar-collapsed-width);
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+@media (max-width: 1024px) {
+    .main {
+        margin-left: 0;
+    }
+
+    .main.sidebarCollapsed {
+        margin-left: 0;
+    }
+
+    [dir="rtl"] .main {
+        margin-right: 0;
+    }
+
+    [dir="rtl"] .main.sidebarCollapsed {
+        margin-right: 0;
+    }
+
+    .content {
+        padding: var(--space-4);
+    }
+}
+
+@media (max-width: 640px) {
+    .content {
+        padding: var(--space-3);
+    }
+}

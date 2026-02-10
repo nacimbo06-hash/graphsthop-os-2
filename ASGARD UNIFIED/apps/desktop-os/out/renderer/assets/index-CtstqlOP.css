@@ -1,0 +1,353 @@
+._loginPage_ksa1e_1 {
+    display: flex;
+    min-height: 100vh;
+    background: #F9FAFB;
+}
+
+/* ===========================================
+   LEFT PANEL - BRANDING
+   =========================================== */
+
+._brandPanel_ksa1e_11 {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 45%;
+    padding: 3rem;
+    background: linear-gradient(135deg, #212121 0%, #121212 100%);
+    color: #fff;
+}
+
+._brandContent_ksa1e_21 {
+    max-width: 480px;
+}
+
+._logo_ksa1e_25 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #00D177;
+}
+
+._logo_ksa1e_25 img {
+    filter: drop-shadow(0 2px 8px rgba(0, 209, 119, 0.3));
+}
+
+._brandContent_ksa1e_21 h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+._brandContent_ksa1e_21 p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+}
+
+._features_ksa1e_53 {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+._feature_ksa1e_53 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 209, 119, 0.08);
+    border: 1px solid rgba(0, 209, 119, 0.15);
+    border-radius: 10px;
+    font-size: 0.95rem;
+}
+
+._featureIcon_ksa1e_70 {
+    font-size: 1.25rem;
+}
+
+._brandFooter_ksa1e_74 {
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+._brandFooter_ksa1e_74 p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===========================================
+   RIGHT PANEL - FORM
+   =========================================== */
+
+._formPanel_ksa1e_89 {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+._formContainer_ksa1e_97 {
+    width: 100%;
+    max-width: 400px;
+}
+
+._formHeader_ksa1e_102 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+._formHeader_ksa1e_102 h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+._formHeader_ksa1e_102 p {
+    color: #6B7280;
+    margin: 0;
+}
+
+/* Form */
+._form_ksa1e_89 {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+._error_ksa1e_126 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #FEE2E2;
+    border: 1px solid #FECACA;
+    border-radius: 10px;
+    color: #DC2626;
+    font-size: 0.9rem;
+}
+
+._field_ksa1e_138 {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+._field_ksa1e_138 label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+._inputWrapper_ksa1e_150 {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+._inputIcon_ksa1e_156 {
+    position: absolute;
+    left: 1rem;
+    color: #9CA3AF;
+    pointer-events: none;
+}
+
+._inputWrapper_ksa1e_150 input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    font-size: 1rem;
+    color: #111827;
+    background: #fff;
+    transition: all 0.2s;
+}
+
+._inputWrapper_ksa1e_150 input:focus {
+    outline: none;
+    border-color: #00D177;
+    box-shadow: 0 0 0 3px rgba(0, 209, 119, 0.15);
+}
+
+._inputWrapper_ksa1e_150 input::placeholder {
+    color: #9CA3AF;
+}
+
+._passwordToggle_ksa1e_184 {
+    position: absolute;
+    right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #9CA3AF;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+._passwordToggle_ksa1e_184:hover {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+/* Options */
+._options_ksa1e_206 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+._checkbox_ksa1e_212 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #6B7280;
+}
+
+._checkbox_ksa1e_212 input {
+    width: 18px;
+    height: 18px;
+    accent-color: #00D177;
+}
+
+/* Submit Button - IGO Brand */
+._submitBtn_ksa1e_228 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #00D177 0%, #00A35D 100%);
+    color: #212121;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+._submitBtn_ksa1e_228:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 209, 119, 0.4);
+}
+
+._submitBtn_ksa1e_228:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+._spinner_ksa1e_254 {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: _spin_ksa1e_254 0.8s linear infinite;
+}
+
+@keyframes _spin_ksa1e_254 {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===========================================
+   DEMO ACCOUNTS
+   =========================================== */
+
+._demoSection_ksa1e_273 {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #E5E7EB;
+}
+
+._demoHeader_ksa1e_279 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+._demoAccounts_ksa1e_292 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+._demoAccount_ksa1e_292 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.75rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    background: #F9FAFB;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+._demoAccount_ksa1e_292:hover {
+    background: rgba(0, 209, 119, 0.1);
+    border-color: rgba(0, 209, 119, 0.3);
+}
+
+._demoRole_ksa1e_316 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+._demoEmail_ksa1e_322 {
+    font-size: 0.7rem;
+    color: #6B7280;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+@media (max-width: 1024px) {
+    ._brandPanel_ksa1e_11 {
+        display: none;
+    }
+
+    ._formPanel_ksa1e_89 {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    ._formPanel_ksa1e_89 {
+        padding: 1.5rem;
+    }
+
+    ._demoAccounts_ksa1e_292 {
+        grid-template-columns: 1fr;
+    }
+}

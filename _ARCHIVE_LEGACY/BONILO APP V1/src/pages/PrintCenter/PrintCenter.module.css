@@ -1,0 +1,542 @@
+/* Print Center - Redesigned Minimal UI */
+
+.printCenter {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: var(--color-background);
+    overflow: hidden;
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.backBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--color-background);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: all 0.2s;
+}
+
+.backBtn:hover {
+    background: var(--color-primary);
+    color: white;
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-text);
+}
+
+.headerTitle h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Main Content - Two Panels */
+.mainContent {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    flex: 1;
+    overflow: hidden;
+}
+
+.leftPanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    overflow: hidden;
+}
+
+.rightPanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+/* Section */
+.section {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+}
+
+.section h2 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 var(--space-3) 0;
+}
+
+/* Template Grid */
+.templateGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+}
+
+.templateCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    background: var(--color-background);
+    border: 2px solid transparent;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.templateCard:hover {
+    border-color: var(--template-color, var(--color-primary));
+    transform: translateY(-2px);
+}
+
+.templateCard.selected {
+    border-color: var(--template-color, var(--color-primary));
+    background: color-mix(in srgb, var(--template-color, var(--color-primary)) 10%, transparent);
+}
+
+.templateIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: var(--template-color, var(--color-primary));
+    color: white;
+    border-radius: var(--radius-lg);
+}
+
+.templateName {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--color-text);
+}
+
+.templateSize {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.checkIcon {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    color: var(--template-color, var(--color-primary));
+}
+
+/* Search Bar */
+.searchBar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0 var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.searchBar svg {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.searchBar input {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: var(--space-3) 0;
+    font-size: 0.95rem;
+    color: var(--color-text);
+}
+
+.searchBar input:focus {
+    outline: none;
+}
+
+.searchBar button {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: var(--space-1);
+}
+
+/* Products List */
+.productsList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.productItem {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.productItem.selected {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+
+.productMain {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    cursor: pointer;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    color: var(--color-primary);
+}
+
+.productItem.selected .checkbox {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: white;
+}
+
+.productInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.productName {
+    display: block;
+    font-weight: 600;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.productMeta {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+.productVariety {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    margin: 2px 0;
+}
+
+.productPrice {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.quantityControl {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+}
+
+.quantityControl button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--color-primary);
+    color: white;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.quantityControl span {
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8);
+    color: var(--color-text-secondary);
+    gap: var(--space-2);
+}
+
+/* Quick Actions */
+.quickActions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.quickAction {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quickAction:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+
+.quickAction:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.quickAction span:first-of-type {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.badge {
+    background: var(--color-primary);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+
+/* Summary */
+.summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+}
+
+.summaryRow span {
+    color: var(--color-text-secondary);
+}
+
+.summaryRow strong {
+    color: var(--color-text);
+    font-size: 1.1rem;
+}
+
+.totalLabels {
+    font-size: 1.5rem !important;
+    color: var(--color-primary) !important;
+}
+
+.clearBtn {
+    width: 100%;
+    padding: var(--space-2);
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-top: var(--space-2);
+}
+
+.clearBtn:hover {
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+
+/* Print Actions */
+.printActions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: auto;
+}
+
+.previewBtn,
+.printBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.previewBtn {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.previewBtn:hover:not(:disabled) {
+    border-color: var(--color-primary);
+}
+
+.printBtn {
+    background: var(--color-primary);
+    color: white;
+}
+
+.printBtn:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.previewBtn:disabled,
+.printBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Modal Overlay */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.previewModal {
+    background: var(--color-surface);
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-width: 500px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modalHeader h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text);
+}
+
+.modalHeader button {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: var(--space-1);
+}
+
+.previewContent {
+    padding: var(--space-4);
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.previewIframe {
+    width: 100%;
+    height: 350px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: #f5f5f5;
+}
+
+.noPreview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .mainContent {
+        grid-template-columns: 1fr;
+    }
+
+    .rightPanel {
+        order: -1;
+    }
+
+    .templateGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

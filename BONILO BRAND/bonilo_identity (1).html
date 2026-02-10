@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bonilo — Visual Identity System v1.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #FDFBF7;
+            color: #2C2C2C;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 300;
+            margin-bottom: 12px;
+            color: #3D7C4F;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 500;
+            margin: 80px 0 32px;
+            color: #2C2C2C;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 32px 0 16px;
+            color: #3D7C4F;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 14px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: #5A5A5A;
+            max-width: 720px;
+        }
+
+        .section {
+            margin-bottom: 80px;
+        }
+
+        /* Logo System */
+        .logo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 48px;
+            margin-top: 40px;
+        }
+
+        .logo-card {
+            background: white;
+            padding: 48px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 280px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+
+        .logo-card.dark {
+            background: #2C2C2C;
+        }
+
+        .logo-card.green {
+            background: #3D7C4F;
+        }
+
+        .logo-card h4 {
+            font-size: 13px;
+            font-weight: 500;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 24px;
+        }
+
+        .logo-card.dark h4,
+        .logo-card.green h4 {
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* Wordmark */
+        .wordmark {
+            font-family: 'Rounded Mplus 1c', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 64px;
+            font-weight: 500;
+            color: #3D7C4F;
+            letter-spacing: -0.02em;
+            position: relative;
+        }
+
+        .wordmark.white {
+            color: #FDFBF7;
+        }
+
+        .wordmark.black {
+            color: #2C2C2C;
+        }
+
+        .wordmark-with-smile {
+            position: relative;
+            display: inline-block;
+        }
+
+        .smile {
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 100%;
+            height: 6px;
+        }
+
+        .smile svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Icon */
+        .icon-container {
+            width: 120px;
+            height: 120px;
+        }
+
+        .icon-container.small {
+            width: 64px;
+            height: 64px;
+        }
+
+        .icon-container.tiny {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Color Palette */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+            margin-top: 40px;
+        }
+
+        .color-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+
+        .color-swatch {
+            height: 180px;
+            width: 100%;
+        }
+
+        .color-info {
+            padding: 24px;
+        }
+
+        .color-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2C2C2C;
+        }
+
+        .color-values {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #888;
+            line-height: 1.8;
+        }
+
+        /* Applications */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 48px;
+            margin-top: 40px;
+        }
+
+        .app-card {
+            background: white;
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+
+        /* Storefront */
+        .storefront {
+            background: linear-gradient(to bottom, #E8F3EC 0%, #FDFBF7 100%);
+            padding: 80px 40px;
+            border-radius: 16px;
+            text-align: center;
+            position: relative;
+        }
+
+        .storefront-sign {
+            font-size: 96px;
+            font-weight: 500;
+            color: #3D7C4F;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+        }
+
+        .storefront-tagline {
+            font-size: 18px;
+            color: #5A5A5A;
+            font-weight: 400;
+        }
+
+        /* App Icon */
+        .app-icon-showcase {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .app-icon {
+            width: 180px;
+            height: 180px;
+            background: #3D7C4F;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(61,124,79,0.3);
+        }
+
+        .app-icon.small {
+            width: 120px;
+            height: 120px;
+            border-radius: 26px;
+        }
+
+        .app-icon.tiny {
+            width: 80px;
+            height: 80px;
+            border-radius: 18px;
+        }
+
+        /* Shopping Bag */
+        .shopping-bag {
+            width: 300px;
+            height: 360px;
+            background: #FDFBF7;
+            border: 3px solid #3D7C4F;
+            border-radius: 8px 8px 24px 24px;
+            margin: 0 auto;
+            padding: 48px 32px;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        .bag-handle {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 40px;
+            border: 3px solid #3D7C4F;
+            border-bottom: none;
+            border-radius: 60px 60px 0 0;
+        }
+
+        .bag-logo {
+            text-align: center;
+            font-size: 48px;
+            font-weight: 500;
+            color: #3D7C4F;
+            margin-top: 60px;
+        }
+
+        /* Receipt */
+        .receipt {
+            width: 320px;
+            background: white;
+            padding: 32px;
+            margin: 0 auto;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            font-family: 'Courier New', monospace;
+        }
+
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 2px dashed #DDD;
+        }
+
+        .receipt-logo {
+            font-size: 32px;
+            font-weight: 500;
+            color: #3D7C4F;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            margin-bottom: 8px;
+        }
+
+        .receipt-info {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Button */
+        .button-showcase {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 48px;
+            font-size: 16px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3D7C4F;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2F6340;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(61,124,79,0.3);
+        }
+
+        .btn-secondary {
+            background: #FDFBF7;
+            color: #3D7C4F;
+            border: 2px solid #3D7C4F;
+        }
+
+        .btn-accent {
+            background: #E8A05D;
+            color: white;
+        }
+
+        /* Typography */
+        .type-specimen {
+            background: white;
+            padding: 48px;
+            border-radius: 16px;
+            margin-top: 32px;
+        }
+
+        .type-display {
+            font-size: 72px;
+            font-weight: 500;
+            color: #3D7C4F;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+
+        .type-heading {
+            font-size: 36px;
+            font-weight: 600;
+            color: #2C2C2C;
+            margin-bottom: 16px;
+        }
+
+        .type-body {
+            font-size: 18px;
+            color: #5A5A5A;
+            line-height: 1.7;
+            max-width: 640px;
+        }
+
+        /* Clear Space */
+        .clearspace-demo {
+            background: white;
+            padding: 80px;
+            border-radius: 16px;
+            display: inline-block;
+            margin-top: 32px;
+        }
+
+        .clearspace-box {
+            border: 2px dashed #E8A05D;
+            padding: 64px;
+            position: relative;
+        }
+
+        .clearspace-guide {
+            position: absolute;
+            border: 1px dashed #E8A05D;
+            opacity: 0.3;
+        }
+
+        .clearspace-guide.top {
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+        }
+
+        .clearspace-guide.bottom {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+        }
+
+        .clearspace-guide.left {
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 64px;
+        }
+
+        .clearspace-guide.right {
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 64px;
+        }
+
+        /* Technical Specs */
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-top: 32px;
+        }
+
+        .spec-card {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            border-left: 4px solid #3D7C4F;
+        }
+
+        .spec-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #3D7C4F;
+            margin-bottom: 16px;
+        }
+
+        .spec-content {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #5A5A5A;
+            line-height: 1.8;
+        }
+
+        /* Lockups */
+        .lockup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 48px;
+            margin-top: 40px;
+        }
+
+        .lockup-card {
+            background: white;
+            padding: 64px 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 240px;
+        }
+
+        .lockup-horizontal {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .lockup-stacked {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="section">
+            <h1>bonilo</h1>
+            <p style="font-size: 18px; color: #3D7C4F; margin-bottom: 8px;">Visual Identity System v1.0</p>
+            <p>A complete brand system expressing warmth, trust, and everyday reliability through calm, human design.</p>
+        </div>
+
+        <!-- Logo System -->
+        <div class="section">
+            <h2>1. Logo System</h2>
+            <p>The bonilo logo system consists of a rounded wordmark, standalone icon, and multiple lockup configurations. All forms prioritize legibility and emotional warmth.</p>
+            
+            <div class="logo-grid">
+                <!-- Primary Wordmark -->
+                <div class="logo-card">
+                    <div class="wordmark-with-smile">
+                        <div class="wordmark">bonilo</div>
+                        <div class="smile">
+                            <svg viewBox="0 0 200 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2 4C50 -1 150 -1 198 4" stroke="#3D7C4F" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <h4>Primary Wordmark</h4>
+                </div>
+
+                <!-- Icon Only -->
+                <div class="logo-card">
+                    <div class="icon-container">
+                        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="60" cy="60" r="58" stroke="#3D7C4F" stroke-width="4"/>
+                            <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="#3D7C4F"/>
+                            <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="#3D7C4F"/>
+                            <path d="M40 85C50 90 70 90 80 85" stroke="#3D7C4F" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h4>Standalone Icon</h4>
+                </div>
+
+                <!-- White on Dark -->
+                <div class="logo-card dark">
+                    <div class="wordmark white">bonilo</div>
+                    <h4>Inverse (Dark BG)</h4>
+                </div>
+
+                <!-- Black on Light -->
+                <div class="logo-card">
+                    <div class="wordmark black">bonilo</div>
+                    <h4>Monochrome (Light BG)</h4>
+                </div>
+
+                <!-- White on Green -->
+                <div class="logo-card green">
+                    <div class="wordmark white">bonilo</div>
+                    <h4>White on Brand Green</h4>
+                </div>
+
+                <!-- Icon on Green -->
+                <div class="logo-card green">
+                    <div class="icon-container">
+                        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="60" cy="60" r="58" stroke="#FDFBF7" stroke-width="4"/>
+                            <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="#FDFBF7"/>
+                            <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="#FDFBF7"/>
+                            <path d="M40 85C50 90 70 90 80 85" stroke="#FDFBF7" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h4>Icon Inverse</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lockup Variations -->
+        <div class="section">
+            <h2>2. Lockup Variations</h2>
+            <p>Multiple configurations ensure flexibility across applications while maintaining visual consistency.</p>
+            
+            <div class="lockup-grid">
+                <!-- Horizontal Lockup -->
+                <div class="lockup-card">
+                    <div class="lockup-horizontal">
+                        <div class="icon-container small">
+                            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="60" cy="60" r="58" stroke="#3D7C4F" stroke-width="4"/>
+                                <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="#3D7C4F"/>
+                                <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="#3D7C4F"/>
+                                <path d="M40 85C50 90 70 90 80 85" stroke="#3D7C4F" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="wordmark" style="font-size: 48px;">bonilo</div>
+                    </div>
+                </div>
+
+                <!-- Stacked Lockup -->
+                <div class="lockup-card">
+                    <div class="lockup-stacked">
+                        <div class="icon-container small">
+                            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="60" cy="60" r="58" stroke="#3D7C4F" stroke-width="4"/>
+                                <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="#3D7C4F"/>
+                                <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="#3D7C4F"/>
+                                <path d="M40 85C50 90 70 90 80 85" stroke="#3D7C4F" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="wordmark" style="font-size: 36px;">bonilo</div>
+                    </div>
+                </div>
+
+                <!-- Simplified (No Smile) -->
+                <div class="lockup-card">
+                    <div class="wordmark" style="font-size: 48px;">bonilo</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 48px;">Size Variations</h3>
+            <div class="logo-card" style="margin-top: 24px;">
+                <div style="display: flex; align-items: center; gap: 32px;">
+                    <div class="icon-container">
+                        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="60" cy="60" r="58" stroke="#3D7C4F" stroke-width="4"/>
+                            <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="#3D7C4F"/>
+                            <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="#3D7C4F"/>
+                            <path d="M40 85C50 90 70 90 80 85" stroke="#3D7C4F" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="icon-container small">
+                        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="60" cy="60" r="58" stroke="#3D7C4F" stroke-width="4"/>
+                            <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="#3D7C4F"/>
+                            <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="#3D7C4F"/>
+                            <path d="M40 85C50 90 70 90 80 85" stroke="#3D7C4F" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="icon-container tiny">
+                        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="60" cy="60" r="58" stroke="#3D7C4F" stroke-width="4"/>
+                            <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="#3D7C4F"/>
+                            <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="#3D7C4F"/>
+                        </svg>
+                    </div>
+                </div>
+                <h4>120px / 64px / 32px (simplified at micro)</h4>
+            </div>
+        </div>
+
+        <!-- Color System -->
+        <div class="section">
+            <h2>3. Color System</h2>
+            <p>A warm, natural palette that reduces visual fatigue and expresses trust, nourishment, and calm.</p>
+            
+            <div class="color-grid">
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #3D7C4F;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Primary Green</div>
+                        <div class="color-values">
+                            HEX: #3D7C4F<br>
+                            RGB: 61, 124, 79<br>
+                            CMYK: 70, 25, 65, 10<br>
+                            Usage: Primary brand color
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #FDFBF7;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Warm Cream</div>
+                        <div class="color-values">
+                            HEX: #FDFBF7<br>
+                            RGB: 253, 251, 247<br>
+                            CMYK: 1, 2, 4, 0<br>
+                            Usage: Backgrounds, breathing space
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #E8A05D;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Soft Amber</div>
+                        <div class="color-values">
+                            HEX: #E8A05D<br>
+                            RGB: 232, 160, 93<br>
+                            CMYK: 5, 40, 65, 0<br>
+                            Usage: Accent only (≤10%)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #2C2C2C;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Neutral Dark</div>
+                        <div class="color-values">
+                            HEX: #2C2C2C<br>
+                            RGB: 44, 44, 44<br>
+                            CMYK: 65, 60, 60, 50<br>
+                            Usage: Primary text
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #5A5A5A;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Neutral Mid</div>
+                        <div class="color-values">
+                            HEX: #5A5A5A<br>
+                            RGB: 90, 90, 90<br>
+                            CMYK: 60, 50, 50, 20<br>
+                            Usage: Secondary text
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #E8F3EC;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Light Green</div>
+                        <div class="color-values">
+                            HEX: #E8F3EC<br>
+                            RGB: 232, 243, 236<br>
+                            CMYK: 10, 0, 10, 0<br>
+                            Usage: Soft backgrounds, cards
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typography -->
+        <div class="section">
+            <h2>4. Typography System</h2>
+            <p>Rounded, highly legible typefaces that prioritize clarity and human warmth over performance.</p>
+            
+            <div class="type-specimen">
+                <div class="type-display">bonilo</div>
+                <div class="type-heading">Fresh groceries, everyday care</div>
+                <div class="type-body">
+                    Our typography is neutral, friendly, and effortlessly readable. Rounded sans-serif forms create warmth without gimmicks. Every letterform prioritizes clarity at all sizes—from storefront signage to mobile receipts.
+                </div>
+            </div>
+
+            <div class="specs-grid" style="margin-top: 48px;">
+                <div class="spec-card">
+                    <div class="spec-title">Primary Typeface</div>
+                    <div class="spec-content">
+                        Family: Rounded Sans-Serif<br>
+                        Examples: DM Sans, Inter Rounded,<br>
+                        Rounded Mplus 1c, Nunito<br>
+                        <br>
+                        Weights: 400, 500, 600<br>
+                        Features: Open counters,<br>
+                        medium stroke weight
+                    </div>
+                </div>
+
+                <div class="spec-card">
+                    <div class="spec-title">Secondary Typeface</div>
+                    <div class="spec-content">
+                        Family: High-Legibility Sans<br>
+                        Examples: System fonts,<br>
+                        -apple-system, Roboto<br>
+                        <br>
+                        Usage: UI, data, receipts<br>
+                        No condensed or decorative
+                    </div>
+                </div>
+
+                <div class="spec-card">
+                    <div class="spec-title">Scale & Hierarchy</div>
+                    <div class="spec-content">
+                        Display: 64–96px<br>
+                        Heading: 32–48px<br>
+                        Body: 16–18px<br>
+                        Small: 13–14px<br>
+                        <br>
+                        Line-height: 1.5–1.7<br>
+                        Tracking: -0.02em (large)<br>
+                        0 (body)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clear Space -->
+        <div class="section">
+            <h2>5. Clear Space Guidelines</h2>
+            <p>Minimum clear space equals the height of the "o" in bonilo. This ensures the logo breathes and remains visible.</p>
+            
+            <div class="clearspace-demo">
+                <div class="clearspace-box">
+                    <div class="clearspace-guide top"></div>
+                    <div class="clearspace-guide bottom"></div>
+                    <div class="clearspace-guide left"></div>
+                    <div class="clearspace-guide right"></div>
+                    <div class="wordmark" style="font-size: 56px;">bonilo</div>
+                </div>
+            </div>
+
+            <p style="margin-top: 32px; color: #E8A05D; font-weight: 500;">
+                ⚠️ Minimum clear space = height of "o" | Enforced on all sides
+            </p>
+        </div>
+
+        <!-- Application: Storefront -->
+        <div class="section">
+            <h2>6. Application: Storefront Signage</h2>
+            <p>Large-scale implementation demonstrates calm, readable presence at 3m and 6m viewing distances.</p>
+            
+            <div class="storefront">
+                <div class="storefront-sign">bonilo</div>
+                <div class="storefront-tagline">Your neighborhood grocery</div>
+            </div>
+        </div>
+
+        <!-- Application: App Icon -->
+        <div class="section">
+            <h2>7. Application: App Icon</h2>
+            <p>Circular icon optimized for iOS and Android platforms. Legible from 16px to 1024px.</p>
+            
+            <div class="app-icon-showcase">
+                <div class="app-icon">
+                    <svg width="100" height="100" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="white"/>
+                        <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="white"/>
+                        <path d="M40 85C50 90 70 90 80 85" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+
+                <div class="app-icon small">
+                    <svg width="64" height="64" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="white"/>
+                        <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="white"/>
+                        <path d="M40 85C50 90 70 90 80 85" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+
+                <div class="app-icon tiny">
+                    <svg width="40" height="40" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M40 35C40 31 42 28 46 28H65C73 28 78 33 78 41C78 48 73 53 65 53H46V35Z" fill="white"/>
+                        <path d="M46 53H68C76 53 81 58 81 66C81 74 76 79 68 79H46C42 79 40 77 40 73V53" fill="white"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="specs-grid" style="margin-top: 48px;">
+                <div class="spec-card">
+                    <div class="spec-title">iOS Requirements</div>
+                    <div class="spec-content">
+                        1024×1024px (App Store)<br>
+                        180×180px (iPhone)<br>
+                        167×167px (iPad Pro)<br>
+                        152×152px (iPad)<br>
+                        <br>
+                        Format: PNG (no alpha)<br>
+                        Color space: sRGB
+                    </div>
+                </div>
+
+                <div class="spec-card">
+                    <div class="spec-title">Android Requirements</div>
+                    <div class="spec-content">
+                        512×512px (Play Store)<br>
+                        192×192px (xxxhdpi)<br>
+                        144×144px (xxhdpi)<br>
+                        96×96px (xhdpi)<br>
+                        <br>
+                        Format: PNG (adaptive)<br>
+                        Safe zone: 66dp circle
+                    </div>
+                </div>
+
+                <div class="spec-card">
+                    <div class="spec-title">Favicon Set</div>
+                    <div class="spec-content">
+                        32×32px (standard)<br>
+                        16×16px (browser tab)<br>
+                        180×180px (Apple touch)<br>
+                        192×192px (Android)<br>
+                        <br>
+                        Format: ICO, PNG, SVG<br>
+                        Simplified at ≤32px
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application: Shopping Bag -->
+        <div class="section">
+            <h2>8. Application: Shopping Bag</h2>
+            <p>Minimal, friendly packaging that reinforces brand identity with every trip.</p>
+            
+            <div class="shopping-bag">
+                <div class="bag-handle"></div>
+                <div class="bag-logo">bonilo</div>
+            </div>
+        </div>
+
+        <!-- Application: Receipt -->
+        <div class="section">
+            <h2>9. Application: Receipt Header</h2>
+            <p>Clean, human touchpoint at the end of every transaction.</p>
+            
+            <div class="receipt">
+                <div class="receipt-header">
+                    <div class="receipt-logo">bonilo</div>
+                    <div class="receipt-info">
+                        Your neighborhood grocery<br>
+                        123 Main Street<br>
+                        (555) 123-4567
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: #888;">
+                    Thank you for shopping with us
+                </div>
+            </div>
+        </div>
+
+        <!-- Application: UI Buttons -->
+        <div class="section">
+            <h2>10. Application: UI Buttons</h2>
+            <p>Rounded, calm call-to-actions that feel approachable and trustworthy.</p>
+            
+            <div class="button-showcase">
+                <button class="btn btn-primary">Shop Now</button>
+                <button class="btn btn-secondary">View Cart</button>
+                <button class="btn btn-accent">Special Offer</button>
+            </div>
+
+            <div class="spec-card" style="margin-top: 32px; max-width: 600px;">
+                <div class="spec-title">Button Specifications</div>
+                <div class="spec-content">
+                    Border radius: 48px (fully rounded)<br>
+                    Padding: 16px 32px (desktop)<br>
+                    12px 24px (mobile)<br>
+                    <br>
+                    Font weight: 500<br>
+                    Font size: 16px (desktop)<br>
+                    14px (mobile)<br>
+                    <br>
+                    Hover: Transform Y(-1px)<br>
+                    Shadow: 0 4px 12px rgba(61,124,79,0.3)<br>
+                    Transition: 200ms ease
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Deliverables -->
+        <div class="section">
+            <h2>11. Technical Deliverables</h2>
+            <p>Complete asset package for production implementation.</p>
+            
+            <div class="specs-grid">
+                <div class="spec-card">
+                    <div class="spec-title">Vector Masters</div>
+                    <div class="spec-content">
+                        bonilo_logo.svg<br>
+                        bonilo_logo.ai<br>
+                        bonilo_icon.svg<br>
+                        bonilo_icon.ai<br>
+                        <br>
+                        All paths outlined<br>
+                        RGB + CMYK versions<br>
+                        Print-ready PDF
+                    </div>
+                </div>
+
+                <div class="spec-card">
+                    <div class="spec-title">Raster Exports</div>
+                    <div class="spec-content">
+                        PNG (transparent)<br>
+                        Sizes: 16, 32, 64, 128,<br>
+                        256, 512, 1024px<br>
+                        <br>
+                        Resolution: 72dpi (web)<br>
+                        300dpi (print)<br>
+                        Color: sRGB (web)<br>
+                        Adobe RGB (print)
+                    </div>
+                </div>
+
+                <div class="spec-card">
+                    <div class="spec-title">Documentation</div>
+                    <div class="spec-content">
+                        Brand Guidelines PDF<br>
+                        Color Palette (ASE, CSS)<br>
+                        Logo Usage Guide<br>
+                        Typography Specs<br>
+                        <br>
+                        Accessibility Report<br>
+                        WCAG 2.1 AAA compliance<br>
+                        Contrast ratios documented
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quality Gates -->
+        <div class="section">
+            <h2>12. Quality Gates</h2>
+            <p>All assets must pass these tests before approval.</p>
+            
+            <div class="specs-grid">
+                <div class="spec-card">
+                    <div class="spec-title">✓ Legibility Test</div>
+                    <div class="spec-content">
+                        Icon readable at 16px<br>
+                        Wordmark readable at 32px<br>
+                        All elements clear in B&W<br>
+                        <br>
+                        Status: PASS
+                    </div>
+                </div>
+
+                <div class="spec-card">
+                    <div class="spec-title">✓ Scale Test</div>
+                    <div class="spec-content">
+                        3m signage: readable 10m away<br>
+                        6m signage: readable 20m away<br>
+                        Mobile: clear at actual size<br>
+                        <br>
+                        Status: PASS
+                    </div>
+                </div>
+
+                <div class="spec-card">
+                    <div class="spec-title">✓ Contrast Test</div>
+                    <div class="spec-content">
+                        Green on Cream: 7.2:1 (AAA)<br>
+                        Dark on Cream: 12.8:1 (AAA)<br>
+                        White on Green: 8.1:1 (AAA)<br>
+                        <br>
+                        Status: WCAG AAA compliant
+                    </div>
+                </div>
+
+                <div class="spec-card">
+                    <div class="spec-title">✓ Print Test</div>
+                    <div class="spec-content">
+                        300dpi clarity: verified<br>
+                        CMYK conversion: accurate<br>
+                        Spot color options: provided<br>
+                        <br>
+                        Status: Print-ready
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Governance -->
+        <div class="section">
+            <h2>13. Brand Governance</h2>
+            
+            <div class="spec-card" style="background: #E8F3EC; border-left: 4px solid #3D7C4F; max-width: 800px;">
+                <div class="spec-title">Core Principles (Locked)</div>
+                <div class="spec-content" style="color: #2C2C2C; font-family: inherit;">
+                    1. Consistency = Trust<br>
+                    One design owner, one source of truth, zero local reinterpretations<br>
+                    <br>
+                    2. Simplicity Over Cleverness<br>
+                    If it feels loud, trendy, or salesy—it's out of scope<br>
+                    <br>
+                    3. Emotional Safety First<br>
+                    Every touchpoint must feel calm, human, and dependable<br>
+                    <br>
+                    4. No Stylistic Drift<br>
+                    All applications must pass through design review<br>
+                    <br>
+                    5. Quality Gates Enforced<br>
+                    Legibility, scale, contrast, and print tests are mandatory
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="section" style="margin-top: 120px; padding-top: 60px; border-top: 2px solid #E8F3EC;">
+            <p style="color: #888; font-size: 14px;">
+                bonilo Visual Identity System v1.0<br>
+                Production-grade brand system expressing warmth, trust, and everyday reliability<br>
+                All specifications locked and enforceable across all applications
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,362 @@
+{
+    "app": {
+        "name": "IGO",
+        "tagline": "Votre partenaire intelligent de gestion commerciale"
+    },
+    "common": {
+        "loading": "Chargement...",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "delete": "Supprimer",
+        "edit": "Modifier",
+        "add": "Ajouter",
+        "search": "Rechercher",
+        "filter": "Filtrer",
+        "export": "Exporter",
+        "import": "Importer",
+        "print": "Imprimer",
+        "refresh": "Actualiser",
+        "close": "Fermer",
+        "confirm": "Confirmer",
+        "back": "Retour",
+        "next": "Suivant",
+        "previous": "Précédent",
+        "yes": "Oui",
+        "no": "Non",
+        "all": "Tout",
+        "none": "Aucun",
+        "select": "Sélectionner",
+        "currency": "DA",
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "thisWeek": "Cette semaine",
+        "thisMonth": "Ce mois",
+        "online": "En ligne",
+        "offline": "Hors ligne",
+        "syncing": "Synchronisation..."
+    },
+    "nav": {
+        "dashboard": "Tableau de bord",
+        "pos": "Point de vente",
+        "treasury": "Trésorerie",
+        "inventory": "Inventaire",
+        "supplies": "Approvisionnement",
+        "suppliers": "Fournisseurs",
+        "customers": "Clients",
+        "print": "Impression",
+        "reports": "Rapports",
+        "users": "Utilisateurs",
+        "settings": "Paramètres",
+        "help": "Aide"
+    },
+    "dashboard": {
+        "title": "Tableau de bord",
+        "welcome": "Bienvenue",
+        "metrics": {
+            "dailySales": "Ventes du jour",
+            "activeCheckouts": "Caisses actives",
+            "customersToday": "Clients aujourd'hui",
+            "activeAlerts": "Alertes actives"
+        },
+        "salesChart": {
+            "title": "Ventes sur 24h",
+            "noData": "Aucune donnée"
+        },
+        "quickActions": {
+            "title": "Actions rapides",
+            "openRegister": "Ouvrir la caisse",
+            "voidSale": "Annuler vente",
+            "priceCheck": "Vérifier prix",
+            "dailyReport": "Rapport journalier",
+            "addProduct": "Ajouter produit",
+            "newCustomer": "Nouveau client"
+        },
+        "inventory": {
+            "title": "Alertes inventaire",
+            "lowStock": "Stock faible",
+            "outOfStock": "Rupture de stock",
+            "expiringSoon": "Expiration proche"
+        },
+        "alerts": {
+            "title": "Alertes en direct",
+            "noAlerts": "Aucune alerte"
+        },
+        "aiRecommendations": {
+            "title": "Recommandations IA",
+            "viewAll": "Voir tout"
+        }
+    },
+    "pos": {
+        "title": "Point de vente",
+        "search": {
+            "placeholder": "Rechercher par code-barres ou nom...",
+            "noResults": "Aucun produit trouvé"
+        },
+        "cart": {
+            "title": "Panier",
+            "empty": "Panier vide",
+            "subtotal": "Sous-total",
+            "vat": "TVA",
+            "discount": "Remise",
+            "total": "Total",
+            "clearCart": "Vider le panier",
+            "holdSale": "Mettre en attente",
+            "recallSale": "Rappeler vente"
+        },
+        "customer": {
+            "select": "Sélectionner client",
+            "guest": "Client anonyme",
+            "loyaltyPoints": "Points fidélité"
+        },
+        "payment": {
+            "title": "Paiement",
+            "cash": "Espèces",
+            "cib": "CIB",
+            "dahabia": "Dahabia",
+            "visa": "Visa",
+            "mastercard": "Mastercard",
+            "credit": "Crédit",
+            "split": "Paiement fractionné",
+            "received": "Montant reçu",
+            "change": "Monnaie",
+            "complete": "Finaliser la vente",
+            "processing": "Traitement..."
+        },
+        "receipt": {
+            "print": "Imprimer reçu",
+            "email": "Envoyer par email"
+        },
+        "shortcuts": {
+            "title": "Raccourcis clavier",
+            "f1": "Aide",
+            "f2": "Recherche client",
+            "f3": "Recherche produit",
+            "f4": "Appliquer remise",
+            "f5": "Vérifier prix",
+            "f6": "Mettre en attente",
+            "f7": "Rappeler vente",
+            "f8": "Réimprimer",
+            "f9": "Ouvrir tiroir",
+            "f10": "Autorisation manager",
+            "f11": "Annuler article",
+            "f12": "Finaliser vente",
+            "esc": "Focus scanner"
+        },
+        "priceCap": {
+            "warning": "Attention: Le prix dépasse le plafond réglementaire",
+            "maxPrice": "Prix maximum"
+        }
+    },
+    "treasury": {
+        "title": "Trésorerie et Budget",
+        "metrics": {
+            "revenue": "Recettes",
+            "expenses": "Dépenses",
+            "profit": "Bénéfice",
+            "cash": "Liquidités"
+        },
+        "dailyClosure": {
+            "title": "Clôture journalière",
+            "openingCash": "Fond de caisse",
+            "salesTotal": "Total ventes",
+            "expensesTotal": "Total dépenses",
+            "expectedCash": "Montant attendu",
+            "actualCash": "Montant réel",
+            "variance": "Écart",
+            "savings": "Épargne",
+            "notes": "Notes",
+            "close": "Clôturer"
+        },
+        "expenses": {
+            "title": "Dépenses",
+            "add": "Ajouter dépense",
+            "category": "Catégorie",
+            "amount": "Montant",
+            "date": "Date",
+            "vendor": "Fournisseur"
+        },
+        "budget": {
+            "title": "Budget",
+            "budgeted": "Budgété",
+            "actual": "Réel",
+            "remaining": "Restant",
+            "overBudget": "Dépassement"
+        },
+        "aiAdvisor": {
+            "title": "Conseiller financier IA",
+            "costOptimization": "Optimisation des coûts",
+            "roiAnalysis": "Analyse ROI"
+        }
+    },
+    "supplies": {
+        "title": "Approvisionnement",
+        "calendar": {
+            "title": "Calendrier algérien",
+            "ramadan": "Ramadan",
+            "eidFitr": "Aïd el-Fitr",
+            "eidAdha": "Aïd el-Adha",
+            "mouloud": "Mouloud",
+            "oliveHarvest": "Récolte olives",
+            "dateHarvest": "Récolte dattes"
+        },
+        "forecast": {
+            "title": "Prévisions de demande",
+            "demandIncrease": "Hausse prévue de la demande",
+            "demandDecrease": "Baisse prévue de la demande"
+        },
+        "reorder": {
+            "title": "Réapprovisionnement",
+            "queue": "File d'attente",
+            "auto": "Commande auto",
+            "manual": "Commande manuelle"
+        },
+        "purchaseOrder": {
+            "title": "Bon d'achat",
+            "new": "Nouveau bon",
+            "number": "Numéro",
+            "supplier": "Fournisseur",
+            "status": "Statut",
+            "draft": "Brouillon",
+            "sent": "Envoyé",
+            "confirmed": "Confirmé",
+            "received": "Reçu",
+            "cancelled": "Annulé"
+        },
+        "suppliers": {
+            "title": "Fournisseurs",
+            "add": "Ajouter fournisseur",
+            "rating": "Note",
+            "leadTime": "Délai livraison"
+        }
+    },
+    "customers": {
+        "title": "Gestion clients",
+        "add": "Ajouter client",
+        "profile": {
+            "title": "Profil client",
+            "info": "Informations",
+            "history": "Historique achats",
+            "loyalty": "Programme fidélité",
+            "debt": "Dettes"
+        },
+        "loyalty": {
+            "title": "Programme fidélité",
+            "tier": {
+                "bronze": "Bronze",
+                "silver": "Argent",
+                "gold": "Or",
+                "platinum": "Platine"
+            },
+            "points": "Points",
+            "redeem": "Échanger points",
+            "earn": "Gagner points",
+            "pointsPerDA": "point pour 10 DA"
+        },
+        "debt": {
+            "title": "Dettes",
+            "currentDebt": "Dette actuelle",
+            "creditLimit": "Limite crédit",
+            "available": "Disponible",
+            "dueDate": "Échéance",
+            "overdue": "En retard",
+            "paymentHistory": "Historique paiements",
+            "recordPayment": "Enregistrer paiement"
+        }
+    },
+    "reports": {
+        "title": "Rapports et Analyses",
+        "sales": {
+            "title": "Rapports ventes",
+            "daily": "Ventes journalières",
+            "byCategory": "Par catégorie",
+            "byProduct": "Par produit",
+            "byPayment": "Par mode paiement"
+        },
+        "inventory": {
+            "title": "Rapports inventaire",
+            "levels": "Niveaux stock",
+            "shrinkage": "Perte",
+            "turnover": "Rotation"
+        },
+        "financial": {
+            "title": "Rapports financiers",
+            "pnl": "Pertes et Profits",
+            "cashFlow": "Flux de trésorerie",
+            "expenses": "Dépenses"
+        },
+        "customer": {
+            "title": "Rapports clients",
+            "loyalty": "Rapport fidélité",
+            "debtAging": "Ancienneté dettes",
+            "ltv": "Valeur client"
+        },
+        "compliance": {
+            "title": "Rapports conformité",
+            "priceCap": "Contrôle prix",
+            "tax": "Taxes"
+        }
+    },
+    "settings": {
+        "title": "Paramètres",
+        "general": {
+            "title": "Général",
+            "storeName": "Nom du magasin",
+            "language": "Langue",
+            "currency": "Devise",
+            "timezone": "Fuseau horaire"
+        },
+        "pos": {
+            "title": "Point de vente",
+            "autoPrint": "Impression auto reçu",
+            "priceOverride": "Modifier prix",
+            "requireCustomer": "Client obligatoire"
+        },
+        "users": {
+            "title": "Utilisateurs",
+            "add": "Ajouter utilisateur",
+            "roles": {
+                "owner": "Propriétaire",
+                "manager": "Manager",
+                "cashier": "Caissier",
+                "stockManager": "Gestionnaire stock",
+                "accountant": "Comptable"
+            },
+            "permissions": "Permissions",
+            "twoFactor": "Double authentification"
+        },
+        "printer": {
+            "title": "Imprimante",
+            "type": "Type",
+            "connection": "Connexion"
+        },
+        "data": {
+            "title": "Données",
+            "backup": "Sauvegarde",
+            "restore": "Restaurer",
+            "export": "Exporter"
+        }
+    },
+    "help": {
+        "title": "Aide et Support",
+        "search": "Rechercher aide...",
+        "articles": "Articles",
+        "tutorials": "Tutoriels",
+        "contact": "Nous contacter",
+        "whatsapp": "WhatsApp",
+        "chat": "Chat en direct"
+    },
+    "errors": {
+        "general": "Une erreur inattendue s'est produite",
+        "network": "Erreur de connexion réseau",
+        "unauthorized": "Action non autorisée",
+        "notFound": "Élément non trouvé",
+        "validation": "Veuillez vérifier les données saisies",
+        "priceCap": "Le prix dépasse le plafond autorisé"
+    },
+    "success": {
+        "saved": "Enregistré avec succès",
+        "deleted": "Supprimé avec succès",
+        "saleComplete": "Vente effectuée avec succès",
+        "synced": "Synchronisation réussie"
+    }
+}

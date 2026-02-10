@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bonilo Category Insights</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            --primary: #3D7C4F;
+            --background-light: #F2F4F7;
+            --secondary-green: #e8f0eb;
+            --card-white: rgba(255, 255, 255, 0.95);
+            --bonilo-green: #3D7C4F;
+        }
+        .glass-card {
+            background-color: var(--card-white);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+        }
+        .dot-matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px;
+        }
+        .dot-unit {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #E2E8F0;
+        }
+        .dot-unit.active {
+            background-color: var(--bonilo-green);
+        }
+        .sparkline-svg {
+            stroke: var(--bonilo-green);
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+        }
+        .sidebar-item {
+            @apply w-10 h-10 flex items-center justify-center rounded-xl text-[#8E9BAE] transition-all duration-200 hover:bg-gray-100 hover:text-gray-900;
+        }
+        .sidebar-item.active {
+            @apply bg-[var(--bonilo-green)] text-white shadow-lg shadow-[#3D7C4F]/30;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3D7C4F",
+                        "background-light": "#F2F4F7",
+                        "secondary-green": "#e8f0eb"
+                    },
+                    fontFamily: {
+                        "sans": ["Nunito", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "xl": "20px",
+                        "2xl": "24px",
+                        "3xl": "32px"
+                    },
+                    boxShadow: {
+                        "soft": "0 4px 20px rgba(0,0,0,0.04)"
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light font-sans text-[#2D3430] antialiased">
+<div class="flex h-screen w-full p-6 gap-6 overflow-hidden">
+<aside class="w-16 h-full flex flex-col items-center py-6 bg-white rounded-3xl shadow-sm border border-white/60">
+<div class="text-primary mb-10">
+<span class="material-symbols-outlined text-3xl font-bold">eco</span>
+</div>
+<nav class="flex flex-col items-center gap-4 flex-1">
+<button class="sidebar-item">
+<span class="material-symbols-outlined text-xl">grid_view</span>
+</button>
+<button class="sidebar-item">
+<span class="material-symbols-outlined text-xl">account_balance_wallet</span>
+</button>
+<button class="sidebar-item active">
+<span class="material-symbols-outlined text-xl">inventory_2</span>
+</button>
+<button class="sidebar-item">
+<span class="material-symbols-outlined text-xl">bar_chart</span>
+</button>
+<button class="sidebar-item">
+<span class="material-symbols-outlined text-xl">notifications</span>
+</button>
+</nav>
+<div class="flex flex-col items-center gap-4 mt-auto">
+<button class="sidebar-item">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+<button class="sidebar-item">
+<span class="material-symbols-outlined text-xl">logout</span>
+</button>
+</div>
+</aside>
+<main class="flex-1 overflow-y-auto pr-2">
+<div class="max-w-7xl mx-auto space-y-8">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-2">
+<div>
+<h1 class="text-3xl font-extrabold tracking-tight text-[#1A1F1C]">Category Insights</h1>
+<p class="text-[#6d7e72] mt-1 font-medium text-base">Detailed stock distribution and category performance.</p>
+</div>
+<div>
+<button class="bg-primary text-white px-8 py-3 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-xl">add</span>
+                            Manage Stock
+                        </button>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-6">
+<div class="glass-card p-8 shadow-soft">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+<div>
+<h2 class="text-2xl font-bold text-[#1A1F1C]">Category Distribution</h2>
+<p class="text-sm text-[#6d7e72]">Inventory volume across product groups</p>
+</div>
+<div class="flex gap-6">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+<span class="text-xs font-bold text-[#6d7e72]">In Stock</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-[#E2E8F0]"></div>
+<span class="text-xs font-bold text-[#6d7e72]">Pending</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-10">
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-extrabold text-[#1A1F1C]">Fruits &amp; Veggies</span>
+<span class="text-xs font-bold text-primary">12 Items</span>
+</div>
+<div class="dot-matrix-grid">
+<div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div>
+<div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div>
+<div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div>
+<div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-extrabold text-[#1A1F1C]">Beverages</span>
+<span class="text-xs font-bold text-primary">8 Items</span>
+</div>
+<div class="dot-matrix-grid">
+<div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div>
+<div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit"></div><div class="dot-unit"></div>
+<div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div>
+<div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-extrabold text-[#1A1F1C]">Bakery</span>
+<span class="text-xs font-bold text-primary">15 Items</span>
+</div>
+<div class="dot-matrix-grid">
+<div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div>
+<div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div>
+<div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div>
+<div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-extrabold text-[#1A1F1C]">Dairy &amp; Eggs</span>
+<span class="text-xs font-bold text-primary">6 Items</span>
+</div>
+<div class="dot-matrix-grid">
+<div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div><div class="dot-unit active"></div>
+<div class="dot-unit active"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div>
+<div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div>
+<div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div><div class="dot-unit"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="text-2xl font-bold text-[#1A1F1C]">Product Performance</h2>
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-[#6d7e72]">Sort by:</span>
+<select class="bg-transparent border-none text-xs font-bold text-primary focus:ring-0 p-0 cursor-pointer">
+<option>Highest Sales</option>
+<option>Low Stock First</option>
+<option>Alphabetical</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<div class="glass-card p-6 shadow-soft flex flex-col justify-between h-44">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-extrabold text-[#1A1F1C]">Organic Avocado</h3>
+<p class="text-xs font-bold text-[#6d7e72] mt-0.5">$4.50 / unit</p>
+</div>
+<span class="text-[10px] font-black bg-secondary-green text-primary px-2.5 py-1 rounded-full uppercase tracking-tight">Growth</span>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<p class="text-[10px] font-bold text-[#A0ACA3] uppercase tracking-widest mb-2">Weekly Sales</p>
+<svg class="w-24 h-8" viewBox="0 0 100 30">
+<path class="sparkline-svg" d="M0,25 Q10,15 20,20 T40,10 T60,15 T80,5 T100,10"></path>
+</svg>
+</div>
+<div class="text-right">
+<p class="text-xl font-black text-[#1A1F1C]">124</p>
+<p class="text-[10px] font-bold text-primary">Units sold</p>
+</div>
+</div>
+</div>
+<div class="glass-card p-6 shadow-soft flex flex-col justify-between h-44">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-extrabold text-[#1A1F1C]">Almond Milk</h3>
+<p class="text-xs font-bold text-[#6d7e72] mt-0.5">$3.20 / pack</p>
+</div>
+<span class="text-[10px] font-black bg-gray-100 text-[#6d7e72] px-2.5 py-1 rounded-full uppercase tracking-tight">Stable</span>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<p class="text-[10px] font-bold text-[#A0ACA3] uppercase tracking-widest mb-2">Weekly Sales</p>
+<svg class="w-24 h-8" viewBox="0 0 100 30">
+<path class="sparkline-svg" d="M0,15 Q20,15 40,15 T60,20 T80,18 T100,15"></path>
+</svg>
+</div>
+<div class="text-right">
+<p class="text-xl font-black text-[#1A1F1C]">89</p>
+<p class="text-[10px] font-bold text-primary">Units sold</p>
+</div>
+</div>
+</div>
+<div class="glass-card p-6 shadow-soft flex flex-col justify-between h-44">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-extrabold text-[#1A1F1C]">Sourdough Bread</h3>
+<p class="text-xs font-bold text-[#6d7e72] mt-0.5">$5.00 / loaf</p>
+</div>
+<span class="text-[10px] font-black bg-amber-50 text-amber-600 px-2.5 py-1 rounded-full uppercase tracking-tight">Low Stock</span>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<p class="text-[10px] font-bold text-[#A0ACA3] uppercase tracking-widest mb-2">Weekly Sales</p>
+<svg class="w-24 h-8" viewBox="0 0 100 30">
+<path class="sparkline-svg" d="M0,28 Q10,25 20,10 T40,5 T60,2 T80,8 T100,12"></path>
+</svg>
+</div>
+<div class="text-right">
+<p class="text-xl font-black text-[#1A1F1C]">245</p>
+<p class="text-[10px] font-bold text-primary">Units sold</p>
+</div>
+</div>
+</div>
+<button class="glass-card p-6 shadow-soft border-2 border-dashed border-[#dee3e0] flex flex-col items-center justify-center gap-2 group hover:border-primary transition-colors h-44">
+<div class="w-10 h-10 rounded-full bg-secondary-green text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined font-bold">add</span>
+</div>
+<p class="text-sm font-extrabold text-[#6d7e72] group-hover:text-primary">New Product</p>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

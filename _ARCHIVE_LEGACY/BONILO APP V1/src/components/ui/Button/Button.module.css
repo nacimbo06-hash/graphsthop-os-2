@@ -1,0 +1,209 @@
+/* ============================================
+   Button Component Styles
+   Bonilo Design System
+   ============================================ */
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-family: inherit;
+    font-weight: var(--font-weight-semibold);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+}
+
+.button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.button:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 100ms;
+}
+
+/* ===========================================
+   SIZES
+   =========================================== */
+
+.sm {
+    padding: 6px 12px;
+    font-size: var(--font-size-sm);
+    min-height: 32px;
+}
+
+.md {
+    padding: 10px 20px;
+    font-size: var(--font-size-base);
+    min-height: 40px;
+}
+
+.lg {
+    padding: 14px 28px;
+    font-size: var(--font-size-md);
+    min-height: 48px;
+}
+
+/* ===========================================
+   VARIANTS
+   =========================================== */
+
+/* Primary - Bonilo Green Gradient */
+.primary {
+    background: linear-gradient(135deg, #3D7C4F, #4A8F5E);
+    color: var(--color-text-inverse);
+    border-color: transparent;
+    font-weight: var(--font-weight-bold);
+}
+
+.primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4A8F5E, #5A9A6B);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-primary);
+}
+
+.primary:active:not(:disabled) {
+    transform: scale(0.97) translateY(0);
+    background: linear-gradient(135deg, #2D5F3C, #3D7C4F);
+}
+
+/* Secondary - Amber accent */
+.secondary {
+    background-color: transparent;
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+}
+
+.secondary:hover:not(:disabled) {
+    background-color: var(--color-border-light);
+    border-color: rgba(61, 124, 79, 0.3);
+    color: var(--color-primary);
+}
+
+.secondary:active:not(:disabled) {
+    background-color: var(--color-primary-bg);
+    transform: scale(0.97);
+}
+
+/* Danger */
+.danger {
+    background-color: var(--color-danger);
+    color: var(--color-text-inverse);
+    border-color: var(--color-danger);
+}
+
+.danger:hover:not(:disabled) {
+    background-color: var(--color-danger-dark);
+    border-color: var(--color-danger-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-danger);
+}
+
+/* Ghost */
+.ghost {
+    background-color: transparent;
+    color: var(--color-text-primary);
+    border-color: transparent;
+}
+
+.ghost:hover:not(:disabled) {
+    background-color: var(--color-border-light);
+}
+
+/* Link */
+.link {
+    background-color: transparent;
+    color: var(--color-primary);
+    border: none;
+    padding: 0;
+    min-height: auto;
+}
+
+.link:hover:not(:disabled) {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+.link:active:not(:disabled) {
+    transform: none;
+}
+
+/* ===========================================
+   STATES
+   =========================================== */
+
+.fullWidth {
+    width: 100%;
+}
+
+.loading {
+    position: relative;
+    color: transparent !important;
+}
+
+/* ===========================================
+   ICONS
+   =========================================== */
+
+.leftIcon,
+.rightIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.leftIcon svg,
+.rightIcon svg {
+    width: 1em;
+    height: 1em;
+}
+
+/* ===========================================
+   SPINNER
+   =========================================== */
+
+.spinner {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    border-right-color: transparent;
+    animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===========================================
+   RTL SUPPORT
+   =========================================== */
+
+[dir="rtl"] .leftIcon {
+    order: 1;
+}
+
+[dir="rtl"] .content {
+    order: 2;
+}
+
+[dir="rtl"] .rightIcon {
+    order: 0;
+}

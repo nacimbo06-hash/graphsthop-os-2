@@ -1,0 +1,27 @@
+.shell {
+    display: flex;
+    min-height: 100vh;
+    background: var(--color-canvas);
+}
+
+.main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    transition: margin-left var(--duration-slow) var(--ease-out);
+    animation: fadeIn var(--duration-normal) var(--ease-out);
+}
+
+.main.sidebarCollapsed {
+    margin-left: var(--sidebar-collapsed);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

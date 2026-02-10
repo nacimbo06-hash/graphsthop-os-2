@@ -1,0 +1,358 @@
+{
+    "app": {
+        "name": "IGO",
+        "tagline": "شريكك الذكي في إدارة الأعمال التجارية"
+    },
+    "common": {
+        "loading": "جار التحميل...",
+        "save": "حفظ",
+        "cancel": "إلغاء",
+        "delete": "حذف",
+        "edit": "تعديل",
+        "add": "إضافة",
+        "search": "بحث",
+        "filter": "تصفية",
+        "export": "تصدير",
+        "import": "استيراد",
+        "print": "طباعة",
+        "refresh": "تحديث",
+        "close": "إغلاق",
+        "confirm": "تأكيد",
+        "back": "رجوع",
+        "next": "التالي",
+        "previous": "السابق",
+        "yes": "نعم",
+        "no": "لا",
+        "all": "الكل",
+        "none": "لا شيء",
+        "select": "اختيار",
+        "currency": "دج",
+        "today": "اليوم",
+        "yesterday": "أمس",
+        "thisWeek": "هذا الأسبوع",
+        "thisMonth": "هذا الشهر",
+        "online": "متصل",
+        "offline": "غير متصل",
+        "syncing": "جار المزامنة..."
+    },
+    "nav": {
+        "dashboard": "لوحة التحكم",
+        "pos": "نقطة البيع",
+        "treasury": "الخزينة",
+        "supplies": "المشتريات",
+        "customers": "الزبائن",
+        "reports": "التقارير",
+        "settings": "الإعدادات",
+        "help": "المساعدة"
+    },
+    "dashboard": {
+        "title": "لوحة التحكم",
+        "welcome": "مرحباً بك",
+        "metrics": {
+            "dailySales": "مبيعات اليوم",
+            "activeCheckouts": "الصناديق النشطة",
+            "customersToday": "زبائن اليوم",
+            "activeAlerts": "التنبيهات الفعالة"
+        },
+        "salesChart": {
+            "title": "مبيعات 24 ساعة",
+            "noData": "لا توجد بيانات"
+        },
+        "quickActions": {
+            "title": "إجراءات سريعة",
+            "openRegister": "فتح الصندوق",
+            "voidSale": "إلغاء بيع",
+            "priceCheck": "فحص السعر",
+            "dailyReport": "تقرير يومي",
+            "addProduct": "إضافة منتج",
+            "newCustomer": "زبون جديد"
+        },
+        "inventory": {
+            "title": "تنبيهات المخزون",
+            "lowStock": "مخزون منخفض",
+            "outOfStock": "نفاد المخزون",
+            "expiringSoon": "قارب على الانتهاء"
+        },
+        "alerts": {
+            "title": "التنبيهات المباشرة",
+            "noAlerts": "لا توجد تنبيهات"
+        },
+        "aiRecommendations": {
+            "title": "توصيات الذكاء الاصطناعي",
+            "viewAll": "عرض الكل"
+        }
+    },
+    "pos": {
+        "title": "نقطة البيع",
+        "search": {
+            "placeholder": "ابحث بالباركود أو اسم المنتج...",
+            "noResults": "لم يتم العثور على منتجات"
+        },
+        "cart": {
+            "title": "سلة المشتريات",
+            "empty": "السلة فارغة",
+            "subtotal": "المجموع الجزئي",
+            "vat": "ضريبة القيمة المضافة",
+            "discount": "الخصم",
+            "total": "المجموع الكلي",
+            "clearCart": "إفراغ السلة",
+            "holdSale": "تعليق البيع",
+            "recallSale": "استرجاع بيع"
+        },
+        "customer": {
+            "select": "اختر زبون",
+            "guest": "زبون عابر",
+            "loyaltyPoints": "نقاط الولاء"
+        },
+        "payment": {
+            "title": "الدفع",
+            "cash": "نقدي",
+            "cib": "CIB",
+            "dahabia": "الذهبية",
+            "visa": "فيزا",
+            "mastercard": "ماستركارد",
+            "credit": "دين",
+            "split": "دفع مقسم",
+            "received": "المبلغ المستلم",
+            "change": "الباقي",
+            "complete": "إتمام البيع",
+            "processing": "جار المعالجة..."
+        },
+        "receipt": {
+            "print": "طباعة الفاتورة",
+            "email": "إرسال بالبريد"
+        },
+        "shortcuts": {
+            "title": "اختصارات لوحة المفاتيح",
+            "f1": "المساعدة",
+            "f2": "بحث زبون",
+            "f3": "بحث منتج",
+            "f4": "تطبيق خصم",
+            "f5": "فحص السعر",
+            "f6": "تعليق البيع",
+            "f7": "استرجاع بيع",
+            "f8": "إعادة طباعة",
+            "f9": "فتح الدرج",
+            "f10": "تجاوز المدير",
+            "f11": "إلغاء عنصر",
+            "f12": "إتمام البيع",
+            "esc": "تركيز الماسح"
+        },
+        "priceCap": {
+            "warning": "تحذير: السعر يتجاوز الحد الأقصى المحدد",
+            "maxPrice": "الحد الأقصى للسعر"
+        }
+    },
+    "treasury": {
+        "title": "الخزينة والميزانية",
+        "metrics": {
+            "revenue": "الإيرادات",
+            "expenses": "المصروفات",
+            "profit": "الربح",
+            "cash": "النقد المتاح"
+        },
+        "dailyClosure": {
+            "title": "إقفال اليوم",
+            "openingCash": "الرصيد الافتتاحي",
+            "salesTotal": "إجمالي المبيعات",
+            "expensesTotal": "إجمالي المصروفات",
+            "expectedCash": "المبلغ المتوقع",
+            "actualCash": "المبلغ الفعلي",
+            "variance": "الفرق",
+            "savings": "المدخرات",
+            "notes": "ملاحظات",
+            "close": "إقفال اليوم"
+        },
+        "expenses": {
+            "title": "المصروفات",
+            "add": "إضافة مصروف",
+            "category": "الفئة",
+            "amount": "المبلغ",
+            "date": "التاريخ",
+            "vendor": "المورد"
+        },
+        "budget": {
+            "title": "الميزانية",
+            "budgeted": "المخطط",
+            "actual": "الفعلي",
+            "remaining": "المتبقي",
+            "overBudget": "تجاوز الميزانية"
+        },
+        "aiAdvisor": {
+            "title": "المستشار المالي الذكي",
+            "costOptimization": "تحسين التكاليف",
+            "roiAnalysis": "تحليل العائد على الاستثمار"
+        }
+    },
+    "supplies": {
+        "title": "المشتريات والتوريد",
+        "calendar": {
+            "title": "التقويم الجزائري",
+            "ramadan": "رمضان",
+            "eidFitr": "عيد الفطر",
+            "eidAdha": "عيد الأضحى",
+            "mouloud": "المولد النبوي",
+            "oliveHarvest": "موسم الزيتون",
+            "dateHarvest": "موسم التمور"
+        },
+        "forecast": {
+            "title": "توقعات الطلب",
+            "demandIncrease": "زيادة متوقعة في الطلب",
+            "demandDecrease": "انخفاض متوقع في الطلب"
+        },
+        "reorder": {
+            "title": "إعادة الطلب",
+            "queue": "قائمة الانتظار",
+            "auto": "طلب تلقائي",
+            "manual": "طلب يدوي"
+        },
+        "purchaseOrder": {
+            "title": "أمر الشراء",
+            "new": "أمر شراء جديد",
+            "number": "رقم الأمر",
+            "supplier": "المورد",
+            "status": "الحالة",
+            "draft": "مسودة",
+            "sent": "تم الإرسال",
+            "confirmed": "مؤكد",
+            "received": "تم الاستلام",
+            "cancelled": "ملغى"
+        },
+        "suppliers": {
+            "title": "الموردين",
+            "add": "إضافة مورد",
+            "rating": "التقييم",
+            "leadTime": "وقت التسليم"
+        }
+    },
+    "customers": {
+        "title": "إدارة الزبائن",
+        "add": "إضافة زبون",
+        "profile": {
+            "title": "ملف الزبون",
+            "info": "المعلومات الشخصية",
+            "history": "سجل المشتريات",
+            "loyalty": "برنامج الولاء",
+            "debt": "الديون"
+        },
+        "loyalty": {
+            "title": "برنامج الولاء",
+            "tier": {
+                "bronze": "برونزي",
+                "silver": "فضي",
+                "gold": "ذهبي",
+                "platinum": "بلاتيني"
+            },
+            "points": "النقاط",
+            "redeem": "استبدال النقاط",
+            "earn": "اكتساب النقاط",
+            "pointsPerDA": "نقطة لكل 10 دج"
+        },
+        "debt": {
+            "title": "الديون",
+            "currentDebt": "الدين الحالي",
+            "creditLimit": "حد الائتمان",
+            "available": "المتاح",
+            "dueDate": "تاريخ الاستحقاق",
+            "overdue": "متأخر",
+            "paymentHistory": "سجل الدفعات",
+            "recordPayment": "تسجيل دفعة"
+        }
+    },
+    "reports": {
+        "title": "التقارير والتحليلات",
+        "sales": {
+            "title": "تقارير المبيعات",
+            "daily": "المبيعات اليومية",
+            "byCategory": "حسب الفئة",
+            "byProduct": "حسب المنتج",
+            "byPayment": "حسب طريقة الدفع"
+        },
+        "inventory": {
+            "title": "تقارير المخزون",
+            "levels": "مستويات المخزون",
+            "shrinkage": "الفاقد",
+            "turnover": "معدل الدوران"
+        },
+        "financial": {
+            "title": "التقارير المالية",
+            "pnl": "الربح والخسارة",
+            "cashFlow": "التدفق النقدي",
+            "expenses": "المصروفات"
+        },
+        "customer": {
+            "title": "تقارير الزبائن",
+            "loyalty": "تقرير الولاء",
+            "debtAging": "تقادم الديون",
+            "ltv": "القيمة الدائمة للزبون"
+        },
+        "compliance": {
+            "title": "تقارير الامتثال",
+            "priceCap": "مراقبة الأسعار",
+            "tax": "الضرائب"
+        }
+    },
+    "settings": {
+        "title": "الإعدادات",
+        "general": {
+            "title": "عام",
+            "storeName": "اسم المتجر",
+            "language": "اللغة",
+            "currency": "العملة",
+            "timezone": "المنطقة الزمنية"
+        },
+        "pos": {
+            "title": "نقطة البيع",
+            "autoPrint": "طباعة تلقائية للفاتورة",
+            "priceOverride": "السماح بتعديل السعر",
+            "requireCustomer": "إلزام اختيار زبون"
+        },
+        "users": {
+            "title": "المستخدمين",
+            "add": "إضافة مستخدم",
+            "roles": {
+                "owner": "مالك",
+                "manager": "مدير",
+                "cashier": "كاشير",
+                "stockManager": "مدير المخزون",
+                "accountant": "محاسب"
+            },
+            "permissions": "الصلاحيات",
+            "twoFactor": "المصادقة الثنائية"
+        },
+        "printer": {
+            "title": "الطابعة",
+            "type": "نوع الطابعة",
+            "connection": "نوع الاتصال"
+        },
+        "data": {
+            "title": "البيانات",
+            "backup": "نسخ احتياطي",
+            "restore": "استعادة",
+            "export": "تصدير"
+        }
+    },
+    "help": {
+        "title": "المساعدة والدعم",
+        "search": "ابحث عن مساعدة...",
+        "articles": "المقالات",
+        "tutorials": "الدروس",
+        "contact": "اتصل بنا",
+        "whatsapp": "تواصل عبر واتساب",
+        "chat": "الدردشة المباشرة"
+    },
+    "errors": {
+        "general": "حدث خطأ غير متوقع",
+        "network": "خطأ في الاتصال بالشبكة",
+        "unauthorized": "غير مصرح لك بهذا الإجراء",
+        "notFound": "لم يتم العثور على العنصر",
+        "validation": "يرجى التحقق من البيانات المدخلة",
+        "priceCap": "السعر يتجاوز الحد الأقصى المسموح"
+    },
+    "success": {
+        "saved": "تم الحفظ بنجاح",
+        "deleted": "تم الحذف بنجاح",
+        "saleComplete": "تمت عملية البيع بنجاح",
+        "synced": "تمت المزامنة بنجاح"
+    }
+}

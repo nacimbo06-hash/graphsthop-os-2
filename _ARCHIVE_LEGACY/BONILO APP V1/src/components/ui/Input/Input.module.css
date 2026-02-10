@@ -1,0 +1,138 @@
+/* ============================================
+   Input Component Styles
+   Bonilo Design System
+   ============================================ */
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    transition: color var(--transition-fast);
+}
+
+/* ===========================================
+   INPUT CONTAINER
+   =========================================== */
+
+.inputContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    font-family: inherit;
+    transition: all var(--transition-fast);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+.input::placeholder {
+    color: var(--color-text-muted);
+}
+
+/* ===========================================
+   SIZES
+   =========================================== */
+
+.sm .input {
+    padding: 6px 12px;
+    font-size: var(--font-size-sm);
+}
+
+.md .input {
+    padding: 10px 16px;
+    font-size: var(--font-size-base);
+}
+
+.lg .input {
+    padding: 14px 20px;
+    font-size: var(--font-size-md);
+}
+
+/* ===========================================
+   WITH ICONS
+   =========================================== */
+
+.hasLeftIcon .input {
+    padding-left: 40px;
+}
+
+.hasRightIcon .input {
+    padding-right: 40px;
+}
+
+.leftIcon,
+.rightIcon {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    pointer-events: none;
+    transition: color var(--transition-fast);
+}
+
+.leftIcon {
+    left: 12px;
+}
+
+.rightIcon {
+    right: 12px;
+}
+
+/* Highlight icon on focus */
+.inputContainer:focus-within .leftIcon,
+.inputContainer:focus-within .rightIcon {
+    color: var(--color-primary);
+}
+
+/* ===========================================
+   STATES
+   =========================================== */
+
+.error .input {
+    border-color: var(--color-danger);
+}
+
+.error .input:focus {
+    box-shadow: 0 0 0 3px var(--color-danger-bg);
+}
+
+.disabled .input {
+    background-color: var(--color-background);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* ===========================================
+   MESSAGE
+   =========================================== */
+
+.message {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.errorMessage {
+    color: var(--color-danger);
+}

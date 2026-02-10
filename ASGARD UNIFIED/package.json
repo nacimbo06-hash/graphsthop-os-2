@@ -1,0 +1,26 @@
+{
+  "name": "asgard-unified",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ASGARD Unified - IGO Retail Management Ecosystem",
+  "author": "IGO Team",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:desktop": "npm run dev --workspace=apps/desktop-os",
+    "dev:print": "npm run dev --workspace=apps/print-studio",
+    "build:desktop:win": "npm run build:win --workspace=apps/desktop-os",
+    "build:desktop:linux": "npm run build:linux --workspace=apps/desktop-os",
+    "build:desktop:mac": "npm run build:mac --workspace=apps/desktop-os",
+    "build:print": "npm run build --workspace=apps/print-studio",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "clean": "rm -rf apps/*/dist apps/*/out packages/*/dist node_modules"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

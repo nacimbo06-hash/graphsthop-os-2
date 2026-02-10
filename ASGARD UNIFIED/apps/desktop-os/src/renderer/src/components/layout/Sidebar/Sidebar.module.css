@@ -1,0 +1,269 @@
+/* ============================================
+   Sidebar Component Styles
+   Bonilo Design System - Glassmorphism
+   ============================================ */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
+    background: var(--glass-bg-light);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-right: var(--glass-border-light);
+    display: flex;
+    flex-direction: column;
+    z-index: var(--z-sticky);
+    transition: width var(--transition-normal);
+    overflow: hidden;
+}
+
+.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+/* ===========================================
+   LOGO
+   =========================================== */
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--color-border-light);
+    min-height: var(--header-height);
+}
+
+.logoIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3D7C4F, #5A9A6B);
+    border-radius: var(--radius-lg);
+    color: #FFFFFF;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(61, 124, 79, 0.25);
+    transition: transform var(--transition-fast);
+}
+
+.logoIcon:hover {
+    transform: scale(1.05);
+}
+
+.logoText {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.logoTitle {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+}
+
+/* ===========================================
+   NAVIGATION
+   =========================================== */
+
+.nav {
+    flex: 1;
+    padding: var(--space-3);
+    overflow-y: auto;
+}
+
+.navList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.navLink {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    position: relative;
+}
+
+.navLink:hover {
+    background-color: rgba(61, 124, 79, 0.08);
+    color: var(--color-primary);
+}
+
+/* Bonilo Brand - Green accent active state */
+.navLink.active {
+    background: linear-gradient(135deg, rgba(61, 124, 79, 0.12), rgba(61, 124, 79, 0.06));
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.navLink.active:hover {
+    background: linear-gradient(135deg, rgba(61, 124, 79, 0.16), rgba(61, 124, 79, 0.1));
+}
+
+.navIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform var(--transition-fast);
+}
+
+.navLink:hover .navIcon {
+    transform: scale(1.05);
+}
+
+.navLabel {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Collapsed state */
+.collapsed .nav {
+    padding: var(--space-3) var(--space-2);
+}
+
+.collapsed .navLink {
+    justify-content: center;
+    padding: var(--space-3);
+}
+
+.collapsed .navLink.active {
+    box-shadow: none;
+    background: rgba(61, 124, 79, 0.12);
+}
+
+.collapsed .navLabel {
+    display: none;
+}
+
+/* ===========================================
+   TOGGLE BUTTON
+   =========================================== */
+
+.toggleButton {
+    position: absolute;
+    bottom: 80px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    z-index: 10;
+    opacity: 0.7;
+}
+
+.toggleButton:hover {
+    background-color: var(--color-border-light);
+    color: var(--color-primary);
+    opacity: 1;
+    transform: scale(1.05);
+    border-color: var(--color-primary-bg);
+}
+
+.collapsed .toggleButton {
+    right: 50%;
+    transform: translateX(50%);
+}
+
+.collapsed .toggleButton:hover {
+    transform: translateX(50%) scale(1.05);
+}
+
+/* ===========================================
+   RTL SUPPORT
+   =========================================== */
+
+[dir="rtl"] .sidebar {
+    left: auto;
+    right: 0;
+    border-right: none;
+    border-left: var(--glass-border-light);
+}
+
+[dir="rtl"] .navLink.active {
+    box-shadow: inset -3px 0 0 var(--color-primary);
+}
+
+[dir="rtl"] .toggleButton {
+    right: auto;
+    left: 12px;
+}
+
+[dir="rtl"] .collapsed .toggleButton {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+}
+
+/* ===========================================
+   DARK MODE
+   =========================================== */
+
+:global([data-theme="dark"]) .sidebar {
+    background: var(--glass-bg-light);
+}
+
+:global([data-theme="dark"]) .toggleButton {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+:global([data-theme="dark"]) .toggleButton:hover {
+    background-color: var(--color-surface-elevated);
+    color: var(--color-primary);
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+@media (max-width: 1024px) {
+    .sidebar {
+        position: fixed;
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    [dir="rtl"] .sidebar {
+        transform: translateX(100%);
+    }
+
+    [dir="rtl"] .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .toggleButton {
+        display: none;
+    }
+}

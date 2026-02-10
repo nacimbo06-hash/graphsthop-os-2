@@ -1,0 +1,317 @@
+<html class="light" lang="en"><head><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-background-light font-sans text-[#2D3430] antialiased">```html
+
+
+
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bonilo Inventory Data View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            --primary: #3D7C4F;
+            --background-light: #FDFBF7;
+            --secondary-green: #e8f0eb;
+            --amber-low: #F59E0B;
+            --card-white: rgba(255, 255, 255, 0.75);
+            --sidebar-bg: #FFFFFF;
+        }
+        .glass-card {
+            backdrop-filter: blur(20px);
+            background-color: var(--card-white);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+        }
+        .dot-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 1px;
+            background-color: #E2E8F0;
+        }
+        .dot.active {
+            background-color: var(--primary);
+        }
+        .dot.warning {
+            background-color: var(--amber-low);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3D7C4F",
+                        "background-light": "#FDFBF7",
+                        "secondary-green": "#e8f0eb",
+                        "amber-low": "#F59E0B"
+                    },
+                    fontFamily: {
+                        "sans": ["Nunito", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "xl": "20px",
+                        "2xl": "24px"
+                    },
+                    boxShadow: {
+                        "soft": "0 8px 30px rgba(0,0,0,0.04)",
+                        "sidebar": "4px 0 24px rgba(0,0,0,0.02)"
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+
+
+<div class="flex h-screen w-full overflow-hidden">
+<nav class="w-[72px] h-[calc(100vh-32px)] m-4 bg-white rounded-3xl shadow-sidebar flex flex-col items-center py-8 gap-8 z-20 border border-black/5">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">eco</span>
+</div>
+<div class="flex flex-col gap-4 flex-1">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl text-[#A0ACA3] hover:bg-black/5 transition-all">
+<span class="material-symbols-outlined text-[22px]">grid_view</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 active-nav">
+<span class="material-symbols-outlined text-[22px]">inventory_2</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl text-[#A0ACA3] hover:bg-black/5 transition-all">
+<span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl text-[#A0ACA3] hover:bg-black/5 transition-all">
+<span class="material-symbols-outlined text-[22px]">bar_chart</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl text-[#A0ACA3] hover:bg-black/5 transition-all">
+<span class="material-symbols-outlined text-[22px]">group</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl text-[#A0ACA3] hover:bg-black/5 transition-all">
+<span class="material-symbols-outlined text-[22px]">history</span>
+</button>
+</div>
+<div class="flex flex-col gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl text-[#A0ACA3] hover:bg-black/5 transition-all">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl text-[#A0ACA3] hover:bg-black/5 transition-all">
+<span class="material-symbols-outlined text-[22px]">logout</span>
+</button>
+</div>
+</nav>
+<main class="flex-1 overflow-y-auto p-4 md:p-8">
+<div class="max-w-6xl mx-auto space-y-6">
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<h1 class="text-2xl font-extrabold tracking-tight text-[#1A1F1C]">Product Inventory</h1>
+<span class="text-[10px] font-bold text-[#A0ACA3] uppercase tracking-widest bg-white/50 px-3 py-1 rounded-full">19 Dec 2023</span>
+</div>
+<p class="text-sm text-[#6d7e72] font-medium italic">Manage neighborhood stock &amp; availability.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="md:col-span-4 glass-card p-4 shadow-soft">
+<div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
+<button class="px-5 py-2 rounded-full text-xs font-bold bg-primary text-white whitespace-nowrap">All Products</button>
+<button class="px-5 py-2 rounded-full text-xs font-bold text-[#6d7e72] bg-white/40 hover:bg-white/60 whitespace-nowrap">Produce</button>
+<button class="px-5 py-2 rounded-full text-xs font-bold text-[#6d7e72] bg-white/40 hover:bg-white/60 whitespace-nowrap">Dairy</button>
+<button class="px-5 py-2 rounded-full text-xs font-bold text-[#6d7e72] bg-white/40 hover:bg-white/60 whitespace-nowrap">Bakery</button>
+<button class="px-5 py-2 rounded-full text-xs font-bold text-[#6d7e72] bg-white/40 hover:bg-white/60 whitespace-nowrap">Pantry</button>
+<button class="px-5 py-2 rounded-full text-xs font-bold text-[#6d7e72] bg-white/40 hover:bg-white/60 whitespace-nowrap">Beverages</button>
+</div>
+</div>
+<div class="md:col-span-1 glass-card p-5 shadow-soft flex flex-col justify-between border-l-4 border-amber-low/50">
+<div>
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-black text-amber-low uppercase tracking-widest bg-amber-low/10 px-2 py-0.5 rounded-sm">Low Stock Alert</span>
+<span class="material-symbols-outlined text-amber-low text-xl">error</span>
+</div>
+<h3 class="text-lg font-bold text-[#1A1F1C]">Insights</h3>
+<p class="text-xs text-[#6d7e72] mt-1 leading-relaxed">8 items are currently below reorder thresholds.</p>
+</div>
+<button class="mt-4 w-full py-2 bg-amber-low/10 text-amber-low text-[11px] font-bold rounded-lg hover:bg-amber-low/20 transition-colors uppercase tracking-tight">
+                        View Shortlist
+                    </button>
+</div>
+<div class="md:col-span-1 glass-card p-5 shadow-soft">
+<p class="text-[10px] font-bold text-[#6d7e72] uppercase tracking-wider mb-2">Total Inventory Value</p>
+<p class="text-2xl font-extrabold text-[#1A1F1C]">$42,890.00</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="text-[10px] font-bold text-primary bg-secondary-green px-2 py-0.5 rounded-full">+4.2%</span>
+<span class="text-[10px] text-[#A0ACA3] font-medium">vs last month</span>
+</div>
+</div>
+<div class="md:col-span-2 glass-card p-5 shadow-soft overflow-hidden">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-[10px] font-bold text-[#6d7e72] uppercase tracking-wider mb-2">Stock Utilization</p>
+<p class="text-2xl font-extrabold text-[#1A1F1C]">82%</p>
+</div>
+<div class="dot-matrix">
+<div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div>
+<div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div>
+<div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+<div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+</div>
+<div class="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[82%]"></div>
+</div>
+</div>
+<div class="md:col-span-4 glass-card shadow-soft overflow-hidden">
+<div class="p-5 border-b border-black/5 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="relative w-full md:w-72">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#A0ACA3] text-lg">search</span>
+<input class="w-full pl-9 pr-4 py-2 bg-white/60 border-none rounded-full text-xs focus:ring-1 focus:ring-primary" placeholder="Search product name or SKU..." type="text"/>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center gap-1 px-4 py-2 rounded-full border border-[#dee3e0]/50 text-xs font-bold text-[#6d7e72] hover:bg-white/50">
+<span class="material-symbols-outlined text-sm">download</span> Export
+                            </button>
+<button class="flex items-center gap-1 px-5 py-2 rounded-full bg-primary text-white text-xs font-bold shadow-md shadow-primary/20">
+<span class="material-symbols-outlined text-sm">add</span> New Product
+                            </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-white/20">
+<tr>
+<th class="px-6 py-4 text-[10px] font-black text-[#A0ACA3] uppercase tracking-widest">Product Details</th>
+<th class="px-6 py-4 text-[10px] font-black text-[#A0ACA3] uppercase tracking-widest text-center">Current Stock</th>
+<th class="px-6 py-4 text-[10px] font-black text-[#A0ACA3] uppercase tracking-widest">Cost Price</th>
+<th class="px-6 py-4 text-[10px] font-black text-[#A0ACA3] uppercase tracking-widest">Retail Price</th>
+<th class="px-6 py-4 text-[10px] font-black text-[#A0ACA3] uppercase tracking-widest text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-black/5">
+<tr class="hover:bg-white/40 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary-green flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">eco</span>
+</div>
+<div>
+<p class="text-sm font-bold text-[#1A1F1C]">Organic Hass Avocado</p>
+<p class="text-[10px] text-[#6d7e72] font-medium uppercase tracking-tight">Category: Produce</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col items-center gap-1">
+<div class="dot-matrix">
+<div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div>
+<div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+</div>
+<span class="text-xs font-bold text-[#1A1F1C]">42 Units</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-semibold text-[#1A1F1C]">$1.20</td>
+<td class="px-6 py-4 text-sm font-bold text-primary">$2.50</td>
+<td class="px-6 py-4 text-right">
+<button class="text-[#A0ACA3] hover:text-primary">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-white/40 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-amber-low/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-amber-low">bakery_dining</span>
+</div>
+<div>
+<p class="text-sm font-bold text-[#1A1F1C]">Artisan Sourdough</p>
+<p class="text-[10px] text-[#6d7e72] font-medium uppercase tracking-tight">Category: Bakery</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col items-center gap-1">
+<div class="dot-matrix">
+<div class="dot warning"></div><div class="dot warning"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+<div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+<span class="text-xs font-bold text-amber-low">4 Units</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-semibold text-[#1A1F1C]">$3.10</td>
+<td class="px-6 py-4 text-sm font-bold text-primary">$6.00</td>
+<td class="px-6 py-4 text-right">
+<button class="text-[#A0ACA3] hover:text-primary">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-white/40 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-blue-500">water_drop</span>
+</div>
+<div>
+<p class="text-sm font-bold text-[#1A1F1C]">Natural Spring Water 1L</p>
+<p class="text-[10px] text-[#6d7e72] font-medium uppercase tracking-tight">Category: Beverages</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col items-center gap-1">
+<div class="dot-matrix">
+<div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div>
+<div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div>
+</div>
+<span class="text-xs font-bold text-[#1A1F1C]">120 Units</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-semibold text-[#1A1F1C]">$0.45</td>
+<td class="px-6 py-4 text-sm font-bold text-primary">$1.50</td>
+<td class="px-6 py-4 text-right">
+<button class="text-[#A0ACA3] hover:text-primary">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-white/20 flex justify-between items-center text-[10px] font-bold text-[#A0ACA3] uppercase tracking-widest">
+<span>Showing 1-10 of 124 products</span>
+<div class="flex gap-2">
+<button class="w-6 h-6 flex items-center justify-center rounded-full bg-white/50 border border-black/5"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="w-6 h-6 flex items-center justify-center rounded-full bg-white/50 border border-black/5"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

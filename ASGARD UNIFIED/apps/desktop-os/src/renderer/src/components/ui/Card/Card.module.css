@@ -1,0 +1,142 @@
+/* ============================================
+   Card Component Styles
+   Bonilo Design System - Glassmorphism
+   ============================================ */
+
+.card {
+    background: var(--glass-bg-light);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border-light);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+/* ===========================================
+   PADDING VARIANTS
+   =========================================== */
+
+.padding-none {
+    padding: 0;
+}
+
+.padding-sm {
+    padding: var(--space-3);
+}
+
+.padding-md {
+    padding: var(--space-5);
+}
+
+.padding-lg {
+    padding: var(--space-6);
+}
+
+/* ===========================================
+   SHADOW VARIANTS
+   =========================================== */
+
+.shadow-none {
+    box-shadow: none;
+}
+
+.shadow-sm {
+    box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+    box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+    box-shadow: var(--shadow-lg);
+}
+
+/* ===========================================
+   INTERACTIVE STATES
+   =========================================== */
+
+.hover:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.clickable:active {
+    transform: translateY(0) scale(0.99);
+}
+
+/* ===========================================
+   HEADER
+   =========================================== */
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-border-light);
+    margin-bottom: var(--space-4);
+}
+
+.headerContent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.headerContent h1,
+.headerContent h2,
+.headerContent h3,
+.headerContent h4 {
+    margin: 0;
+}
+
+.headerAction {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* ===========================================
+   BODY
+   =========================================== */
+
+.body {
+    flex: 1;
+}
+
+/* ===========================================
+   FOOTER
+   =========================================== */
+
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border-light);
+    margin-top: var(--space-4);
+}
+
+/* ===========================================
+   DARK MODE
+   =========================================== */
+
+:global([data-theme="dark"]) .card {
+    background: var(--glass-bg-light);
+    border: var(--glass-border);
+}
+
+/* ===========================================
+   RTL SUPPORT
+   =========================================== */
+
+[dir="rtl"] .footer {
+    justify-content: flex-start;
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "IGO Desktop",
+  "version": "1.0.0",
+  "identifier": "dz.igo.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "IGO - Gestion Commerciale",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 768,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Business",
+    "shortDescription": "Logiciel de gestion commerciale pour supermarchés",
+    "longDescription": "IGO est un logiciel de gestion commerciale complet pour les supermarchés algériens. Il offre une gestion des stocks, un point de vente rapide, une gestion de trésorerie et des rapports détaillés.",
+    "copyright": "© 2026 IGO Team",
+    "externalBin": [],
+    "resources": []
+  },
+  "plugins": {
+    "sql": {
+      "preload": [
+        "sqlite:igo-desktop.db"
+      ]
+    }
+  }
+}

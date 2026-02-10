@@ -1,0 +1,776 @@
+/* ===========================================
+   Command Center - Apple-inspired Design
+   Dark theme, glassmorphism, premium feel
+   =========================================== */
+
+.commandCenter {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #0A0A0A 0%, #1A1A2E 50%, #16213E 100%);
+    color: #FFFFFF;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+}
+
+/* ===== HEADER ===== */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4) var(--space-6);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.greeting {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #FFFFFF, #A0A0A0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.periodSelector {
+    padding: var(--space-2) var(--space-4);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-lg);
+    color: #FFFFFF;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.periodSelector:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.periodSelector option {
+    background: #1A1A2E;
+    color: #FFFFFF;
+}
+
+.iconBtn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.iconBtn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+}
+
+.notifBadge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #FF3B30;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+}
+
+/* ===== METRICS STRIP ===== */
+.metricsStrip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-6);
+}
+
+.metricCard {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.metricCard:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.metricIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    color: white;
+}
+
+.metricContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.metricValue {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.metricLabel {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 2px;
+}
+
+.metricTrend {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.metricTrend.positive {
+    background: rgba(52, 199, 89, 0.2);
+    color: #34C759;
+}
+
+.metricTrend.negative {
+    background: rgba(255, 59, 48, 0.2);
+    color: #FF3B30;
+}
+
+/* ===== AI BAR ===== */
+.aiBar {
+    margin: 0 var(--space-6);
+    padding: var(--space-4);
+    background: linear-gradient(135deg, rgba(175, 82, 222, 0.15), rgba(0, 122, 255, 0.15));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(175, 82, 222, 0.3);
+    border-radius: 20px;
+}
+
+.aiBarHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 13px;
+    font-weight: 600;
+    color: #AF52DE;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.aiInsights {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.aiInsight {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.aiInsight:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.aiInsight.critical {
+    border-left: 3px solid #FF3B30;
+}
+
+.aiInsight.high {
+    border-left: 3px solid #FF9500;
+}
+
+.aiInsight.medium {
+    border-left: 3px solid #007AFF;
+}
+
+.aiIcon {
+    font-size: 20px;
+}
+
+.aiContent {
+    flex: 1;
+}
+
+.aiContent strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.aiContent p {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.aiAction {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.aiAction:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== MAIN CONTENT ===== */
+.mainContent {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-6);
+    flex: 1;
+}
+
+.chartsColumn {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.activityColumn {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+/* ===== CARDS ===== */
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cardTitle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.liveIndicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #34C759;
+    letter-spacing: 0.5px;
+}
+
+.liveDot {
+    width: 8px;
+    height: 8px;
+    background: #34C759;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.chartContainer {
+    padding: var(--space-3);
+}
+
+/* ===== CATEGORY CHART ===== */
+.categoryContent {
+    display: flex;
+    align-items: center;
+    padding: var(--space-3);
+}
+
+.pieWrapper {
+    flex: 1;
+}
+
+.categoryLegend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.legendDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.legendName {
+    flex: 1;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.legendValue {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ===== TOP PRODUCTS ===== */
+.topProducts {
+    display: flex;
+    flex-direction: column;
+}
+
+.productItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s ease;
+}
+
+.productItem:last-child {
+    border-bottom: none;
+}
+
+.productItem:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.productRank {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.productEmoji {
+    font-size: 24px;
+}
+
+.productInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.productName {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.productSales {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.productTrend {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.productTrend.positive {
+    color: #34C759;
+}
+
+.productTrend.negative {
+    color: #FF3B30;
+}
+
+/* ===== RECENT SALES ===== */
+.recentSales {
+    display: flex;
+    flex-direction: column;
+}
+
+.saleItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.saleItem:last-child {
+    border-bottom: none;
+}
+
+.saleInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.saleItems {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.saleTime {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.saleRight {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.saleTotal {
+    font-size: 14px;
+    font-weight: 600;
+    color: #34C759;
+}
+
+.saleMethod {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ===== DOCK ===== */
+.dock {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-6);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dockItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dockItem:hover {
+    transform: translateY(-4px);
+}
+
+.dockItem:hover .dockIcon {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.dockIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.dockItem span {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
+}
+
+.dockItem:hover span {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinning {
+    animation: spin 0.8s linear infinite;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+    .metricsStrip {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mainContent {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .headerRight {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .metricsStrip {
+        grid-template-columns: 1fr;
+        padding: var(--space-4);
+    }
+
+    .mainContent {
+        padding: var(--space-4);
+    }
+
+    .aiBar {
+        margin: 0 var(--space-4);
+    }
+
+    .dock {
+        padding: var(--space-3);
+        gap: var(--space-1);
+    }
+
+    .dockIcon {
+        width: 48px;
+        height: 48px;
+    }
+
+    .dockItem span {
+        font-size: 10px;
+    }
+}
+
+/* ===== ADVANCED CHART STYLES ===== */
+
+.customTooltip {
+    background: rgba(20, 20, 35, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: var(--space-3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    min-width: 150px;
+    z-index: 100;
+}
+
+.tooltipLabel {
+    font-size: 13px;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0 0 8px 0;
+}
+
+.tooltipDivider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 8px 0;
+}
+
+.tooltipItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.tooltipDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.tooltipValue {
+    margin-left: auto;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.pieWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pieWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.legendText {
+    display: flex;
+    flex-direction: column;
+}
+
+.legendName {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.legendValue {
+    font-size: 13px;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.chartLegend {
+    display: flex;
+    gap: 16px;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.legendDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.chartFooter {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.insightTag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.insightTag strong {
+    color: #FFFFFF;
+}
+
+.insightTag svg {
+    color: #34C759;
+}

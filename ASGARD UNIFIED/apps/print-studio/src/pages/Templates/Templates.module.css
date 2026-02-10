@@ -1,0 +1,534 @@
+/* ============================================
+   TEMPLATES PAGE - ETIX Style Labels
+   ============================================ */
+
+.templates {
+    padding: var(--space-6);
+    animation: fadeIn var(--duration-normal) var(--ease-out);
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-8);
+    gap: var(--space-4);
+}
+
+.headerContent h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    margin-bottom: var(--space-1);
+    background: linear-gradient(135deg, var(--color-text-primary), var(--color-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.headerContent p {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+.searchBox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    min-width: 300px;
+    backdrop-filter: blur(var(--glass-blur));
+}
+
+.searchBox input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+    outline: none;
+}
+
+.searchBox svg {
+    color: var(--color-text-muted);
+}
+
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-6);
+}
+
+/* Card */
+.card {
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    transition: all var(--duration-normal) var(--ease-out);
+    backdrop-filter: blur(var(--glass-blur));
+}
+
+.card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow);
+}
+
+/* Preview Area */
+.preview {
+    position: relative;
+    padding: var(--space-8);
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+}
+
+/* ============================================
+   LABEL PREVIEW STYLES - ETIX FORMAT (Replica)
+   ============================================ */
+
+.labelPreview {
+    width: 240px;
+    /* Gallery Scale */
+    height: 160px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #000;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Shared Components */
+.barcodeCenter {
+    display: flex;
+    height: 30px;
+    gap: 1px;
+    justify-content: center;
+    margin-top: 5px;
+}
+
+.bar {
+    height: 100%;
+    background: #000;
+}
+
+.barcodeNumberCenter {
+    font-size: 9px;
+    font-family: monospace;
+    letter-spacing: 2px;
+    text-align: center;
+    display: block;
+}
+
+.retailPriceLabel {
+    font-size: 8px;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+.retailPriceLabelDark {
+    font-size: 8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------
+   Layout 1: Header Full Box
+   -------------------------------------------- */
+.labelHeaderFullBox {
+    background: var(--accent-color, #fbbf24);
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.headerTopLine {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.productNameBold {
+    font-size: 14px;
+    font-weight: 800;
+    display: block;
+}
+
+.skuLineInHeader {
+    font-size: 10px;
+    font-family: monospace;
+    opacity: 0.7;
+}
+
+.headerPriceRow {
+    margin-top: auto;
+    text-align: right;
+}
+
+.priceValueXL {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -1.5px;
+    line-height: 1;
+}
+
+.currencySmall {
+    font-size: 12px;
+    font-weight: 700;
+    vertical-align: super;
+    margin-right: 2px;
+}
+
+.barcodeSectionAlone {
+    padding: 8px;
+    border-top: 1px solid #eee;
+}
+
+/* --------------------------------------------
+   Layout 2: Split Layout
+   -------------------------------------------- */
+.splitLayout {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    height: 100%;
+}
+
+.splitLeft {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.splitRightAccent {
+    background: var(--accent-color, #fbbf24);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.productNameNormal {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.skuGrey {
+    font-size: 9px;
+    color: #666;
+    font-family: monospace;
+}
+
+.barcodeLeft {
+    display: flex;
+    height: 20px;
+    gap: 0.5px;
+    margin-top: 5px;
+}
+
+.priceValueLrg {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.currencyMed {
+    font-size: 11px;
+    margin-right: 2px;
+}
+
+/* --------------------------------------------
+   Layout 3: L3 Style
+   -------------------------------------------- */
+.layout3Body {
+    flex: 1;
+    display: flex;
+}
+
+.l3Left {
+    flex: 1;
+    padding: 12px;
+}
+
+.l3RightAccent {
+    width: 60px;
+    background: var(--accent-color, #fbbf24);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.productNameLarge {
+    font-size: 16px;
+    font-weight: 800;
+    display: block;
+}
+
+.priceValueBold {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.barcodeBottomFull {
+    padding: 8px 0;
+    background: #fdfdfd;
+    border-top: 1px dashed #eee;
+}
+
+/* --------------------------------------------
+   Layout 4: Floating Accent
+   -------------------------------------------- */
+.l4Header {
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.skuRight {
+    font-family: monospace;
+    font-size: 9px;
+    opacity: 0.6;
+}
+
+.l4CenterAccent {
+    margin: 0 12px;
+    background: var(--accent-color, #fbbf24);
+    height: 50px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.priceValueHuge {
+    font-size: 28px;
+    font-weight: 900;
+}
+
+/* --------------------------------------------
+   Layout 5: Compact Split
+   -------------------------------------------- */
+.l5Top {
+    padding: 10px 12px;
+}
+
+.l5BottomRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex: 1;
+}
+
+.l5PriceAccent {
+    background: var(--accent-color, #fbbf24);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.l5BarcodeArea {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.barcodeCompact {
+    display: flex;
+    height: 20px;
+    gap: 0.5px;
+}
+
+.barcodeNumberSmall {
+    font-size: 8px;
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+/* --------------------------------------------
+   Layout 6: Barcode Top
+   -------------------------------------------- */
+.l6BarcodeTop {
+    background: #fafafa;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.l6BottomPart {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 0.8fr;
+}
+
+.l6Info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.l6PriceAccent {
+    background: var(--accent-color, #fbbf24);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================
+   BADGES
+   ============================================ */
+
+.badges {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    display: flex;
+    gap: var(--space-2);
+}
+
+.popularBadge,
+.proBadge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+}
+
+.popularBadge {
+    background: rgba(251, 191, 36, 0.95);
+    color: #000;
+}
+
+.proBadge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+}
+
+/* ============================================
+   HOVER ACTIONS
+   ============================================ */
+
+.hoverActions {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    animation: fadeIn var(--duration-fast) var(--ease-out);
+}
+
+.previewBtn,
+.useBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    transition: all var(--duration-fast) var(--ease-out);
+    border: none;
+    cursor: pointer;
+}
+
+.previewBtn {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.previewBtn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.useBtn {
+    background: var(--color-primary);
+    color: #000;
+}
+
+.useBtn:hover {
+    filter: brightness(1.1);
+    box-shadow: var(--shadow-glow);
+}
+
+/* ============================================
+   CARD INFO
+   ============================================ */
+
+.cardInfo {
+    padding: var(--space-4) var(--space-5);
+}
+
+.cardText h3 {
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+.cardText p {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+    }
+
+    .searchBox {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
