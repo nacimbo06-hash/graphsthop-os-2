@@ -42,7 +42,7 @@ import {
     Eye,
 } from 'lucide-react';
 import { useSettings } from '../../contexts/SettingsContext';
-import { 
+import {
     useAuthStore,
     useSalesStore,
     useTreasuryStore,
@@ -50,7 +50,9 @@ import {
     useCustomersStore
 } from '@asgard/shared/stores';
 import { InsightsGenerator, type AIInsight } from '../../services/ai/forecastingService';
+import { BoniloIntelligence } from '../../services/ai/intelligenceService';
 import { ExpiryAlertService } from '../../services/expiryAlertService';
+import { DailyBriefingWidget } from './components/DailyBriefing';
 import styles from './Dashboard.module.css';
 
 // Chart data is now computed from real store data inside the component
@@ -98,10 +100,12 @@ export const Dashboard: React.FC = () => {
     const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
     const [showAllInsights, setShowAllInsights] = useState(false);
 
-    // Load AI insights on mount
+    // Load AI insights — now powered by real data through BoniloIntelligence
     useEffect(() => {
-        setAiInsights(InsightsGenerator.generateDailyInsights());
-    }, []);
+        const calendarInsights = InsightsGenerator.generateDailyInsights();
+        const smartInsights = BoniloIntelligence.smartInsights(sales, products);
+        setAiInsights([...smartInsights, ...calendarInsights]);
+    }, [sales, products]);
 
     // Get metrics based on selected period - using REAL DATA
     const getMetrics = () => {
@@ -362,7 +366,9 @@ export const Dashboard: React.FC = () => {
 
     const handleRefresh = () => {
         setIsRefreshing(true);
-        setAiInsights(InsightsGenerator.generateDailyInsights());
+        const calendarInsights = InsightsGenerator.generateDailyInsights();
+        const smartInsights = BoniloIntelligence.smartInsights(sales, products);
+        setAiInsights([...smartInsights, ...calendarInsights]);
         setTimeout(() => setIsRefreshing(false), 1500);
     };
 
@@ -741,6 +747,9 @@ export const Dashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Daily Briefing — Phase B Intelligence */}
+            <DailyBriefingWidget />
 
             {/* Quick Actions & Alerts Row */}
             <div className={styles.actionsRow}>
