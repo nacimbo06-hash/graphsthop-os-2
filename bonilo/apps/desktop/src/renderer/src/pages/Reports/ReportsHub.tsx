@@ -27,7 +27,8 @@ import {
 } from 'recharts';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useSalesStore, useProductsStore } from '@asgard/shared/stores';
-import { InsightsGenerator, type AIInsight, getAlgerianCalendarEvents } from '../../services/ai/forecastingService';
+import { ForecastingEngine, type AIInsight, getAlgerianCalendarEvents } from '../../services/ai/forecastingService';
+import { BoniloIntelligence } from '../../services/ai/intelligenceService';
 import styles from './ReportsHub.module.css';
 import { formatCurrencyCompact } from '../../utils/formatters';
 
@@ -64,9 +65,10 @@ export const ReportsHub: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
 
+    // Use smart insights powered by real data
     useEffect(() => {
-        setAiInsights(InsightsGenerator.generateDailyInsights());
-    }, []);
+        setAiInsights(BoniloIntelligence.smartInsights(sales, products));
+    }, [sales, products]);
 
     // Helper: Calculate data for a specific range
     const getRangeData = (start: Date, end: Date) => {
@@ -131,28 +133,44 @@ export const ReportsHub: React.FC = () => {
         };
     }, [sales, comparisonPeriod]);
 
-    // Top performers logic
+    // Top performers logic — with real growth comparison
     const topPerformers = useMemo(() => {
-        const productMap: Record<string, { revenue: number, count: number }> = {};
+        const now = new Date();
+        const midpoint = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+
+        const recentMap: Record<string, { revenue: number; count: number }> = {};
+        const olderMap: Record<string, { revenue: number }> = {};
+
         sales.forEach(s => {
+            const d = new Date(s.timestamp);
             s.items.forEach(item => {
-                if (!productMap[item.productName]) {
-                    productMap[item.productName] = { revenue: 0, count: 0 };
+                const name = item.productName || item.productId;
+                if (d >= midpoint) {
+                    if (!recentMap[name]) recentMap[name] = { revenue: 0, count: 0 };
+                    recentMap[name].revenue += item.total;
+                    recentMap[name].count += item.quantity;
+                } else {
+                    if (!olderMap[name]) olderMap[name] = { revenue: 0 };
+                    olderMap[name].revenue += item.total;
                 }
-                productMap[item.productName].revenue += item.total;
-                productMap[item.productName].count += item.quantity;
             });
         });
 
-        return Object.entries(productMap)
+        return Object.entries(recentMap)
             .sort((a, b) => b[1].revenue - a[1].revenue)
             .slice(0, 3)
-            .map(([name, data], idx) => ({
-                name,
-                revenue: data.revenue,
-                growth: Math.floor(Math.random() * 20), // Placeholder growth
-                rank: idx + 1
-            }));
+            .map(([name, data], idx) => {
+                const older = olderMap[name]?.revenue || 0;
+                const growth = older > 0
+                    ? Math.round(((data.revenue - older) / older) * 100)
+                    : (data.revenue > 0 ? 100 : 0);
+                return {
+                    name,
+                    revenue: data.revenue,
+                    growth,
+                    rank: idx + 1,
+                };
+            });
     }, [sales]);
 
     // Using centralized formatCurrencyCompact for compact display
@@ -175,7 +193,7 @@ export const ReportsHub: React.FC = () => {
     const refreshData = () => {
         setIsLoading(true);
         setTimeout(() => {
-            setAiInsights(InsightsGenerator.generateDailyInsights());
+            setAiInsights(BoniloIntelligence.smartInsights(sales, products));
             setIsLoading(false);
         }, 800);
     };
@@ -202,21 +220,24 @@ export const ReportsHub: React.FC = () => {
         }
     };
 
-    // AI Forecast Mock (Keep for now as it needs complex logic)
-    const forecastData = [
-        { day: 'Auj', actual: data.currentPeriod.revenue, predicted: data.currentPeriod.revenue * 0.95 },
-        { day: 'Dem', predicted: data.currentPeriod.revenue * 0.92 },
-        { day: 'J+2', predicted: data.currentPeriod.revenue * 1.1, event: 'Vendredi' },
-        { day: 'J+3', predicted: data.currentPeriod.revenue * 1.05 },
-        { day: 'J+4', predicted: data.currentPeriod.revenue * 0.8 },
-        { day: 'J+5', predicted: data.currentPeriod.revenue * 0.85 },
-        { day: 'J+6', predicted: data.currentPeriod.revenue * 0.9 },
-    ];
+    // AI Forecast — powered by real sales data via ForecastingEngine
+    const revenueForecast = useMemo(() =>
+        ForecastingEngine.forecastRevenue(sales, 7),
+        [sales]
+    );
+
+    const forecastData = revenueForecast.forecasts.map((f, i) => ({
+        ...f,
+        actual: i === 0 ? data.currentPeriod.revenue : undefined,
+    }));
 
     const events = getAlgerianCalendarEvents(new Date().getFullYear());
     const today = new Date();
     const nextEvent = events.find(e => e.startDate > today);
     const daysUntilEvent = nextEvent ? Math.ceil((nextEvent.startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+    const trendEmoji = revenueForecast.trend === 'rising' ? '📈' : revenueForecast.trend === 'falling' ? '📉' : '➡️';
+    const trendLabel = revenueForecast.trend === 'rising' ? 'Hausse' : revenueForecast.trend === 'falling' ? 'Baisse' : 'Stable';
 
     const criticalCount = aiInsights.filter(i => i.importance === 'critical' || i.importance === 'high').length;
 
@@ -413,21 +434,28 @@ export const ReportsHub: React.FC = () => {
                                 <Sparkles size={18} />
                                 <div>
                                     <span>Prévu 7 jours</span>
-                                    <strong>{formatCurrency(data.currentPeriod.revenue * 7 * 0.9)}</strong>
+                                    <strong>{formatCurrency(revenueForecast.forecasts.reduce((s, f) => s + f.predicted, 0))}</strong>
                                 </div>
                             </div>
                             <div className={styles.statCard}>
                                 <Target size={18} />
                                 <div>
                                     <span>Confiance IA</span>
-                                    <strong>87%</strong>
+                                    <strong>{Math.round(revenueForecast.confidence * 100)}%</strong>
+                                </div>
+                            </div>
+                            <div className={styles.statCard}>
+                                <Calendar size={18} />
+                                <div>
+                                    <span>Tendance</span>
+                                    <strong>{trendEmoji} {trendLabel}</strong>
                                 </div>
                             </div>
                             <div className={styles.statCard}>
                                 <Calendar size={18} />
                                 <div>
                                     <span>Pic prévu</span>
-                                    <strong>Vendredi</strong>
+                                    <strong>{revenueForecast.peakDay}</strong>
                                 </div>
                             </div>
                         </div>
@@ -466,7 +494,7 @@ export const ReportsHub: React.FC = () => {
                                         <span className={styles.performerRank}>{p.rank}</span>
                                         <span className={styles.performerName}>{p.name}</span>
                                         <span className={styles.performerValue}>{formatCurrency(p.revenue)}</span>
-                                        <span className={`${styles.performerGrowth} ${styles.positive}`}>+{p.growth}%</span>
+                                        <span className={`${styles.performerGrowth} ${p.growth >= 0 ? styles.positive : styles.negative}`}>{p.growth >= 0 ? '+' : ''}{p.growth}%</span>
                                     </div>
                                 ))}
                                 {topPerformers.length === 0 && <p className={styles.empty}>Aucune vente enregistrée</p>}

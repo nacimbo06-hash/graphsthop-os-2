@@ -1,6 +1,6 @@
 /**
  * Settings Service - Centralized Settings Management
- * SuperMarket Control OS
+ * Bonilo — Retail Management OS
  * 
  * This service handles loading, saving, and providing settings
  * across the entire application.
@@ -142,7 +142,8 @@ const defaultSettings: AllSettings = {
     },
 };
 
-const STORAGE_KEY = 'supermarket_settings';
+const STORAGE_KEY = 'bonilo_settings';
+const LEGACY_STORAGE_KEY = 'supermarket_settings';
 
 class SettingsServiceClass {
     private settings: AllSettings;
@@ -158,7 +159,16 @@ class SettingsServiceClass {
      */
     private loadSettings(): AllSettings {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
+            let saved = localStorage.getItem(STORAGE_KEY);
+            // Migrate from legacy key if new key doesn't exist
+            if (!saved) {
+                saved = localStorage.getItem(LEGACY_STORAGE_KEY);
+                if (saved) {
+                    localStorage.setItem(STORAGE_KEY, saved);
+                    localStorage.removeItem(LEGACY_STORAGE_KEY);
+                    console.log('[Settings] ✅ Migrated settings from legacy key');
+                }
+            }
             if (saved) {
                 const parsed = JSON.parse(saved);
                 // Merge with defaults to ensure all keys exist

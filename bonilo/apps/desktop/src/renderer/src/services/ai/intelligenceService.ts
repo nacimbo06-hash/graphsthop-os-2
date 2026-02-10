@@ -22,6 +22,7 @@ import {
     type AIInsight,
     type ReorderSuggestion,
     type AnomalyResult,
+    type TrendDirection,
 } from './forecastingService';
 
 // ═══════════════════════════════════════════════════
@@ -70,6 +71,7 @@ export interface DailyBriefing {
         isPayDay: boolean;
         isFriday: boolean;
         activeEvents: string[];
+        trend: TrendDirection;
     };
     // Actions to take
     actions: BriefingAction[];
@@ -348,7 +350,29 @@ function generateDailyBriefing(sales: Sale[], products: Product[]): DailyBriefin
     }
 
     const predictedRevenue = Math.round(avgDailyRevenue * multiplier);
-    const confidence = sales.length > 30 ? 0.85 : sales.length > 7 ? 0.65 : 0.35;
+
+    // Dynamic confidence from ForecastingEngine
+    const trend = ForecastingEngine.detectRevenueTrend(sales, 14);
+    // Build actual daily revenue for confidence computation
+    const dailyRevBuckets = ForecastingEngine.buildDailyRevenue(sales, 21);
+    const hasEvent = events.length > 0;
+    // Base confidence from data characteristics
+    let confidence: number;
+    if (dailyRevBuckets.filter(v => v > 0).length >= 14) {
+        // Enough data for real confidence
+        const mean = dailyRevBuckets.reduce((a, b) => a + b, 0) / dailyRevBuckets.length;
+        const cv = mean > 0
+            ? Math.sqrt(dailyRevBuckets.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / dailyRevBuckets.length) / mean
+            : 1;
+        const volumeScore = Math.min(1, dailyRevBuckets.filter(v => v > 0).length / 21);
+        const cvScore = Math.max(0, Math.min(1, 1 - cv));
+        confidence = volumeScore * 0.4 + cvScore * 0.35 + (hasEvent ? 0.85 : 0.6) * 0.25;
+        confidence = Math.round(Math.max(0.20, Math.min(0.95, confidence)) * 100) / 100;
+    } else if (sales.length > 7) {
+        confidence = 0.55;
+    } else {
+        confidence = 0.30;
+    }
 
     // ── Actions to Take ──
     const actions: BriefingAction[] = [];
@@ -447,6 +471,7 @@ function generateDailyBriefing(sales: Sale[], products: Product[]): DailyBriefin
             isPayDay: todayIsPayDay,
             isFriday: todayIsFriday,
             activeEvents: eventNames,
+            trend,
         },
         actions: actions.sort((a, b) => {
             const order = { critical: 0, high: 1, medium: 2, low: 3 };

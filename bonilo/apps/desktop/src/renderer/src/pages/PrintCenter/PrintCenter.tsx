@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Printer,
     Tag,
@@ -10,196 +10,441 @@ import {
     Eye,
     CheckCircle,
     Package,
-    AlertTriangle,
     TrendingDown,
     Clock,
     X,
+    Minus,
+    Plus,
+    Check,
+    Moon,
+    AlertTriangle,
+    BoxIcon,
+    Zap,
+    Sparkles,
 } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
-import { JonyHTML, type PriceLabelData, type LabelType } from '../../services/jonyPrintDesigner';
 import { useProductsStore } from '@asgard/shared/stores';
 import { formatCurrency } from '../../utils/formatters';
 import styles from './PrintCenter.module.css';
 
-// Essential label templates only
+// ============ TEMPLATE DEFINITIONS ============
+
 interface LabelTemplate {
     id: string;
     name: string;
     icon: React.ReactNode;
     description: string;
-    size: string;
-    labelType: LabelType;
     color: string;
+    hasBanner: boolean;
+    bannerText?: string;
+    bannerClass?: string;
 }
 
-const labelTemplates: LabelTemplate[] = [
+const TEMPLATES: LabelTemplate[] = [
     {
         id: 'standard',
-        name: 'STANDARD',
-        icon: <Tag size={28} />,
+        name: 'Standard',
+        icon: <Tag size={24} />,
         description: 'Nom + Prix + Code-barres',
-        size: '60×40mm',
-        labelType: 'standard',
-        color: '#10b981',
+        color: '#3D7C4F',
+        hasBanner: false,
     },
     {
         id: 'promo',
-        name: 'PROMO',
-        icon: <Percent size={28} />,
-        description: 'Ancien prix barré + Nouveau',
-        size: '60×40mm',
-        labelType: 'promotion',
-        color: '#f59e0b',
+        name: 'Promo Flash',
+        icon: <Zap size={24} />,
+        description: 'Ancien prix barré + remise',
+        color: '#EF4444',
+        hasBanner: true,
+        bannerText: '🔥 PROMO FLASH',
+        bannerClass: 'labelPromoBanner',
+    },
+    {
+        id: 'ramadan',
+        name: 'Ramadan',
+        icon: <Moon size={24} />,
+        description: 'Offre spéciale Ramadan',
+        color: '#D4A843',
+        hasBanner: true,
+        bannerText: '☪ OFFRE RAMADAN',
+        bannerClass: 'labelRamadanBanner',
+    },
+    {
+        id: 'pack',
+        name: 'Pack Éco',
+        icon: <BoxIcon size={24} />,
+        description: 'Prix pack + prix unitaire',
+        color: '#3B82F6',
+        hasBanner: false,
+    },
+    {
+        id: 'expiry',
+        name: 'Péremption',
+        icon: <AlertTriangle size={24} />,
+        description: 'DLC proche + remise urgente',
+        color: '#F59E0B',
+        hasBanner: true,
+        bannerText: '⚠ DERNIÈRE CHANCE',
+        bannerClass: 'labelWarningBanner',
     },
     {
         id: 'shelf',
-        name: 'RAYON',
-        icon: <Layers size={28} />,
+        name: 'Rayon',
+        icon: <Layers size={24} />,
         description: 'Étiquette gondole longue',
-        size: '100×30mm',
-        labelType: 'standard',
-        color: '#6366f1',
+        color: '#8B5CF6',
+        hasBanner: false,
     },
 ];
 
-// Product with quantity for printing
+const DISCOUNT_PRESETS = [10, 15, 20, 25, 30, 50];
+
+// ============ PRINT ITEM ============
+
 interface PrintItem {
     productId: string;
     quantity: number;
 }
 
+// ============ COMPONENT ============
+
 export const PrintCenter: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const toast = useToast();
     const { products } = useProductsStore();
 
     // State
-    const [selectedTemplate, setSelectedTemplate] = useState<string>('standard');
+    const [selectedTemplate, setSelectedTemplate] = useState('standard');
     const [searchQuery, setSearchQuery] = useState('');
-    const [printItems, setPrintItems] = useState<PrintItem[]>([]);
-    const [showPreview, setShowPreview] = useState(false);
+
+    // Initialize from router state if available (from Bulk Actions)
+    const [printItems, setPrintItems] = useState<PrintItem[]>(() => {
+        const state = location.state as { selectedProductIds?: string[] } | null;
+        if (state?.selectedProductIds && Array.isArray(state.selectedProductIds)) {
+            // Validate IDs exist in products (optional but good practice)
+            return state.selectedProductIds
+                .map(id => ({ productId: id, quantity: 1 }));
+        }
+        return [];
+    });
+
+    const [showPrintConfirm, setShowPrintConfirm] = useState(false);
     const [isPrinting, setIsPrinting] = useState(false);
+
+    // Promo editor state
+    const [customDiscount, setCustomDiscount] = useState(20);
+    const [promoLabel, setPromoLabel] = useState('PROMO');
+
+    // Current template object
+    const currentTemplate = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
 
     // Filtered products
     const filteredProducts = useMemo(() => {
-        if (!searchQuery.trim()) return products.slice(0, 50); // Show first 50 by default
-        const query = searchQuery.toLowerCase();
-        return products.filter(p => {
-            const nameMatch = (p.name || '').toLowerCase().includes(query);
-            const designationMatch = (p.designation || '').toLowerCase().includes(query);
-            const varietyMatch = (p.variety || '').toLowerCase().includes(query);
-            const shortNameMatch = (p.shortName || '').toLowerCase().includes(query);
-            const barcodeMatch = (p.barcode || '').includes(query);
-            const skuMatch = (p.sku || '').toLowerCase().includes(query);
-
-            return nameMatch || designationMatch || varietyMatch || shortNameMatch || barcodeMatch || skuMatch;
-        });
+        if (!searchQuery.trim()) return products.slice(0, 60);
+        const q = searchQuery.toLowerCase();
+        return products.filter(p =>
+            (p.name || '').toLowerCase().includes(q) ||
+            (p.designation || '').toLowerCase().includes(q) ||
+            (p.barcode || '').includes(q) ||
+            (p.sku || '').toLowerCase().includes(q) ||
+            (p.variety || '').toLowerCase().includes(q)
+        );
     }, [products, searchQuery]);
 
-    // Quick action data
-    const lowStockProducts = useMemo(() =>
-        products.filter(p => p.stock <= (p.minStock || 5)),
+    // Quick action counts
+    const lowStockCount = useMemo(() =>
+        products.filter(p => p.stock <= (p.minStock || 5)).length,
         [products]
     );
 
-    const recentProducts = useMemo(() => {
-        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recentCount = useMemo(() => {
+        const oneWeek = Date.now() - 7 * 24 * 60 * 60 * 1000;
         return products.filter(p => {
-            const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
-            return createdAt > oneWeekAgo;
-        });
+            const created = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+            return created > oneWeek;
+        }).length;
     }, [products]);
 
-    // Total labels to print
-    const totalLabels = printItems.reduce((sum, item) => sum + item.quantity, 0);
+    // Total labels
+    const totalLabels = printItems.reduce((s, i) => s + i.quantity, 0);
 
-    // Toggle product selection
-    const toggleProduct = (productId: string) => {
+    // First selected product (for preview)
+    const previewProduct = useMemo(() => {
+        if (printItems.length === 0) return null;
+        return products.find(p => p.id === printItems[0].productId) || null;
+    }, [printItems, products]);
+
+    // Toggle product
+    const toggleProduct = useCallback((productId: string) => {
         setPrintItems(prev => {
             const exists = prev.find(p => p.productId === productId);
-            if (exists) {
-                return prev.filter(p => p.productId !== productId);
-            }
+            if (exists) return prev.filter(p => p.productId !== productId);
             return [...prev, { productId, quantity: 1 }];
         });
-    };
+    }, []);
 
-    // Update quantity
-    const updateQuantity = (productId: string, delta: number) => {
-        setPrintItems(prev => prev.map(item => {
-            if (item.productId === productId) {
-                return { ...item, quantity: Math.max(1, item.quantity + delta) };
-            }
-            return item;
-        }));
-    };
+    // Update qty
+    const updateQty = useCallback((productId: string, delta: number) => {
+        setPrintItems(prev => prev.map(item =>
+            item.productId === productId
+                ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+                : item
+        ));
+    }, []);
 
-    // Quick action: Add all low stock
+    // Quick actions
     const addLowStock = () => {
-        const newItems = lowStockProducts.map(p => ({ productId: p.id, quantity: 1 }));
+        const lowStock = products.filter(p => p.stock <= (p.minStock || 5));
         setPrintItems(prev => {
-            const existingIds = new Set(prev.map(p => p.productId));
-            const toAdd = newItems.filter(item => !existingIds.has(item.productId));
+            const existing = new Set(prev.map(p => p.productId));
+            const toAdd = lowStock.filter(p => !existing.has(p.id)).map(p => ({ productId: p.id, quantity: 1 }));
             return [...prev, ...toAdd];
         });
-        toast.success(`${lowStockProducts.length} produits en rupture ajoutés`);
+        toast.success(`${lowStock.length} produits stock bas ajoutés`);
     };
 
-    // Quick action: Add recent arrivals
-    const addRecentArrivals = () => {
-        const newItems = recentProducts.map(p => ({ productId: p.id, quantity: 1 }));
+    const addRecent = () => {
+        const oneWeek = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const recent = products.filter(p => {
+            const created = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+            return created > oneWeek;
+        });
         setPrintItems(prev => {
-            const existingIds = new Set(prev.map(p => p.productId));
-            const toAdd = newItems.filter(item => !existingIds.has(item.productId));
+            const existing = new Set(prev.map(p => p.productId));
+            const toAdd = recent.filter(p => !existing.has(p.id)).map(p => ({ productId: p.id, quantity: 1 }));
             return [...prev, ...toAdd];
         });
-        toast.success(`${recentProducts.length} nouveaux produits ajoutés`);
+        toast.success(`${recent.length} nouveaux produits ajoutés`);
     };
 
-    // Clear selection
-    const clearSelection = () => {
-        setPrintItems([]);
+    const selectAll = () => {
+        const all = filteredProducts.map(p => ({ productId: p.id, quantity: 1 }));
+        setPrintItems(all);
+        toast.success(`${all.length} produits sélectionnés`);
     };
 
-    // Print labels
-    const handlePrint = async () => {
-        if (printItems.length === 0) {
-            toast.warning('Sélectionnez au moins un produit');
-            return;
+    // ============ GENERATE LABEL HTML ============
+
+    const generateLabelHTML = useCallback((productId: string): string => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return '';
+
+        const price = product.sellPrice || product.sellingPrice || 0;
+        const priceStr = Math.round(price).toLocaleString('fr-DZ');
+        const name = (product.designation || product.name || '').toUpperCase();
+        const barcode = product.barcode || '0000000000000';
+        const sku = product.sku || '';
+        const isPromo = selectedTemplate === 'promo' || selectedTemplate === 'ramadan' || selectedTemplate === 'expiry';
+        const oldPrice = isPromo ? Math.round(price / (1 - customDiscount / 100)) : 0;
+        const oldPriceStr = oldPrice.toLocaleString('fr-DZ');
+        const tpl = currentTemplate;
+
+        // Banner HTML
+        let bannerHTML = '';
+        if (tpl.hasBanner && tpl.bannerClass && tpl.bannerText) {
+            bannerHTML = `<div class="${tpl.bannerClass}">${tpl.bannerText}</div>`;
         }
 
+        // Discount badge
+        let discountHTML = '';
+        if (isPromo) {
+            discountHTML = `<div class="labelDiscountBadge">-${customDiscount}%</div>`;
+        }
+
+        // Old price
+        let oldPriceHTML = '';
+        if (isPromo) {
+            oldPriceHTML = `<div class="labelOldPrice">${oldPriceStr} DA</div>`;
+        }
+
+        // Pack badge
+        let packHTML = '';
+        let perUnitHTML = '';
+        if (selectedTemplate === 'pack' && product.unitsPerPack) {
+            packHTML = `<div class="labelPackBadge">PACK ×${product.unitsPerPack}</div>`;
+            const perUnit = Math.round(price / product.unitsPerPack);
+            perUnitHTML = `<div class="labelPerUnit">${perUnit.toLocaleString('fr-DZ')} DA / unité</div>`;
+        }
+
+        return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Étiquette</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #e5e7eb;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; padding: 20px;
+        }
+        .labelCard {
+            width: 240px; background: #fff; border-radius: 6px;
+            overflow: hidden; position: relative;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        }
+        .labelPromoBanner {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white; text-align: center; padding: 5px 8px;
+            font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+        }
+        .labelRamadanBanner {
+            background: linear-gradient(135deg, #D4A843, #B8860B);
+            color: white; text-align: center; padding: 5px 8px;
+            font-size: 10px; font-weight: 800; letter-spacing: 1px;
+        }
+        .labelWarningBanner {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            color: white; text-align: center; padding: 5px 8px;
+            font-size: 9px; font-weight: 800; letter-spacing: 0.5px;
+        }
+        .labelContent { padding: 14px 16px 10px; }
+        .labelProductName {
+            font-size: 12px; font-weight: 700; color: #111827;
+            text-transform: uppercase; line-height: 1.25; margin-bottom: 6px;
+            max-height: 32px; overflow: hidden;
+        }
+        .labelOldPrice {
+            font-size: 14px; font-weight: 600; color: #9CA3AF;
+            text-decoration: line-through; margin-bottom: 2px;
+        }
+        .labelPriceRow {
+            display: flex; align-items: flex-end;
+            justify-content: space-between; margin-bottom: 8px;
+        }
+        .labelPrice { display: flex; align-items: baseline; }
+        .labelPriceValue {
+            font-size: 40px; font-weight: 900; color: #000;
+            letter-spacing: -2px; line-height: 1;
+        }
+        .labelPriceCurrency {
+            font-size: 14px; font-weight: 700; color: #374151;
+            margin-left: 3px; align-self: flex-start; margin-top: 6px;
+        }
+        .labelDiscountBadge {
+            position: absolute; top: ${tpl.hasBanner ? '35px' : '10px'}; right: 10px;
+            background: #EF4444; color: white; font-size: 13px;
+            font-weight: 800; padding: 5px 10px; border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(239,68,68,0.35);
+        }
+        .labelPackBadge {
+            position: absolute; top: 10px; right: 10px;
+            background: #3B82F6; color: white; font-size: 11px;
+            font-weight: 800; padding: 4px 10px; border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+        }
+        .labelPerUnit {
+            font-size: 10px; color: #6B7280; font-weight: 600; margin-top: 2px;
+        }
+        .labelBarcode {
+            display: flex; align-items: flex-end;
+            justify-content: space-between; padding: 6px 16px 10px;
+            border-top: 1px solid #F3F4F6;
+        }
+        .barcodeVisual { display: flex; flex-direction: column; gap: 2px; }
+        .barcodeBars { display: flex; gap: 1px; height: 22px; }
+        .barcodeBars span { background: #000; width: 2px; }
+        .barcodeBars span:nth-child(odd) { width: 1px; }
+        .barcodeBars span:nth-child(3n) { width: 3px; }
+        .barcodeBars span:nth-child(5n) { width: 1px; }
+        .barcodeNumber {
+            font-size: 9px; font-weight: 600; color: #6B7280;
+            letter-spacing: 1.5px; font-family: 'Courier New', monospace;
+        }
+        .labelSku {
+            font-size: 8px; font-weight: 600; color: #9CA3AF; text-align: right;
+        }
+        @media print {
+            body { background: white; padding: 0; min-height: auto; }
+            .labelCard { box-shadow: none; border: 1px solid #eee; }
+            @page { margin: 2mm; size: 62mm 42mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="labelCard">
+        ${bannerHTML}
+        ${discountHTML}
+        ${packHTML}
+        <div class="labelContent">
+            <div class="labelProductName">${name}</div>
+            ${oldPriceHTML}
+            <div class="labelPriceRow">
+                <div>
+                    <div class="labelPrice">
+                        <span class="labelPriceValue">${priceStr}</span>
+                        <span class="labelPriceCurrency">DA</span>
+                    </div>
+                    ${perUnitHTML}
+                </div>
+            </div>
+        </div>
+        <div class="labelBarcode">
+            <div class="barcodeVisual">
+                <div class="barcodeBars">
+                    ${'<span></span>'.repeat(20)}
+                </div>
+                <div class="barcodeNumber">${barcode}</div>
+            </div>
+            <div class="labelSku">${sku}</div>
+        </div>
+    </div>
+</body>
+</html>`;
+    }, [products, selectedTemplate, customDiscount, currentTemplate]);
+
+    // ============ PRINT ============
+
+    const handlePrint = async () => {
+        if (printItems.length === 0) return;
         setIsPrinting(true);
-        const template = labelTemplates.find(t => t.id === selectedTemplate);
+        setShowPrintConfirm(false);
 
         let successCount = 0;
 
-        for (const item of printItems) {
+        // Create a single print window with all labels
+        const allLabelsHTML = printItems.flatMap(item => {
             const product = products.find(p => p.id === item.productId);
-            if (!product) continue;
+            if (!product) return [];
+            return Array(item.quantity).fill(generateLabelHTML(item.productId));
+        });
 
-            const data: PriceLabelData = {
-                type: template?.labelType || 'standard',
-                productName: product.designation || product.name.toUpperCase(),
-                barcode: product.barcode || '',
-                sku: product.sku || '',
-                price: product.sellPrice || product.sellingPrice,
-                oldPrice: template?.labelType === 'promotion'
-                    ? Math.round(product.sellingPrice * 1.2)
-                    : undefined,
-                discountPercent: template?.labelType === 'promotion' ? 17 : undefined,
-            };
+        if (allLabelsHTML.length > 0) {
+            // Build a combined print document
+            const combinedHTML = `<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8"><title>Impression Étiquettes - Bonilo</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+    .page { page-break-after: always; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 10px; }
+    .page:last-child { page-break-after: auto; }
+    @media print { @page { margin: 2mm; } }
+</style>
+</head><body>
+${allLabelsHTML.map(html => {
+                // Extract just the label card from each HTML
+                const match = html.match(/<div class="labelCard">[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/);
+                const style = html.match(/<style>([\s\S]*?)<\/style>/);
+                return `<div class="page"><style>${style?.[1] || ''}</style>${match?.[0] || ''}</div>`;
+            }).join('\n')}
+</body></html>`;
 
-            // Generate and print
-            const labelHTML = JonyHTML.generateLabelHTML(data);
-
-            for (let i = 0; i < item.quantity; i++) {
-                const printWindow = window.open('', '_blank', 'width=400,height=300');
-                if (printWindow) {
-                    printWindow.document.write(labelHTML);
-                    printWindow.document.close();
-                    printWindow.onload = () => printWindow.print();
-                    successCount++;
-                }
+            const printWindow = window.open('', '_blank', 'width=500,height=600');
+            if (printWindow) {
+                printWindow.document.write(combinedHTML);
+                printWindow.document.close();
+                printWindow.onload = () => {
+                    setTimeout(() => {
+                        printWindow.print();
+                        printWindow.close();
+                    }, 500);
+                };
+                successCount = allLabelsHTML.length;
             }
         }
 
@@ -207,73 +452,193 @@ export const PrintCenter: React.FC = () => {
         toast.success(`${successCount} étiquettes envoyées à l'impression`);
     };
 
-    // Generate preview HTML
-    const getPreviewHTML = (): string => {
-        if (printItems.length === 0) return '';
+    // ============ RENDER LIVE PREVIEW ============
 
-        const firstItem = printItems[0];
-        const product = products.find(p => p.id === firstItem.productId);
-        if (!product) return '';
+    const renderLivePreview = () => {
+        if (!previewProduct) return null;
 
-        const template = labelTemplates.find(t => t.id === selectedTemplate);
+        const price = previewProduct.sellPrice || previewProduct.sellingPrice || 0;
+        const priceStr = Math.round(price).toLocaleString('fr-DZ');
+        const name = (previewProduct.designation || previewProduct.name || '').toUpperCase();
+        const barcode = previewProduct.barcode || '0000000000000';
+        const sku = previewProduct.sku || '';
+        const isPromo = ['promo', 'ramadan', 'expiry'].includes(selectedTemplate);
+        const oldPrice = isPromo ? Math.round(price / (1 - customDiscount / 100)) : 0;
 
-        const data: PriceLabelData = {
-            type: template?.labelType || 'standard',
-            productName: product.designation || product.name.toUpperCase(),
-            barcode: product.barcode || '',
-            sku: product.sku || '',
-            price: product.sellPrice || product.sellingPrice,
-            oldPrice: template?.labelType === 'promotion'
-                ? Math.round(product.sellingPrice * 1.2)
-                : undefined,
-            discountPercent: template?.labelType === 'promotion' ? 17 : undefined,
-        };
+        return (
+            <div className={styles.labelCard}>
+                {/* Banners */}
+                {currentTemplate.hasBanner && currentTemplate.bannerClass && (
+                    <div className={styles[currentTemplate.bannerClass]}>
+                        {currentTemplate.bannerText}
+                    </div>
+                )}
 
-        return JonyHTML.generateLabelHTML(data);
+                {/* Discount Badge */}
+                {isPromo && (
+                    <div className={styles.labelDiscountBadge}>-{customDiscount}%</div>
+                )}
+
+                {/* Pack Badge */}
+                {selectedTemplate === 'pack' && previewProduct.unitsPerPack && (
+                    <div className={styles.labelPackBadge}>PACK ×{previewProduct.unitsPerPack}</div>
+                )}
+
+                <div className={styles.labelContent}>
+                    <div className={styles.labelProductName}>{name}</div>
+
+                    {isPromo && (
+                        <div className={styles.labelOldPrice}>{oldPrice.toLocaleString('fr-DZ')} DA</div>
+                    )}
+
+                    <div className={styles.labelPriceRow}>
+                        <div>
+                            <div className={styles.labelPrice}>
+                                <span className={styles.labelPriceValue}>{priceStr}</span>
+                                <span className={styles.labelPriceCurrency}>DA</span>
+                            </div>
+                            {selectedTemplate === 'pack' && previewProduct.unitsPerPack && (
+                                <div className={styles.labelPerUnit}>
+                                    {Math.round(price / previewProduct.unitsPerPack).toLocaleString('fr-DZ')} DA / unité
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.labelBarcode}>
+                    <div className={styles.barcodeVisual}>
+                        <div className={styles.barcodeBars}>
+                            {Array.from({ length: 20 }, (_, i) => <span key={i} />)}
+                        </div>
+                        <div className={styles.barcodeNumber}>{barcode}</div>
+                    </div>
+                    <div className={styles.labelSku}>{sku}</div>
+                </div>
+            </div>
+        );
     };
+
+    // ============ RENDER ============
+
+    const showPromoEditor = ['promo', 'ramadan', 'expiry'].includes(selectedTemplate);
 
     return (
         <div className={styles.printCenter}>
-            {/* Header */}
+            {/* ===== HEADER ===== */}
             <header className={styles.header}>
-                <button className={styles.backBtn} onClick={() => navigate('/')}>
-                    <ArrowLeft size={20} />
-                </button>
-                <div className={styles.headerTitle}>
-                    <Printer size={28} />
-                    <h1>Centre d'Impression</h1>
+                <div className={styles.headerLeft}>
+                    <button className={styles.backBtn} onClick={() => navigate('/')}>
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div className={styles.headerInfo}>
+                        <h1>Centre d'Impression</h1>
+                        <p>Étiquettes prix, promotions & rayon</p>
+                    </div>
+                </div>
+                <div className={styles.headerRight}>
+                    <div className={styles.headerStat}>
+                        <span className={styles.statValue}>{printItems.length}</span>
+                        <span className={styles.statLabel}>Produits</span>
+                    </div>
+                    <div className={styles.headerStat}>
+                        <span className={styles.statValue}>{totalLabels}</span>
+                        <span className={styles.statLabel}>Étiquettes</span>
+                    </div>
                 </div>
             </header>
 
-            {/* Main Content */}
+            {/* ===== MAIN ===== */}
             <div className={styles.mainContent}>
-                {/* Left: Templates & Selection */}
+                {/* LEFT PANEL */}
                 <div className={styles.leftPanel}>
-                    {/* Template Selection */}
-                    <section className={styles.section}>
-                        <h2>1. Choisir le modèle</h2>
+                    {/* Step 1: Template Selection */}
+                    <div>
+                        <div className={styles.sectionHeader}>
+                            <div className={styles.sectionTitle}>
+                                <span className={styles.stepBadge}>1</span>
+                                <h2>Choisir le modèle</h2>
+                            </div>
+                        </div>
                         <div className={styles.templateGrid}>
-                            {labelTemplates.map(template => (
+                            {TEMPLATES.map(tpl => (
                                 <button
-                                    key={template.id}
-                                    className={`${styles.templateCard} ${selectedTemplate === template.id ? styles.selected : ''}`}
-                                    onClick={() => setSelectedTemplate(template.id)}
-                                    style={{ '--template-color': template.color } as React.CSSProperties}
+                                    key={tpl.id}
+                                    className={`${styles.templateCard} ${selectedTemplate === tpl.id ? styles.selected : ''}`}
+                                    onClick={() => setSelectedTemplate(tpl.id)}
+                                    style={{ '--tpl-color': tpl.color } as React.CSSProperties}
                                 >
-                                    <div className={styles.templateIcon}>{template.icon}</div>
-                                    <span className={styles.templateName}>{template.name}</span>
-                                    <span className={styles.templateSize}>{template.size}</span>
-                                    {selectedTemplate === template.id && (
-                                        <CheckCircle size={18} className={styles.checkIcon} />
+                                    <div className={styles.tplIconWrap}>{tpl.icon}</div>
+                                    <span className={styles.tplName}>{tpl.name}</span>
+                                    <span className={styles.tplDesc}>{tpl.description}</span>
+                                    {selectedTemplate === tpl.id && (
+                                        <CheckCircle size={16} className={styles.tplCheck} />
                                     )}
                                 </button>
                             ))}
                         </div>
-                    </section>
+                    </div>
 
-                    {/* Search & Products */}
-                    <section className={styles.section}>
-                        <h2>2. Sélectionner les produits</h2>
+                    {/* Promo Editor (shown for promo/ramadan/expiry) */}
+                    {showPromoEditor && (
+                        <div className={styles.promoEditor}>
+                            <div className={styles.sectionHeader}>
+                                <div className={styles.sectionTitle}>
+                                    <Sparkles size={18} color={currentTemplate.color} />
+                                    <h2>Configuration Promo</h2>
+                                </div>
+                            </div>
+                            <div className={styles.promoGrid}>
+                                <div className={styles.promoField}>
+                                    <label>Libellé</label>
+                                    <input
+                                        type="text"
+                                        value={promoLabel}
+                                        onChange={e => setPromoLabel(e.target.value)}
+                                        placeholder="Ex: PROMO RAMADAN"
+                                    />
+                                </div>
+                                <div className={styles.promoField}>
+                                    <label>Remise personnalisée</label>
+                                    <input
+                                        type="number"
+                                        value={customDiscount}
+                                        onChange={e => setCustomDiscount(Math.min(99, Math.max(1, Number(e.target.value))))}
+                                        min={1}
+                                        max={99}
+                                    />
+                                </div>
+                                <div className={`${styles.promoField} ${styles.promoDiscount}`}>
+                                    <label>Remise rapide</label>
+                                    <div className={styles.discountBtns}>
+                                        {DISCOUNT_PRESETS.map(d => (
+                                            <button
+                                                key={d}
+                                                className={`${styles.discountBtn} ${customDiscount === d ? styles.active : ''}`}
+                                                onClick={() => setCustomDiscount(d)}
+                                            >
+                                                -{d}%
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step 2: Products Selection */}
+                    <div>
+                        <div className={styles.sectionHeader}>
+                            <div className={styles.sectionTitle}>
+                                <span className={styles.stepBadge}>2</span>
+                                <h2>Sélectionner les produits</h2>
+                            </div>
+                            <button className={styles.sectionAction} onClick={selectAll}>
+                                Tout sélectionner
+                            </button>
+                        </div>
+
+                        {/* Search */}
                         <div className={styles.searchBar}>
                             <Search size={18} />
                             <input
@@ -283,12 +648,33 @@ export const PrintCenter: React.FC = () => {
                                 onChange={e => setSearchQuery(e.target.value)}
                             />
                             {searchQuery && (
-                                <button onClick={() => setSearchQuery('')}>
+                                <button className={styles.clearSearch} onClick={() => setSearchQuery('')}>
                                     <X size={16} />
                                 </button>
                             )}
                         </div>
 
+                        {/* Quick Chips */}
+                        <div className={styles.quickChips}>
+                            <button className={styles.chip} onClick={addLowStock} disabled={lowStockCount === 0}>
+                                <TrendingDown size={14} />
+                                Stock Bas
+                                <span className={styles.chipBadge}>{lowStockCount}</span>
+                            </button>
+                            <button className={styles.chip} onClick={addRecent} disabled={recentCount === 0}>
+                                <Clock size={14} />
+                                Nouveaux
+                                <span className={styles.chipBadge}>{recentCount}</span>
+                            </button>
+                            {printItems.length > 0 && (
+                                <button className={styles.chip} onClick={() => setPrintItems([])}>
+                                    <X size={14} />
+                                    Vider la sélection
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Products List */}
                         <div className={styles.productsList}>
                             {filteredProducts.map(product => {
                                 const item = printItems.find(p => p.productId === product.id);
@@ -300,33 +686,40 @@ export const PrintCenter: React.FC = () => {
                                         className={`${styles.productItem} ${isSelected ? styles.selected : ''}`}
                                     >
                                         <div
-                                            className={styles.productMain}
+                                            className={styles.productCheck}
                                             onClick={() => toggleProduct(product.id)}
                                         >
-                                            <div className={styles.checkbox}>
-                                                {isSelected && <CheckCircle size={18} />}
-                                            </div>
-                                            <div className={styles.productInfo}>
-                                                <span className={styles.productName}>
-                                                    {product.designation || product.name}
-                                                </span>
-                                                {product.variety && (
-                                                    <span className={styles.productVariety}>{product.variety}</span>
-                                                )}
-                                                <span className={styles.productMeta}>
-                                                    {product.sku || 'N/A'} • {product.barcode || 'Sans code'}
-                                                </span>
-                                            </div>
-                                            <span className={styles.productPrice}>
-                                                {formatCurrency(product.sellPrice || product.sellingPrice)}
+                                            {isSelected && <Check size={14} />}
+                                        </div>
+                                        <span className={styles.productEmoji}>
+                                            {product.emoji || product.image || '📦'}
+                                        </span>
+                                        <div className={styles.productInfo} onClick={() => toggleProduct(product.id)}>
+                                            <span className={styles.productName}>
+                                                {product.designation || product.name}
+                                            </span>
+                                            <span className={styles.productMeta}>
+                                                {product.sku || 'N/A'} • {product.barcode || 'Sans code'}
                                             </span>
                                         </div>
-
+                                        <span className={styles.productPrice}>
+                                            {formatCurrency(product.sellPrice || product.sellingPrice)}
+                                        </span>
                                         {isSelected && (
-                                            <div className={styles.quantityControl}>
-                                                <button onClick={() => updateQuantity(product.id, -1)}>−</button>
-                                                <span>{item?.quantity}</span>
-                                                <button onClick={() => updateQuantity(product.id, 1)}>+</button>
+                                            <div className={styles.qtyControls}>
+                                                <button
+                                                    className={`${styles.qtyBtn} ${styles.qtyMinus}`}
+                                                    onClick={() => updateQty(product.id, -1)}
+                                                >
+                                                    <Minus size={14} />
+                                                </button>
+                                                <span className={styles.qtyValue}>{item?.quantity}</span>
+                                                <button
+                                                    className={`${styles.qtyBtn} ${styles.qtyPlus}`}
+                                                    onClick={() => updateQty(product.id, 1)}
+                                                >
+                                                    <Plus size={14} />
+                                                </button>
                                             </div>
                                         )}
                                     </div>
@@ -340,102 +733,102 @@ export const PrintCenter: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                    </section>
+                    </div>
                 </div>
 
-                {/* Right: Actions & Summary */}
+                {/* RIGHT PANEL: Live Preview */}
                 <div className={styles.rightPanel}>
-                    {/* Quick Actions */}
-                    <section className={styles.section}>
-                        <h2>Actions Rapides</h2>
-                        <div className={styles.quickActions}>
-                            <button
-                                className={styles.quickAction}
-                                onClick={addLowStock}
-                                disabled={lowStockProducts.length === 0}
-                            >
-                                <TrendingDown size={20} />
-                                <span>Stock Bas</span>
-                                <span className={styles.badge}>{lowStockProducts.length}</span>
-                            </button>
-                            <button
-                                className={styles.quickAction}
-                                onClick={addRecentArrivals}
-                                disabled={recentProducts.length === 0}
-                            >
-                                <Clock size={20} />
-                                <span>Nouveaux</span>
-                                <span className={styles.badge}>{recentProducts.length}</span>
-                            </button>
+                    <div className={styles.previewHeader}>
+                        <div className={styles.previewTitle}>
+                            <Eye size={18} />
+                            Aperçu en direct
                         </div>
-                    </section>
+                        <span className={styles.previewBadge}>
+                            {currentTemplate.name}
+                        </span>
+                    </div>
 
-                    {/* Selection Summary */}
-                    <section className={styles.section}>
-                        <h2>Récapitulatif</h2>
-                        <div className={styles.summary}>
-                            <div className={styles.summaryRow}>
-                                <span>Produits sélectionnés</span>
-                                <strong>{printItems.length}</strong>
+                    <div className={styles.previewArea}>
+                        {previewProduct ? (
+                            <div className={styles.liveLabel}>
+                                {renderLivePreview()}
                             </div>
-                            <div className={styles.summaryRow}>
-                                <span>Total étiquettes</span>
-                                <strong className={styles.totalLabels}>{totalLabels}</strong>
+                        ) : (
+                            <div className={styles.previewEmpty}>
+                                <Tag size={48} />
+                                <p>Sélectionnez un produit</p>
+                                <span>L'aperçu apparaîtra ici</span>
                             </div>
-                        </div>
-
-                        {printItems.length > 0 && (
-                            <button className={styles.clearBtn} onClick={clearSelection}>
-                                Tout désélectionner
-                            </button>
                         )}
-                    </section>
+                    </div>
 
-                    {/* Print Actions */}
-                    <div className={styles.printActions}>
+                    <div className={styles.printBar}>
                         <button
-                            className={styles.previewBtn}
-                            onClick={() => setShowPreview(true)}
+                            className={`${styles.printBtn} ${styles.printBtnSecondary}`}
                             disabled={printItems.length === 0}
+                            onClick={() => {
+                                if (previewProduct) {
+                                    const html = generateLabelHTML(previewProduct.id);
+                                    const w = window.open('', '_blank', 'width=400,height=400');
+                                    if (w) { w.document.write(html); w.document.close(); }
+                                }
+                            }}
                         >
-                            <Eye size={20} />
+                            <Eye size={18} />
                             Aperçu
                         </button>
                         <button
-                            className={styles.printBtn}
-                            onClick={handlePrint}
+                            className={`${styles.printBtn} ${styles.printBtnPrimary}`}
                             disabled={printItems.length === 0 || isPrinting}
+                            onClick={() => setShowPrintConfirm(true)}
                         >
-                            <Printer size={20} />
+                            <Printer size={18} />
                             {isPrinting ? 'Impression...' : `Imprimer (${totalLabels})`}
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Preview Modal */}
-            {showPreview && (
-                <div className={styles.overlay} onClick={() => setShowPreview(false)}>
-                    <div className={styles.previewModal} onClick={e => e.stopPropagation()}>
+            {/* ===== PRINT CONFIRM MODAL ===== */}
+            {showPrintConfirm && (
+                <div className={styles.overlay} onClick={() => setShowPrintConfirm(false)}>
+                    <div className={styles.printModal} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
-                            <h2>Aperçu</h2>
-                            <button onClick={() => setShowPreview(false)}>
-                                <X size={24} />
+                            <h2>Confirmer l'impression</h2>
+                            <button className={styles.modalClose} onClick={() => setShowPrintConfirm(false)}>
+                                <X size={20} />
                             </button>
                         </div>
-                        <div className={styles.previewContent}>
-                            {printItems.length > 0 ? (
-                                <iframe
-                                    srcDoc={getPreviewHTML()}
-                                    title="Label Preview"
-                                    className={styles.previewIframe}
-                                />
-                            ) : (
-                                <div className={styles.noPreview}>
-                                    <AlertTriangle size={48} />
-                                    <p>Sélectionnez un produit pour voir l'aperçu</p>
+                        <div className={styles.modalBody}>
+                            <div className={styles.printConfirmInfo}>
+                                <div className={styles.confirmRow}>
+                                    <span>Modèle</span>
+                                    <strong>{currentTemplate.name}</strong>
                                 </div>
-                            )}
+                                <div className={styles.confirmRow}>
+                                    <span>Produits</span>
+                                    <strong>{printItems.length}</strong>
+                                </div>
+                                <div className={styles.confirmRow}>
+                                    <span>Total étiquettes</span>
+                                    <strong>{totalLabels}</strong>
+                                </div>
+                                {showPromoEditor && (
+                                    <div className={styles.confirmRow}>
+                                        <span>Remise</span>
+                                        <strong style={{ color: '#EF4444' }}>-{customDiscount}%</strong>
+                                    </div>
+                                )}
+                            </div>
+                            <div className={styles.modalActions}>
+                                <button className={styles.modalCancelBtn} onClick={() => setShowPrintConfirm(false)}>
+                                    Annuler
+                                </button>
+                                <button className={styles.modalPrintBtn} onClick={handlePrint}>
+                                    <Printer size={18} />
+                                    Lancer l'impression
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

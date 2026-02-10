@@ -138,7 +138,7 @@ export const PrintPreview: React.FC<PrintPreviewProps> = ({ receiptData, labelDa
         if (lastSale) {
             return {
                 storeInfo: {
-                    name: settings?.store?.name || 'SuperMarket',
+                    name: settings?.store?.name || 'Bonilo',
                     address: settings?.store?.address || '',
                     phone: settings?.store?.phone || '',
                     nif: settings?.store?.nif || '',

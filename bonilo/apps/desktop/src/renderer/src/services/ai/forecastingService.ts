@@ -1,5 +1,5 @@
 /**
- * AI Forecasting Service - SuperMarket Control OS
+ * AI Forecasting Service - Bonilo
  * 
  * Implements demand forecasting with Algerian market specifics:
  * - Ramadan demand multipliers
@@ -10,6 +10,8 @@
 
 // ===== TYPES =====
 
+export type TrendDirection = 'rising' | 'falling' | 'stable';
+
 export interface ForecastResult {
     date: Date;
     predictedDemand: number;
@@ -17,6 +19,7 @@ export interface ForecastResult {
     upperBound: number;
     confidence: number;
     factors: string[];
+    trend?: TrendDirection;
 }
 
 export interface AnomalyResult {
@@ -326,35 +329,204 @@ function getActiveEvents(date: Date): AlgerianCalendarEvent[] {
     });
 }
 
-// ===== FORECASTING ENGINE =====
+// ===== FORECASTING ENGINE (Real Data Powered) =====
 
-class ForecastingEngineClass {
-    private historicalData: Map<string, number[]> = new Map();
+/** Sale item shape expected by the forecasting engine */
+interface SaleRecord {
+    timestamp: string | Date;
+    items: { productId: string; quantity: number; total: number }[];
+    totalAmount: number;
+}
 
-    // Simple moving average with seasonality
-    private calculateBaselineForecast(productId: string, days: number): number[] {
-        const history = this.historicalData.get(productId) || this.generateMockHistory();
-        const avgDaily = history.reduce((a, b) => a + b, 0) / history.length;
+/**
+ * Detect trend direction using simple linear regression over daily values.
+ * Returns 'rising', 'falling', or 'stable'.
+ */
+function detectTrend(dailyValues: number[]): TrendDirection {
+    if (dailyValues.length < 3) return 'stable';
+    const n = dailyValues.length;
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    for (let i = 0; i < n; i++) {
+        sumX += i;
+        sumY += dailyValues[i];
+        sumXY += i * dailyValues[i];
+        sumX2 += i * i;
+    }
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const mean = sumY / n;
+    // Normalize slope relative to mean to get a percentage change per day
+    if (mean === 0) return 'stable';
+    const normalizedSlope = slope / mean;
+    if (normalizedSlope > 0.03) return 'rising';   // >3% per day
+    if (normalizedSlope < -0.03) return 'falling';  // <-3% per day
+    return 'stable';
+}
 
-        return Array(days).fill(0).map(() => {
-            // Add some random variation
-            const variation = 0.9 + Math.random() * 0.2;
-            return Math.round(avgDaily * variation);
-        });
+/**
+ * Compute dynamic confidence score (0.0 - 1.0) based on:
+ *   - Data volume (30%): more days of data = higher confidence
+ *   - Coefficient of variation (30%): lower variance = higher confidence
+ *   - Day-of-week match (20%): having data for same weekday boosts confidence
+ *   - Event proximity (20%): being near a known event boosts confidence for event-affected categories
+ */
+function computeConfidence(
+    dailyValues: number[],
+    forecastDate: Date,
+    hasEventFactor: boolean
+): number {
+    // 1. Data volume score: 0-30 days mapped to 0.0-1.0
+    const volumeScore = Math.min(1.0, dailyValues.length / 21);
+
+    // 2. Coefficient of variation score: low CV = high confidence
+    let cvScore = 0.5;
+    if (dailyValues.length >= 3) {
+        const mean = dailyValues.reduce((a, b) => a + b, 0) / dailyValues.length;
+        if (mean > 0) {
+            const variance = dailyValues.reduce((sum, x) => sum + Math.pow(x - mean, 2), 0) / dailyValues.length;
+            const cv = Math.sqrt(variance) / mean;
+            // CV of 0 => score 1.0, CV of 1.0 => score 0.0
+            cvScore = Math.max(0, Math.min(1.0, 1.0 - cv));
+        }
     }
 
-    // Apply Algerian-specific multipliers
+    // 3. Day-of-week match: check if we have data for the same weekday
+    const targetDay = forecastDate.getDay();
+    const hasSameDayData = dailyValues.length >= 7; // at least 1 full week
+    const dayScore = hasSameDayData ? 0.9 : 0.4;
+
+    // 4. Event factor: known events make predictions more reliable for event categories
+    const eventScore = hasEventFactor ? 0.85 : 0.6;
+
+    // Weighted average
+    const confidence = (
+        volumeScore * 0.30 +
+        cvScore * 0.30 +
+        dayScore * 0.20 +
+        eventScore * 0.20
+    );
+
+    // Clamp to 0.15 - 0.98
+    return Math.round(Math.max(0.15, Math.min(0.98, confidence)) * 100) / 100;
+}
+
+class ForecastingEngineClass {
+    /**
+     * Build daily unit totals for a product from real sales data.
+     * Returns an array of { date, units } sorted chronologically.
+     */
+    private buildDailyHistory(
+        productId: string,
+        sales: SaleRecord[],
+        lookbackDays: number = 30
+    ): number[] {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - lookbackDays);
+        cutoff.setHours(0, 0, 0, 0);
+
+        // Bucket by day offset from cutoff
+        const buckets = new Array(lookbackDays).fill(0);
+
+        for (const sale of sales) {
+            const saleDate = new Date(sale.timestamp);
+            if (saleDate < cutoff) continue;
+            const dayIndex = Math.floor((saleDate.getTime() - cutoff.getTime()) / (24 * 60 * 60 * 1000));
+            if (dayIndex < 0 || dayIndex >= lookbackDays) continue;
+            for (const item of sale.items) {
+                if (item.productId === productId || item.productId === productId.replace('-pack', '')) {
+                    buckets[dayIndex] += item.quantity;
+                }
+            }
+        }
+
+        return buckets;
+    }
+
+    /**
+     * Build daily REVENUE totals from all sales.
+     */
+    buildDailyRevenue(sales: SaleRecord[], lookbackDays: number = 30): number[] {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - lookbackDays);
+        cutoff.setHours(0, 0, 0, 0);
+
+        const buckets = new Array(lookbackDays).fill(0);
+
+        for (const sale of sales) {
+            const saleDate = new Date(sale.timestamp);
+            if (saleDate < cutoff) continue;
+            const dayIndex = Math.floor((saleDate.getTime() - cutoff.getTime()) / (24 * 60 * 60 * 1000));
+            if (dayIndex >= 0 && dayIndex < lookbackDays) {
+                buckets[dayIndex] += sale.totalAmount;
+            }
+        }
+
+        return buckets;
+    }
+
+    /**
+     * Calculate baseline using weighted moving average.
+     * More recent data gets higher weight.
+     */
+    private calculateBaselineForecast(
+        productId: string,
+        days: number,
+        sales?: SaleRecord[]
+    ): { baseline: number[]; dailyHistory: number[] } {
+        const dailyHistory = (sales && sales.length > 0)
+            ? this.buildDailyHistory(productId, sales, 30)
+            : this.generateFallbackHistory();
+
+        // Weighted average: recent days get 2x weight
+        const weights = dailyHistory.map((_, i) => 1 + (i / dailyHistory.length));
+        const totalWeight = weights.reduce((a, b) => a + b, 0);
+        const weightedAvg = dailyHistory.reduce(
+            (sum, val, i) => sum + val * weights[i], 0
+        ) / totalWeight;
+
+        // Also compute day-of-week averages for seasonality
+        const dowBuckets: number[][] = [[], [], [], [], [], [], []];
+        const now = new Date();
+        const startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - dailyHistory.length);
+
+        dailyHistory.forEach((val, i) => {
+            const d = new Date(startDate);
+            d.setDate(d.getDate() + i);
+            dowBuckets[d.getDay()].push(val);
+        });
+
+        const dowAvg = dowBuckets.map(bucket =>
+            bucket.length > 0 ? bucket.reduce((a, b) => a + b, 0) / bucket.length : weightedAvg
+        );
+
+        // Forecast: blend global weighted avg (40%) with day-of-week avg (60%)
+        const baseline = Array(days).fill(0).map((_, i) => {
+            const forecastDate = new Date(now);
+            forecastDate.setDate(forecastDate.getDate() + i);
+            const dow = forecastDate.getDay();
+            const blended = weightedAvg * 0.4 + dowAvg[dow] * 0.6;
+            return Math.max(1, Math.round(blended));
+        });
+
+        return { baseline, dailyHistory };
+    }
+
+    // Apply Algerian-specific multipliers with dynamic confidence
     private applyAlgerianMultipliers(
         baseForecasts: number[],
         startDate: Date,
-        category: string
+        category: string,
+        dailyHistory: number[]
     ): ForecastResult[] {
+        const overallTrend = detectTrend(dailyHistory);
+
         return baseForecasts.map((base, index) => {
             const forecastDate = new Date(startDate);
             forecastDate.setDate(forecastDate.getDate() + index);
 
             let multiplier = 1.0;
             const factors: string[] = [];
+            let hasEventFactor = false;
 
             // Check active calendar events
             const activeEvents = getActiveEvents(forecastDate);
@@ -363,6 +535,7 @@ class ForecastingEngineClass {
                 if (eventMultiplier > 1) {
                     multiplier *= eventMultiplier;
                     factors.push(`${event.nameAr} (+${Math.round((eventMultiplier - 1) * 100)}%)`);
+                    hasEventFactor = true;
                 }
             }
 
@@ -384,32 +557,166 @@ class ForecastingEngineClass {
                 }
             }
 
+            // Apply trend adjustment: rising trend pushes forecast up slightly
+            if (overallTrend === 'rising') { multiplier *= 1.05; }
+            if (overallTrend === 'falling') { multiplier *= 0.95; }
+
             const predicted = Math.round(base * multiplier);
-            const variance = predicted * 0.15;
+
+            // Dynamic confidence
+            const confidence = computeConfidence(dailyHistory, forecastDate, hasEventFactor);
+
+            // Variance based on confidence: low confidence = wider bounds
+            const variancePct = 0.30 - (confidence * 0.20); // 10% to 30%
+            const variance = predicted * variancePct;
 
             return {
                 date: forecastDate,
                 predictedDemand: predicted,
-                lowerBound: Math.round(predicted - variance),
+                lowerBound: Math.max(0, Math.round(predicted - variance)),
                 upperBound: Math.round(predicted + variance),
-                confidence: factors.length > 0 ? 0.85 : 0.92,
+                confidence,
                 factors,
+                trend: overallTrend,
             };
         });
     }
 
-    // Generate mock historical data
-    private generateMockHistory(): number[] {
-        return Array(30).fill(0).map(() => Math.floor(10 + Math.random() * 50));
+    // Fallback when no real sales data exists
+    private generateFallbackHistory(): number[] {
+        // Use a deterministic low-noise pattern instead of pure random
+        return Array(30).fill(0).map((_, i) => {
+            const base = 15;
+            const dayOfWeek = (new Date().getDay() - 30 + i + 70) % 7;
+            const fridayBoost = dayOfWeek === 5 ? 8 : 0;
+            return base + fridayBoost + (i % 3);
+        });
     }
 
-    // Public API: Get demand forecast
-    forecastDemand(productId: string, category: string, days: number = 7): ForecastResult[] {
-        const baseline = this.calculateBaselineForecast(productId, days);
-        return this.applyAlgerianMultipliers(baseline, new Date(), category);
+    // Public API: Get demand forecast (now accepts real sales data)
+    forecastDemand(
+        productId: string,
+        category: string,
+        days: number = 7,
+        sales?: SaleRecord[]
+    ): ForecastResult[] {
+        const { baseline, dailyHistory } = this.calculateBaselineForecast(productId, days, sales);
+        return this.applyAlgerianMultipliers(baseline, new Date(), category, dailyHistory);
     }
 
-    // Calculate reorder suggestions
+    /**
+     * Generate a 7-day revenue forecast from aggregate sales data.
+     * Used by the ReportsHub chart.
+     */
+    forecastRevenue(sales: SaleRecord[], days: number = 7): {
+        forecasts: { day: string; predicted: number; lower: number; upper: number; factors: string[] }[];
+        confidence: number;
+        trend: TrendDirection;
+        peakDay: string;
+    } {
+        const dailyRevenue = this.buildDailyRevenue(sales, 30);
+        const trend = detectTrend(dailyRevenue);
+
+        // Weighted average
+        const weights = dailyRevenue.map((_, i) => 1 + (i / dailyRevenue.length));
+        const totalWeight = weights.reduce((a, b) => a + b, 0);
+        const weightedAvg = dailyRevenue.reduce((sum, val, i) => sum + val * weights[i], 0) / totalWeight;
+
+        // Day-of-week seasonality
+        const dowBuckets: number[][] = [[], [], [], [], [], [], []];
+        const now = new Date();
+        const startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - dailyRevenue.length);
+        dailyRevenue.forEach((val, i) => {
+            const d = new Date(startDate);
+            d.setDate(d.getDate() + i);
+            dowBuckets[d.getDay()].push(val);
+        });
+        const dowAvg = dowBuckets.map(bucket =>
+            bucket.length > 0 ? bucket.reduce((a, b) => a + b, 0) / bucket.length : weightedAvg
+        );
+
+        const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+        let maxPredicted = 0;
+        let peakDay = 'Ven';
+
+        const forecasts = Array(days).fill(0).map((_, i) => {
+            const forecastDate = new Date(now);
+            forecastDate.setDate(forecastDate.getDate() + i);
+            const dow = forecastDate.getDay();
+
+            let multiplier = 1.0;
+            const factors: string[] = [];
+
+            // Blend
+            let base = weightedAvg * 0.4 + dowAvg[dow] * 0.6;
+
+            // Trend adjustment
+            if (trend === 'rising') { base *= 1.03; }
+            if (trend === 'falling') { base *= 0.97; }
+
+            // Calendar events
+            const activeEvents = getActiveEvents(forecastDate);
+            for (const event of activeEvents) {
+                const avgMult = Object.values(event.demandMultipliers).reduce((a, b) => a + b, 0) /
+                    Object.values(event.demandMultipliers).length;
+                if (avgMult > 1) {
+                    multiplier *= avgMult;
+                    factors.push(`${event.nameAr || event.name}`);
+                }
+            }
+
+            if (isFriday(forecastDate)) {
+                multiplier *= 1.2;
+                factors.push('Vendredi');
+            }
+            if (isInSalaryPeriod(forecastDate)) {
+                multiplier *= 1.12;
+                factors.push('Salaire');
+            }
+
+            const predicted = Math.round(base * multiplier);
+            const confidenceVal = computeConfidence(dailyRevenue, forecastDate, activeEvents.length > 0);
+            const variancePct = 0.30 - (confidenceVal * 0.20);
+
+            if (predicted > maxPredicted) {
+                maxPredicted = predicted;
+                peakDay = dayNames[dow];
+            }
+
+            const label = i === 0 ? 'Auj' : i === 1 ? 'Dem' : dayNames[dow];
+
+            return {
+                day: label,
+                predicted,
+                lower: Math.max(0, Math.round(predicted * (1 - variancePct))),
+                upper: Math.round(predicted * (1 + variancePct)),
+                factors,
+            };
+        });
+
+        // Average confidence
+        const avgConfidence = computeConfidence(
+            dailyRevenue,
+            now,
+            getActiveEvents(now).length > 0
+        );
+
+        return {
+            forecasts,
+            confidence: avgConfidence,
+            trend,
+            peakDay,
+        };
+    }
+
+    /** Detect trend from sales data */
+    detectRevenueTrend(sales: SaleRecord[], lookbackDays: number = 14): TrendDirection {
+        const daily = this.buildDailyRevenue(sales, lookbackDays);
+        return detectTrend(daily);
+    }
+
+    // Calculate reorder suggestions (now with real data)
     calculateReorderSuggestions(products: {
         id: string;
         name: string;
@@ -417,9 +724,9 @@ class ForecastingEngineClass {
         currentStock: number;
         reorderPoint: number;
         leadTime: number;
-    }[]): ReorderSuggestion[] {
+    }[], sales?: SaleRecord[]): ReorderSuggestion[] {
         return products.map(product => {
-            const forecast = this.forecastDemand(product.id, product.category, product.leadTime + 7);
+            const forecast = this.forecastDemand(product.id, product.category, product.leadTime + 7, sales);
             const totalPredicted = forecast.reduce((sum, f) => sum + f.predictedDemand, 0);
             const daysUntilStockout = product.currentStock / (totalPredicted / forecast.length);
 

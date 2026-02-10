@@ -62,6 +62,8 @@ export const PhysicalInventory: React.FC = () => {
     const [countValue, setCountValue] = useState('');
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const searchInputRef = React.useRef<HTMLInputElement>(null);
+    const countInputRef = React.useRef<HTMLInputElement>(null);
 
     // Session state
     const [session, setSession] = useState<InventorySession>({
@@ -205,10 +207,39 @@ export const PhysicalInventory: React.FC = () => {
     };
 
     // Filter lines
-    const filteredLines = lines.filter(l =>
+    const filteredLines = useMemo(() => lines.filter(l =>
         l.product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         l.product.barcode.includes(searchQuery)
-    );
+    ), [lines, searchQuery]);
+
+    // Scanner Optimization: Auto-select if exact barcode match
+    React.useEffect(() => {
+        if (!searchQuery) return;
+
+        // precise match on barcode?
+        const exactMatch = filteredLines.find(l => l.product.barcode === searchQuery);
+        if (exactMatch && filteredLines.length === 1) {
+            setEditingId(exactMatch.id);
+            setCountValue(exactMatch.countedStock?.toString() || '');
+            // Small delay to allow render then focus
+            setTimeout(() => {
+                countInputRef.current?.focus();
+            }, 10);
+        }
+    }, [searchQuery, filteredLines]);
+
+    const handleCountSubmit = (lineId: string) => {
+        if (countValue === '') return;
+        const count = parseInt(countValue);
+        if (isNaN(count)) return;
+
+        handleCount(lineId, count);
+
+        // After counting, clear search to be ready for next scan
+        setSearchQuery('');
+        setEditingId(null);
+        searchInputRef.current?.focus();
+    };
 
     const isActive = session.status === 'in_progress';
     const isPaused = session.status === 'paused';
@@ -379,12 +410,31 @@ export const PhysicalInventory: React.FC = () => {
                 <div className={styles.searchBox}>
                     <Search size={18} />
                     <input
+                        ref={searchInputRef}
                         type="text"
-                        placeholder="Scanner ou rechercher un produit..."
+                        placeholder="Scanner un code-barres (ou taper un nom)..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         disabled={!isActive && !isPaused}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && filteredLines.length === 1) {
+                                setEditingId(filteredLines[0].id);
+                                setCountValue(filteredLines[0].countedStock?.toString() || '');
+                                setTimeout(() => countInputRef.current?.focus(), 10);
+                            }
+                        }}
                     />
+                    {searchQuery && (
+                        <button
+                            className={styles.clearSearchBtn}
+                            onClick={() => {
+                                setSearchQuery('');
+                                searchInputRef.current?.focus();
+                            }}
+                        >
+                            <X size={16} />
+                        </button>
+                    )}
                 </div>
                 <div className={styles.toolbarActions}>
                     <button className={styles.outlineBtn} onClick={handlePrintSheet}>
@@ -420,22 +470,25 @@ export const PhysicalInventory: React.FC = () => {
                         <div className={styles.countedCell}>
                             {editingId === line.id ? (
                                 <input
+                                    ref={countInputRef}
                                     type="number"
+                                    className={styles.countInput}
                                     value={countValue}
                                     onChange={e => setCountValue(e.target.value)}
                                     onKeyDown={e => {
-                                        if (e.key === 'Enter' && countValue) {
-                                            handleCount(line.id, parseInt(countValue));
+                                        if (e.key === 'Enter') {
+                                            handleCountSubmit(line.id);
                                         }
                                         if (e.key === 'Escape') {
                                             setEditingId(null);
-                                            setCountValue('');
+                                            setSearchQuery('');
+                                            searchInputRef.current?.focus();
                                         }
                                     }}
                                     onBlur={() => {
-                                        if (countValue) {
-                                            handleCount(line.id, parseInt(countValue));
-                                        } else {
+                                        // Optional: Auto-submit on blur? Maybe annoying if just looking away.
+                                        // Let's stick to Enter to confirm.
+                                        if (!countValue && editingId === line.id) {
                                             setEditingId(null);
                                         }
                                     }}

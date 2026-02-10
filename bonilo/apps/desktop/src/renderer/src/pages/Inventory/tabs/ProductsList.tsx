@@ -9,7 +9,14 @@ import {
     Star,
     X,
     Save,
+    CheckSquare,
+    Square,
+    Printer,
+    Tags,
+    MoreHorizontal,
+    MinusSquare,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { TableVirtuoso } from 'react-virtuoso';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useProductsStore, type Product } from '@asgard/shared/stores';
@@ -33,6 +40,13 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
     const [selectedCategory, setSelectedCategory] = useState('Toutes');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [sortBy, setSortBy] = useState<string>('name');
+    const navigate = useNavigate();
+
+    // Bulk Selection State
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+    const [targetCategory, setTargetCategory] = useState('');
 
     // Modal states
     const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
@@ -96,6 +110,51 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
         }
     };
 
+    // Bulk Actions Handlers
+    const handleSelectAll = () => {
+        if (selectedIds.size === filteredProducts.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+        }
+    };
+
+    const handleSelectOne = (id: string) => {
+        const newSet = new Set(selectedIds);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setSelectedIds(newSet);
+    };
+
+    const handleBulkDelete = () => {
+        setShowBulkDeleteConfirm(true);
+    };
+
+    const confirmBulkDelete = () => {
+        selectedIds.forEach(id => deleteProduct(id));
+        setSelectedIds(new Set());
+        setShowBulkDeleteConfirm(false);
+    };
+
+    const handleBulkCategory = () => {
+        if (!targetCategory) return;
+        selectedIds.forEach(id => {
+            updateProduct(id, { category: targetCategory });
+        });
+        setSelectedIds(new Set());
+        setShowBulkCategoryModal(false);
+    };
+
+    const handleBulkPrint = () => {
+        // Navigate to print center with selected IDs in state or query
+        // For now, we'll assume Print Center can read from a simple localStorage key or just mock it
+        // A better way is to pass state via router, but let's try direct navigation for now
+        navigate('/print', { state: { selectedProductIds: Array.from(selectedIds) } });
+    };
+
     return (
         <div className={styles.productsList}>
             {/* Toolbar */}
@@ -156,6 +215,16 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
                         data={filteredProducts}
                         fixedHeaderContent={() => (
                             <tr>
+                                <th style={{ width: '40px' }}>
+                                    <div
+                                        className={styles.checkboxWrapper}
+                                        onClick={handleSelectAll}
+                                    >
+                                        {selectedIds.size === 0 ? <Square size={18} /> :
+                                            selectedIds.size === filteredProducts.length ? <CheckSquare size={18} /> :
+                                                <MinusSquare size={18} />}
+                                    </div>
+                                </th>
                                 <th>Produit</th>
                                 <th>Catégorie</th>
                                 <th>Code-barres</th>
@@ -169,6 +238,17 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
                         )}
                         itemContent={(_, product) => (
                             <>
+                                <td>
+                                    <div
+                                        className={styles.checkboxWrapper}
+                                        onClick={() => handleSelectOne(product.id)}
+                                    >
+                                        {selectedIds.has(product.id) ?
+                                            <CheckSquare size={18} className={styles.checked} /> :
+                                            <Square size={18} className={styles.unchecked} />
+                                        }
+                                    </div>
+                                </td>
                                 <td>
                                     <div className={styles.productCell}>
                                         <span className={styles.emoji}>{product.emoji}</span>
@@ -342,7 +422,79 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
                 onConfirm={confirmDelete}
                 onCancel={() => setShowDeleteConfirm(false)}
             />
-        </div>
+
+            {/* Bulk Actions Bar */}
+            {selectedIds.size > 0 && (
+                <div className={styles.bulkActionBar}>
+                    <div className={styles.bulkSelectionInfo}>
+                        <CheckSquare size={20} />
+                        <span>{selectedIds.size} sélectionné(s)</span>
+                    </div>
+                    <div className={styles.bulkActions}>
+                        <button onClick={() => setShowBulkCategoryModal(true)}>
+                            <Tags size={16} /> Changer catégorie
+                        </button>
+                        <button onClick={handleBulkPrint}>
+                            <Printer size={16} /> Imprimer étiquettes
+                        </button>
+                        <div className={styles.bulkDivider} />
+                        <button className={styles.bulkDeleteBtn} onClick={handleBulkDelete}>
+                            <Trash2 size={16} /> Supprimer
+                        </button>
+                    </div>
+                </div>
+            )
+            }
+
+            {/* Bulk Category Modal */}
+            {
+                showBulkCategoryModal && (
+                    <div className={styles.overlay} onClick={() => setShowBulkCategoryModal(false)}>
+                        <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                            <div className={styles.modalHeader}>
+                                <h2>Changer la catégorie ({selectedIds.size} produits)</h2>
+                                <button onClick={() => setShowBulkCategoryModal(false)}><X size={24} /></button>
+                            </div>
+                            <div className={styles.modalBody}>
+                                <label>Nouvelle catégorie :</label>
+                                <select
+                                    value={targetCategory}
+                                    onChange={e => setTargetCategory(e.target.value)}
+                                    className={styles.categorySelect}
+                                >
+                                    <option value="">Choisir une catégorie...</option>
+                                    {categories.filter(c => c !== 'Toutes').map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className={styles.modalFooter}>
+                                <button onClick={() => setShowBulkCategoryModal(false)}>Annuler</button>
+                                <button
+                                    className={styles.saveBtn}
+                                    onClick={handleBulkCategory}
+                                    disabled={!targetCategory}
+                                >
+                                    <Save size={16} /> Appliquer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Bulk Delete Confirm */}
+            <ConfirmModal
+                isOpen={showBulkDeleteConfirm}
+                title="Suppression multiple"
+                message={`Êtes-vous sûr de vouloir supprimer ces ${selectedIds.size} produits ? Cette action est irréversible.`}
+                confirmText={`Supprimer ${selectedIds.size} produits`}
+                cancelText="Annuler"
+                variant="danger"
+                onConfirm={confirmBulkDelete}
+                onCancel={() => setShowBulkDeleteConfirm(false)}
+            />
+        </div >
     );
 };
 

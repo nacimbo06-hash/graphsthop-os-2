@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, Component, ErrorInfo } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -43,13 +43,91 @@ const PageLoader: React.FC = () => (
   <div style={{
     height: '100vh',
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'var(--bg-primary, #0f172a)'
+    background: '#FDFBF7',
+    gap: '16px',
   }}>
-    <div className="spinner"></div>
+    <div style={{
+      width: '40px',
+      height: '40px',
+      border: '3px solid #E8E2D9',
+      borderTopColor: '#3D7C4F',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite',
+    }} />
+    <span style={{ fontSize: '14px', fontWeight: 600, color: '#2C2C2C', fontFamily: "'Nunito', sans-serif" }}>Chargement...</span>
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
   </div>
 );
+
+// Global Error Boundary — prevents one crashed page from killing the app
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<{ children: React.ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[Bonilo] Page crashed:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#FDFBF7',
+          gap: '20px',
+          fontFamily: "'Nunito', sans-serif",
+          padding: '40px',
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '48px' }}>😵</div>
+          <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#2C2C2C', margin: 0 }}>Une erreur est survenue</h2>
+          <p style={{ fontSize: '14px', color: '#6B7280', maxWidth: '400px', margin: 0, lineHeight: 1.6 }}>
+            {this.state.error?.message || 'Erreur inconnue'}
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false, error: null });
+              window.location.hash = '#/';
+            }}
+            style={{
+              padding: '10px 24px',
+              background: '#3D7C4F',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: "'Nunito', sans-serif",
+            }}
+          >
+            Retour au tableau de bord
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -84,11 +162,7 @@ const AppContent: React.FC = () => {
 
   // Safety check to ensure settings are available
   if (!settings || !storeSettings) {
-    return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
-        <div className="spinner"></div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   // Check if this is a fresh install (no store name configured AND no users created)
@@ -154,9 +228,11 @@ function App() {
           <SyncProvider>
             <ToastProvider>
               <HashRouter>
-                <Suspense fallback={<PageLoader />}>
-                  <AppContent />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<PageLoader />}>
+                    <AppContent />
+                  </Suspense>
+                </ErrorBoundary>
               </HashRouter>
             </ToastProvider>
           </SyncProvider>

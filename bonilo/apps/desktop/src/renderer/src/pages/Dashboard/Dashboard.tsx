@@ -107,8 +107,8 @@ export const Dashboard: React.FC = () => {
         setAiInsights([...smartInsights, ...calendarInsights]);
     }, [sales, products]);
 
-    // Get metrics based on selected period - using REAL DATA
-    const getMetrics = () => {
+    // Get metrics based on selected period - using REAL DATA (memoized)
+    const metrics = useMemo(() => {
         let periodTotal = 0;
         let periodTransactions = 0;
         let previousPeriodTotal = 0;
@@ -125,7 +125,6 @@ export const Dashboard: React.FC = () => {
         if (selectedPeriod === 'today') {
             periodTotal = getTodayTotal();
             periodTransactions = getTodaySales().length;
-            // Calculate yesterday's totals
             const yesterdaySales = sales.filter(s => {
                 const saleDate = new Date(s.timestamp);
                 return saleDate >= yesterdayStart && saleDate < todayStart;
@@ -135,7 +134,6 @@ export const Dashboard: React.FC = () => {
         } else if (selectedPeriod === 'week') {
             periodTotal = getWeekTotal();
             periodTransactions = getWeekSales().length;
-            // Calculate previous week's totals
             const prevWeekSales = sales.filter(s => {
                 const saleDate = new Date(s.timestamp);
                 return saleDate >= prevWeekStart && saleDate < weekStart;
@@ -145,7 +143,6 @@ export const Dashboard: React.FC = () => {
         } else {
             periodTotal = getMonthTotal();
             periodTransactions = getMonthSales().length;
-            // Calculate previous month's totals
             const prevMonthSales = sales.filter(s => {
                 const saleDate = new Date(s.timestamp);
                 return saleDate >= prevMonthStart && saleDate < monthStart;
@@ -158,7 +155,6 @@ export const Dashboard: React.FC = () => {
         const prevAvgTicket = previousPeriodTransactions > 0 ? Math.round(previousPeriodTotal / previousPeriodTransactions) : 0;
         const lowStockCount = getLowStockProducts().length;
 
-        // Calculate real percentage changes
         const calcChange = (current: number, previous: number): number => {
             if (previous === 0) return current > 0 ? 100 : 0;
             return Math.round(((current - previous) / previous) * 100 * 10) / 10;
@@ -167,9 +163,7 @@ export const Dashboard: React.FC = () => {
         const dailySalesChange = calcChange(periodTotal, previousPeriodTotal);
         const transactionsChange = calcChange(periodTransactions, previousPeriodTransactions);
         const avgTicketChange = calcChange(avgTicket, prevAvgTicket);
-
-        // Calculate alerts change (compare with yesterday)
-        const alertsChange = -lowStockCount; // Simplified: negative means fewer alerts
+        const alertsChange = -lowStockCount;
 
         return {
             dailySales: periodTotal,
@@ -181,9 +175,7 @@ export const Dashboard: React.FC = () => {
             activeAlerts: lowStockCount,
             alertsChange,
         };
-    };
-
-    const metrics = getMetrics();
+    }, [sales, products, selectedPeriod]);
 
     // Compute hourly sales data from real transactions
     const { hourlyData, peakHour, peakValue, avgValue } = useMemo(() => {
@@ -236,7 +228,7 @@ export const Dashboard: React.FC = () => {
         };
     }, [sales]);
 
-    // Compute category breakdown from products/sales
+    // Compute category breakdown from products/sales (O(n) Map lookup)
     const categoryData = useMemo(() => {
         const categoryColors: { [key: string]: string } = {
             'Boissons': '#3D7C4F',
@@ -251,11 +243,13 @@ export const Dashboard: React.FC = () => {
         };
 
         const todaySales = getTodaySales();
+        // Build a Map for O(1) product lookups instead of O(n) find() per item
+        const productMap = new Map(products.map(p => [p.id, p]));
         const categoryTotals: { [key: string]: number } = {};
 
         todaySales.forEach(sale => {
             sale.items.forEach(item => {
-                const product = products.find(p => p.id === item.productId);
+                const product = productMap.get(item.productId);
                 const category = product?.category || 'Autre';
                 categoryTotals[category] = (categoryTotals[category] || 0) + item.total;
             });

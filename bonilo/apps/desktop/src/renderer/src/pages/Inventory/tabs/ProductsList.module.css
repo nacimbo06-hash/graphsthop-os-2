@@ -39,7 +39,8 @@
 }
 
 .searchBox input::placeholder {
-    color: var(--color-text-muted);
+    color: #b0b0b0;
+    font-weight: 500;
 }
 
 .filters {
@@ -84,8 +85,10 @@
 }
 
 .resultsInfo {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #aaa;
+    letter-spacing: 0.01em;
 }
 
 /* Table View */
@@ -102,20 +105,21 @@
 }
 
 .table th {
-    padding: var(--space-3) var(--space-4);
-    background: var(--color-background);
+    padding: 12px 16px;
+    background: #fafaf8;
     text-align: left;
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-muted);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #999;
     text-transform: uppercase;
-    border-bottom: 1px solid var(--color-border-light);
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .table td {
-    padding: var(--space-3) var(--space-4);
-    border-bottom: 1px solid var(--color-border-light);
-    font-size: var(--font-size-sm);
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    font-size: 0.82rem;
 }
 
 .table tr:hover {
@@ -138,8 +142,10 @@
 }
 
 .productName {
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-primary);
+    font-weight: 700;
+    color: #2a2a2a;
+    font-size: 0.84rem;
+    letter-spacing: -0.01em;
 }
 
 .favIcon {
@@ -149,100 +155,115 @@
 }
 
 .categoryTag {
-    display: inline-block;
-    padding: 2px 8px;
-    background: var(--color-primary-bg);
-    color: var(--color-primary);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    background: rgba(61, 124, 79, 0.08);
+    color: #3D7C4F;
+    border-radius: 100px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
 }
 
 .barcode {
     font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
-    background: var(--color-background);
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    color: #b5b5b5;
+    background: rgba(0, 0, 0, 0.03);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
 }
 
 .sellPrice {
-    font-weight: var(--font-weight-bold);
-    color: var(--color-text-primary);
+    font-weight: 800;
+    color: #1a1a1a;
+    font-size: 0.88rem;
+    letter-spacing: -0.02em;
 }
 
 .margin {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
 }
 
 .margin.good {
-    background: var(--color-success-bg);
-    color: var(--color-success-dark);
+    background: rgba(61, 153, 112, 0.08);
+    color: #2D7A56;
 }
 
 .margin.low {
-    background: var(--color-warning-bg);
-    color: var(--color-warning-dark);
+    background: rgba(232, 160, 93, 0.08);
+    color: #C07A30;
 }
 
 .stockQty {
-    font-weight: var(--font-weight-medium);
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #2a2a2a;
 }
 
 .stockQty small {
-    color: var(--color-text-muted);
-    font-weight: normal;
+    color: #bbb;
+    font-weight: 500;
+    font-size: 0.7rem;
 }
 
 .stockBadge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.015em;
 }
 
 .inStock {
-    background: var(--color-success-bg);
-    color: var(--color-success-dark);
+    background: rgba(61, 153, 112, 0.08);
+    color: #2D7A56;
 }
 
 .lowStock {
-    background: var(--color-warning-bg);
-    color: var(--color-warning-dark);
+    background: rgba(232, 160, 93, 0.08);
+    color: #C07A30;
 }
 
 .outOfStock {
-    background: var(--color-danger-bg);
-    color: var(--color-danger);
+    background: rgba(217, 85, 85, 0.07);
+    color: #C04040;
 }
 
 .actions {
     display: flex;
-    gap: var(--space-1);
+    gap: 4px;
 }
 
 .actions button {
-    padding: var(--space-1);
+    padding: 6px;
     background: transparent;
     border: none;
-    border-radius: var(--radius-sm);
-    color: var(--color-text-muted);
+    border-radius: 8px;
+    color: #c0c0c0;
     cursor: pointer;
+    transition: all 0.15s ease;
 }
 
 .actions button:hover {
-    background: var(--color-border-light);
-    color: var(--color-text-primary);
+    background: rgba(0, 0, 0, 0.04);
+    color: #555;
 }
 
 .deleteBtn:hover {
-    background: var(--color-danger-bg) !important;
-    color: var(--color-danger) !important;
+    background: rgba(217, 85, 85, 0.08) !important;
+    color: #D95555 !important;
 }
 
 /* Grid View */
@@ -253,20 +274,21 @@
 }
 
 .productCard {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-lg);
-    padding: var(--space-4);
-    transition: all var(--transition-fast);
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 14px;
+    padding: 18px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .productCard:hover {
-    border-color: var(--color-primary);
-    box-shadow: var(--shadow-md);
+    border-color: rgba(61, 124, 79, 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
 }
 
 .productCard.lowStockCard {
-    border-color: var(--color-warning);
+    border-color: rgba(232, 160, 93, 0.3);
 }
 
 .cardHeader {
@@ -281,19 +303,23 @@
 }
 
 .cardName {
-    margin: 0 0 var(--space-1);
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
+    margin: 0 0 4px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #2a2a2a;
+    letter-spacing: -0.01em;
 }
 
 .cardCategory {
-    display: inline-block;
-    padding: 2px 8px;
-    background: var(--color-primary-bg);
-    color: var(--color-primary);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    background: rgba(61, 124, 79, 0.08);
+    color: #3D7C4F;
+    border-radius: 100px;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
     margin-bottom: var(--space-3);
 }
 
@@ -305,15 +331,16 @@
 }
 
 .cardPrice {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-text-primary);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
 }
 
 .cardMargin {
-    font-size: var(--font-size-sm);
-    color: var(--color-success);
-    font-weight: var(--font-weight-medium);
+    font-size: 0.75rem;
+    color: #2D7A56;
+    font-weight: 700;
 }
 
 .cardStock {
@@ -326,13 +353,14 @@
 }
 
 .cardStock span:last-child {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    color: #bbb;
+    font-weight: 500;
 }
 
 .cardActions {
     display: flex;
-    gap: var(--space-2);
+    gap: 6px;
 }
 
 .cardActions button {
@@ -340,19 +368,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-1);
-    padding: var(--space-2);
-    background: var(--color-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
+    gap: 4px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 8px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #888;
     cursor: pointer;
+    transition: all 0.15s ease;
 }
 
 .cardActions button:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+    border-color: rgba(61, 124, 79, 0.25);
+    color: #3D7C4F;
+    background: rgba(61, 124, 79, 0.04);
 }
 
 /* Responsive */
@@ -616,4 +647,117 @@
     font-size: 2rem !important;
     text-align: center;
     max-width: 80px;
+}
+
+/* Checkbox Styles */
+.checkboxWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #ccc;
+    transition: all 0.15s ease;
+}
+
+.checkboxWrapper:hover {
+    color: #3D7C4F;
+    transform: scale(1.08);
+}
+
+.checked {
+    color: #3D7C4F;
+    fill: rgba(61, 124, 79, 0.12);
+}
+
+.unchecked {
+    color: #ddd;
+}
+
+/* Bulk Action Bar */
+.bulkActionBar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 100px;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
+    z-index: 100;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 420px;
+    justify-content: space-between;
+}
+
+.bulkSelectionInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: #3D7C4F;
+    background: rgba(61, 124, 79, 0.08);
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    letter-spacing: 0.01em;
+}
+
+.bulkActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bulkActions button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #777;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.005em;
+}
+
+.bulkActions button:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #333;
+}
+
+.bulkDeleteBtn {
+    color: #D95555 !important;
+}
+
+.bulkDeleteBtn:hover {
+    background: rgba(217, 85, 85, 0.06) !important;
+    color: #C04040 !important;
+}
+
+.bulkDivider {
+    width: 1px;
+    height: 18px;
+    background: rgba(0, 0, 0, 0.08);
+    margin: 0 2px;
+}
+
+/* Bulk Category Selector */
+.categorySelect {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    margin-top: var(--space-2);
 }

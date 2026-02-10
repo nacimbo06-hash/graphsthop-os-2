@@ -1,6 +1,6 @@
 /**
  * Centralized Formatting Utilities
- * SuperMarket Control OS - Project CRYSTALLIZE
+ * Bonilo — Retail Management OS
  * 
  * Single source of truth for all currency/date formatting.
  * All components should import from here instead of defining local functions.

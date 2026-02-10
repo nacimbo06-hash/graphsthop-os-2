@@ -227,7 +227,7 @@ export const CashRegister: React.FC = () => {
         };
         const typeLabel = typeLabels[ticketData.type] || ticketData.type;
 
-        const storeName = settings?.store?.name || 'SuperMarket';
+        const storeName = settings?.store?.name || 'Bonilo';
         const dateStr = new Date(ticketData.createdAt).toLocaleDateString('fr-FR');
         const timeStr = new Date(ticketData.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
         const amount = ticketData.amount.toLocaleString('fr-FR') + ' DA';

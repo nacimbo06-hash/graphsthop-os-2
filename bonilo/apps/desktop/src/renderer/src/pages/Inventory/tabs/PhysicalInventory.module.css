@@ -11,23 +11,27 @@
     display: flex;
     align-items: center;
     gap: var(--space-6);
-    padding: var(--space-4);
-    background: linear-gradient(135deg, var(--color-primary-bg), rgba(66, 133, 244, 0.05));
-    border: 1px solid var(--color-primary);
-    border-radius: var(--radius-lg);
+    padding: 18px 24px;
+    background: linear-gradient(135deg, rgba(61, 124, 79, 0.06), rgba(61, 124, 79, 0.02));
+    border: 1px solid rgba(61, 124, 79, 0.15);
+    border-radius: 14px;
 }
 
 .sessionInfo h3 {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    margin: 0 0 var(--space-1);
-    font-size: var(--font-size-lg);
+    gap: 8px;
+    margin: 0 0 4px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
 }
 
 .sessionMeta {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #999;
 }
 
 .progressSection {
@@ -42,8 +46,9 @@
 }
 
 .progressPercent {
-    font-weight: var(--font-weight-bold);
-    color: var(--color-primary);
+    font-weight: 800;
+    color: #3D7C4F;
+    font-size: 0.85rem;
 }
 
 .progressBar {
@@ -122,40 +127,43 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: var(--space-1);
-    padding: var(--space-4);
-    background: var(--color-surface);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--color-border-light);
-    transition: all var(--transition-fast);
+    gap: 4px;
+    padding: 18px 20px;
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .statCard:hover {
-    border-color: var(--color-primary);
+    border-color: rgba(61, 124, 79, 0.15);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
 }
 
 .statCard svg {
-    color: var(--color-success);
-    margin-bottom: var(--space-2);
+    color: #3D9970;
+    margin-bottom: 6px;
 }
 
 .statCard.warning svg {
-    color: var(--color-danger);
+    color: #D95555;
 }
 
 .statValue {
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-text-primary);
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.03em;
+    line-height: 1;
 }
 
 .statLabel {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #aaa;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
 }
 
 /* Chart Section */
@@ -280,12 +288,13 @@
 .tableHeader {
     display: grid;
     grid-template-columns: 2fr 1.5fr 1fr 1fr 0.8fr 1fr;
-    padding: var(--space-3) var(--space-4);
-    background: var(--color-background);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-muted);
+    padding: 12px 16px;
+    background: #fafaf8;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #999;
     text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .tableRow {
@@ -316,12 +325,16 @@
 
 .barcode {
     font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
+    font-size: 0.7rem;
+    color: #b5b5b5;
+    font-weight: 500;
+    letter-spacing: 0.03em;
 }
 
 .systemStock {
-    font-weight: var(--font-weight-medium);
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #2a2a2a;
 }
 
 .countedCell input {
@@ -366,23 +379,38 @@
 }
 
 .countBtn {
-    padding: var(--space-2) var(--space-3);
-    background: var(--color-primary);
+    padding: 8px 14px;
+    background: #3D7C4F;
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: 8px;
     color: white;
-    font-size: var(--font-size-sm);
+    font-size: 0.78rem;
+    font-weight: 700;
     cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+}
+
+.countBtn:hover {
+    background: #2D5F3C;
+    box-shadow: 0 2px 8px rgba(61, 124, 79, 0.25);
 }
 
 .recountBtn {
-    padding: var(--space-2) var(--space-3);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    color: #777;
+    font-size: 0.78rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.recountBtn:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #444;
 }
 
 /* Responsive */
@@ -570,5 +598,36 @@
     background: var(--color-success) !important;
     border: none !important;
     color: white !important;
+    color: white !important;
     font-weight: var(--font-weight-semibold);
+}
+
+.clearSearchBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-full);
+}
+
+.clearSearchBtn:hover {
+    background: var(--color-border-light);
+    color: var(--color-text-primary);
+}
+
+.countInput {
+    width: 80px;
+    padding: var(--space-2);
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    text-align: center;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-bg);
 }

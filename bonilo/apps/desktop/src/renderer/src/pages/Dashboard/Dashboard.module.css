@@ -1101,13 +1101,6 @@
     justify-content: center;
 }
 
-.pieWrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 
 .legendListGrid {
     display: grid;

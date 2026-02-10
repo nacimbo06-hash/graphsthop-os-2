@@ -30,7 +30,7 @@ import {
     Box,
 } from 'lucide-react';
 import { useTVA, usePOSSettings } from '../../contexts/SettingsContext';
-import { 
+import {
     useProductsStore,
     useTreasuryStore,
     useSalesStore,
@@ -151,6 +151,7 @@ export const POS: React.FC = () => {
     const [showRefundConfirm, setShowRefundConfirm] = useState(false);
     const [saleToRefund, setSaleToRefund] = useState<any | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const [customerSearchQuery, setCustomerSearchQuery] = useState('');
 
 
     // Calculate totals with dynamic TVA from settings
@@ -168,24 +169,40 @@ export const POS: React.FC = () => {
     // Filter products - Using store products only
     const allProducts = storeProducts;
 
-
-    const filteredProducts = allProducts
-        .filter(product => {
-            const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesCategory = selectedCategory === 'all' ||
-                (selectedCategory === 'favorites' ? product.isFavorite : product.category === selectedCategory);
-            return matchesSearch && matchesCategory;
-        })
-        .sort((a, b) => {
-            // Favoris en premier
-            if (a.isFavorite && !b.isFavorite) return -1;
-            if (!a.isFavorite && b.isFavorite) return 1;
-            return 0;
-        });
+    // Memoize filtered products to avoid re-filtering on every render
+    const filteredProducts = useMemo(() =>
+        allProducts
+            .filter(product => {
+                const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    product.sku.toLowerCase().includes(searchQuery.toLowerCase());
+                const matchesCategory = selectedCategory === 'all' ||
+                    (selectedCategory === 'favorites' ? product.isFavorite : product.category === selectedCategory);
+                return matchesSearch && matchesCategory;
+            })
+            .sort((a, b) => {
+                if (a.isFavorite && !b.isFavorite) return -1;
+                if (!a.isFavorite && b.isFavorite) return 1;
+                return 0;
+            })
+        , [allProducts, searchQuery, selectedCategory]);
 
     // Add item to cart (handles pack selection)
     const addToCart = useCallback((product: POSProduct, asBundle: boolean = false) => {
+        // Stock validation
+        const unitsNeeded = asBundle ? product.unitsPerPack : 1;
+        const existingInCart = cart.reduce((total, item) => {
+            const baseId = item.productId.replace('-pack', '');
+            if (baseId === product.id) {
+                return total + (item.isBundle && item.unitsInBundle ? item.quantity * item.unitsInBundle : item.quantity);
+            }
+            return total;
+        }, 0);
+
+        if (existingInCart + unitsNeeded > product.stock) {
+            toast.error(`Stock insuffisant: ${product.stock} disponible(s), ${existingInCart} déjà dans le panier`);
+            return;
+        }
+
         const itemPrice = asBundle && product.bundlePrice ? product.bundlePrice : product.price;
         const itemName = asBundle ? `${product.name} (Pack x${product.unitsPerPack})` : product.name;
         const itemKey = asBundle ? `${product.id}-pack` : product.id;
@@ -339,7 +356,7 @@ export const POS: React.FC = () => {
             </head>
             <body>
                 <div class="header">
-                    <strong>SUPERMARKET OS</strong><br/>
+                    <strong>BONILO</strong><br/>
                     N°: ${receiptNumber}<br/>
                     Date: ${new Date().toLocaleString('fr-FR')}
                 </div>
@@ -413,32 +430,32 @@ export const POS: React.FC = () => {
                 createdBy: user ? `${user.firstName} ${user.lastName}` : 'Caissier',
                 paymentMethod: selectedPayment as any,
             });
-
-            // 3. Update stock for each item and track movements
-            cart.forEach(item => {
-                const quantity = item.isBundle && item.unitsInBundle
-                    ? item.quantity * item.unitsInBundle
-                    : item.quantity;
-                const productId = item.productId.replace('-pack', '');
-                const product = products.find(p => p.id === productId);
-
-                if (product) {
-                    addStockMovement({
-                        type: 'sale',
-                        productId: productId,
-                        productName: product.name,
-                        productEmoji: product.emoji,
-                        quantity: quantity,
-                        previousStock: product.stock,
-                        newStock: product.stock - quantity,
-                        reason: `Vente ${receiptNumber}`,
-                        performedBy: 'Caissier',
-                        reference: receiptNumber,
-                    });
-                    updateStock(productId, quantity, 'remove');
-                }
-            });
         }
+
+        // 3. Update stock for each item and track movements (ALWAYS, regardless of session)
+        cart.forEach(item => {
+            const quantity = item.isBundle && item.unitsInBundle
+                ? item.quantity * item.unitsInBundle
+                : item.quantity;
+            const productId = item.productId.replace('-pack', '');
+            const product = products.find(p => p.id === productId);
+
+            if (product) {
+                addStockMovement({
+                    type: 'sale',
+                    productId: productId,
+                    productName: product.name,
+                    productEmoji: product.emoji,
+                    quantity: quantity,
+                    previousStock: product.stock,
+                    newStock: product.stock - quantity,
+                    reason: `Vente ${receiptNumber}`,
+                    performedBy: 'Caissier',
+                    reference: receiptNumber,
+                });
+                updateStock(productId, quantity, 'remove');
+            }
+        });
 
         // 4. Update Customer Credit if applicable
         if (selectedPayment === 'credit' && customerObj) {
@@ -1096,18 +1113,19 @@ export const POS: React.FC = () => {
                             type="text"
                             className={styles.searchInput}
                             placeholder="Rechercher un client..."
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            value={searchQuery}
+                            onChange={(e) => setCustomerSearchQuery(e.target.value)}
+                            value={customerSearchQuery}
+                            autoFocus
                         />
                         <div className={styles.customerList}>
                             {customers
                                 .filter(c =>
-                                    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                    c.phone.includes(searchQuery)
+                                    c.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+                                    c.phone.includes(customerSearchQuery)
                                 )
                                 .slice(0, 10)
                                 .map(c => (
-                                    <button key={c.id} onClick={() => { setSelectedCustomer(c.id); setShowCustomerSearch(false); setSearchQuery(''); }}>
+                                    <button key={c.id} onClick={() => { setSelectedCustomer(c.id); setShowCustomerSearch(false); setCustomerSearchQuery(''); }}>
                                         <User size={16} />
                                         <div className={styles.customerBtnInfo}>
                                             <span className={styles.customerBtnName}>{c.name}</span>
