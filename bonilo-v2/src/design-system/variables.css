@@ -1,0 +1,171 @@
+/* ============================================
+   bonilo Design System — CSS Variables
+   Brand Identity: Calm, Warm, Human, Friendly
+   ============================================ */
+
+:root {
+    /* ============ COLOR PALETTE ============ */
+
+    /* Primary — bonilo Green */
+    --color-primary: #3D7C4F;
+    --color-primary-light: #5A9A6B;
+    --color-primary-dark: #2D5F3C;
+    --color-primary-bg: rgba(61, 124, 79, 0.12);
+    --color-primary-hover: #357245;
+
+    /* Accent — Soft Amber (≤10% of design) */
+    --color-accent: #E8A05D;
+    --color-accent-light: #F0C28A;
+    --color-accent-dark: #D08A3E;
+    --color-accent-bg: rgba(232, 160, 93, 0.12);
+    --color-accent-soft: #F5DFC4;
+
+    /* Semantic */
+    --color-success: #3D9970;
+    --color-success-light: #6BB896;
+    --color-success-dark: #2D7A56;
+    --color-success-bg: rgba(61, 153, 112, 0.1);
+
+    --color-warning: #E8A05D;
+    --color-warning-light: #F0C28A;
+    --color-warning-dark: #C07A30;
+    --color-warning-bg: rgba(232, 160, 93, 0.1);
+
+    --color-danger: #D95555;
+    --color-danger-light: #E88080;
+    --color-danger-dark: #B43A3A;
+    --color-danger-bg: rgba(217, 85, 85, 0.1);
+
+    --color-info: #4A90D9;
+    --color-info-bg: rgba(74, 144, 217, 0.1);
+
+    /* Neutrals — Warm Cream Base */
+    --color-background: #FDFBF7;
+    --color-surface: #FFFFFF;
+    --color-surface-elevated: #FFFFFF;
+    --color-surface-soft: #F8F7F5;
+    --color-border: #E8E2D9;
+    --color-border-light: rgba(0, 0, 0, 0.06);
+    --color-border-subtle: rgba(0, 0, 0, 0.04);
+
+    /* Text */
+    --color-text-primary: #2C2C2C;
+    --color-text-secondary: #5A5A5A;
+    --color-text-muted: #888888;
+    --color-text-faint: #BBBBBB;
+    --color-text-inverse: #FFFFFF;
+
+    /* ============ TYPOGRAPHY ============ */
+
+    --font-primary: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+    /* Scale */
+    --font-size-2xs: 0.625rem;
+    /* 10px */
+    --font-size-xs: 0.6875rem;
+    /* 11px */
+    --font-size-sm: 0.75rem;
+    /* 12px */
+    --font-size-base: 0.875rem;
+    /* 14px */
+    --font-size-md: 1rem;
+    /* 16px */
+    --font-size-lg: 1.25rem;
+    /* 20px */
+    --font-size-xl: 1.5rem;
+    /* 24px */
+    --font-size-2xl: 1.75rem;
+    /* 28px */
+    --font-size-3xl: 2rem;
+    /* 32px */
+    --font-size-4xl: 2.25rem;
+    /* 36px */
+
+    /* Weights */
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+
+    /* Line Heights */
+    --line-height-tight: 1.2;
+    --line-height-snug: 1.35;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.7;
+
+    /* ============ SPACING (4px grid) ============ */
+
+    --space-0: 0;
+    --space-1: 0.25rem;
+    /* 4px */
+    --space-2: 0.5rem;
+    /* 8px */
+    --space-3: 0.75rem;
+    /* 12px */
+    --space-4: 1rem;
+    /* 16px */
+    --space-5: 1.25rem;
+    /* 20px */
+    --space-6: 1.5rem;
+    /* 24px */
+    --space-8: 2rem;
+    /* 32px */
+    --space-10: 2.5rem;
+    /* 40px */
+    --space-12: 3rem;
+    /* 48px */
+    --space-16: 4rem;
+    /* 64px */
+    --space-20: 5rem;
+    /* 80px */
+
+    /* ============ BORDER RADIUS ============ */
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 14px;
+    --radius-2xl: 16px;
+    --radius-3xl: 20px;
+    --radius-full: 100px;
+
+    /* ============ SHADOWS ============ */
+
+    --shadow-xs: 0 1px 2px rgba(44, 44, 44, 0.04);
+    --shadow-sm: 0 1px 3px rgba(44, 44, 44, 0.08), 0 1px 2px rgba(44, 44, 44, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(44, 44, 44, 0.06), 0 2px 4px -1px rgba(44, 44, 44, 0.03);
+    --shadow-lg: 0 10px 15px -3px rgba(44, 44, 44, 0.06), 0 4px 6px -2px rgba(44, 44, 44, 0.02);
+    --shadow-xl: 0 20px 25px -5px rgba(44, 44, 44, 0.06), 0 10px 10px -5px rgba(44, 44, 44, 0.02);
+    --shadow-primary: 0 4px 14px rgba(61, 124, 79, 0.25);
+    --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.06);
+
+    /* ============ TRANSITIONS ============ */
+
+    --transition-micro: 100ms ease;
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* ============ Z-INDEX ============ */
+
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+    --z-toast: 1080;
+
+    /* ============ LAYOUT ============ */
+
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 68px;
+    --header-height: 60px;
+    --content-max-width: 1440px;
+}

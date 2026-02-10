@@ -1,0 +1,118 @@
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-collapsed-width);
+    height: 100vh;
+    background: linear-gradient(180deg, #2D5F3C 0%, #234A2F 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-4) 0;
+    z-index: var(--z-fixed);
+    transition: width var(--transition-normal);
+    overflow: hidden;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-8);
+    font-family: var(--font-primary);
+    font-weight: var(--font-weight-extrabold);
+    font-size: var(--font-size-lg);
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.logo:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: scale(1.05);
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    flex: 1;
+    width: 100%;
+    padding: 0 var(--space-2);
+}
+
+.navItem {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.navItem:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.navItem.active {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+}
+
+.navItem.active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 20px;
+    background: #FFFFFF;
+    border-radius: 0 var(--radius-full) var(--radius-full) 0;
+}
+
+.badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: var(--radius-full);
+    background: var(--color-danger);
+    color: #FFFFFF;
+    font-size: 9px;
+    font-weight: var(--font-weight-bold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.bottomNav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0 var(--space-2);
+    margin-top: auto;
+}
+
+.divider {
+    width: 28px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: var(--space-2) 0;
+}
