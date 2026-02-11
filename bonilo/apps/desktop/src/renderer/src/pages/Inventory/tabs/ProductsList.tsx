@@ -19,7 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { TableVirtuoso } from 'react-virtuoso';
 import { useSettings } from '../../../contexts/SettingsContext';
-import { useProductsStore, type Product } from '@asgard/shared/stores';
+import { useProductsStore, type Product } from '@bonilo/shared/stores';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
 import styles from './ProductsList.module.css';
 

@@ -10,7 +10,7 @@ import {
     ChevronLeft,
     Search,
 } from 'lucide-react';
-import { useProductsStore } from '@asgard/shared/stores';
+import { useProductsStore } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';

@@ -23,9 +23,10 @@ import {
     useExpensesStore,
     useSafeStore,
     useSinkingFundsStore
-} from '@asgard/shared/stores';
-import type { Product, Customer } from '@asgard/shared';
-import type { Sale } from '@asgard/shared';
+} from '@bonilo/shared/stores';
+import type { Product } from '@bonilo/shared';
+import type { Sale } from '@bonilo/shared';
+import type { Customer } from '@bonilo/shared/stores/customersStore';
 
 interface SyncProviderProps {
     children: React.ReactNode;

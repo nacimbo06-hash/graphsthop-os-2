@@ -25,7 +25,7 @@ import { BundleManagement } from './tabs/BundleManagement';
 import { AddProductModal } from './components/AddProductModal';
 import { GoodsReceipt } from '../Treasury/GoodsReceipt';
 
-import { useProductsStore, type Product } from '@asgard/shared/stores';
+import { useProductsStore, type Product } from '@bonilo/shared/stores';
 import { useToast } from '../../components/feedback/Toast';
 import styles from './InventoryHub.module.css';
 

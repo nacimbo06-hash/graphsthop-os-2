@@ -19,9 +19,9 @@ import {
     Printer,
     Truck,
 } from 'lucide-react';
-import { useAuthStore } from '@asgard/shared/stores';
-import type { ModuleId } from '@asgard/shared';
-import { ROUTES } from '@asgard/shared/constants';
+import { useAuthStore } from '@bonilo/shared/stores';
+import type { ModuleId } from '@bonilo/shared';
+import { ROUTES } from '@bonilo/shared/constants';
 import styles from './Sidebar.module.css';
 import igoLogo from '../../../assets/igo-logo.svg';
 import { NetworkSyncIndicator } from '../../NetworkSync';

@@ -12,7 +12,7 @@ import {
     TrendingUp,
     ChevronRight,
 } from 'lucide-react';
-import { useProductsStore } from '@asgard/shared/stores';
+import { useProductsStore } from '@bonilo/shared/stores';
 import styles from './GlobalSearch.module.css';
 
 interface SearchResult {

@@ -9,7 +9,7 @@ import {
 import { CustomersList } from './tabs/CustomersList';
 import { CreditManagement } from './tabs/CreditManagement';
 import { LoyaltyProgram } from './tabs/LoyaltyProgram';
-import { useCustomersStore } from '@asgard/shared/stores';
+import { useCustomersStore } from '@bonilo/shared/stores';
 import { useSettings } from '../../contexts/SettingsContext';
 import styles from './CustomersHub.module.css';
 

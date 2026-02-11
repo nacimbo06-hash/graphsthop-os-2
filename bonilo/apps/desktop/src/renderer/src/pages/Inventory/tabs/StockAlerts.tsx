@@ -11,7 +11,7 @@ import {
     Plus,
     Truck,
 } from 'lucide-react';
-import { useProductsStore, usePurchasesStore, type Product, type GoodsReceipt } from '@asgard/shared/stores';
+import { useProductsStore, usePurchasesStore, type Product, type GoodsReceipt } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import styles from './StockAlerts.module.css';

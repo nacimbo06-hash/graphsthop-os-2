@@ -12,7 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../../contexts/SettingsContext';
 import styles from './Onboarding.module.css';
-import { useAuthStore } from '@asgard/shared/stores';
+import { useAuthStore } from '@bonilo/shared/stores';
 import igoLogo from '../../assets/igo-logo.svg';
 
 export const Onboarding: React.FC = () => {
@@ -58,7 +58,7 @@ export const Onboarding: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         // Create the first owner user
-        const ownerCreated = createUser({
+        const ownerCreated = await createUser({
             email: formData.ownerEmail || `admin@${formData.name.toLowerCase().replace(/\s+/g, '')}.dz`,
             password: formData.ownerPassword || 'admin123',
             firstName: formData.ownerFirstName || 'Admin',

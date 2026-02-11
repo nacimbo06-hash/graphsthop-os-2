@@ -24,8 +24,8 @@ import {
     MODULE_LABELS,
     ALL_MODULES,
     DEFAULT_MODULE_ACCESS
-} from '@asgard/shared/stores';
-import type { User, UserRole, ModuleId } from '@asgard/shared';
+} from '@bonilo/shared/stores';
+import type { User, UserRole, ModuleId } from '@bonilo/shared';
 import { useToast } from '../../components/feedback/Toast';
 import styles from './UsersManagement.module.css';
 
@@ -165,7 +165,7 @@ export const UsersManagement: React.FC = () => {
         }));
     };
 
-    const handleAddUser = () => {
+    const handleAddUser = async () => {
         // Validation
         if (!formData.firstName || !formData.lastName || !formData.email) {
             setError('Veuillez remplir tous les champs obligatoires');
@@ -182,7 +182,7 @@ export const UsersManagement: React.FC = () => {
             return;
         }
 
-        const success = createUser({
+        const success = await createUser({
             firstName: formData.firstName,
             lastName: formData.lastName,
             email: formData.email,

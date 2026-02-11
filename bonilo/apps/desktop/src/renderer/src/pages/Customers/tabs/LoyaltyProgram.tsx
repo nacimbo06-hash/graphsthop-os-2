@@ -16,7 +16,7 @@ import {
     Plus,
     Trash2,
 } from 'lucide-react';
-import { useCustomersStore } from '@asgard/shared/stores';
+import { useCustomersStore } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';

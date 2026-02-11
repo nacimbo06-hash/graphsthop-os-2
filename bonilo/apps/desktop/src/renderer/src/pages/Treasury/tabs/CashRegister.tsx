@@ -18,7 +18,7 @@ import {
     ArrowRight,
     Banknote,
 } from 'lucide-react';
-import { useTreasuryStore, useAuthStore, type CashMovement } from '@asgard/shared/stores';
+import { useTreasuryStore, useAuthStore, type CashMovement } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import styles from './CashRegister.module.css';

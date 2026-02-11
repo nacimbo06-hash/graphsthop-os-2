@@ -26,7 +26,7 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { useSettings } from '../../contexts/SettingsContext';
-import { useSalesStore, useProductsStore } from '@asgard/shared/stores';
+import { useSalesStore, useProductsStore } from '@bonilo/shared/stores';
 import { ForecastingEngine, type AIInsight, getAlgerianCalendarEvents } from '../../services/ai/forecastingService';
 import { BoniloIntelligence } from '../../services/ai/intelligenceService';
 import styles from './ReportsHub.module.css';

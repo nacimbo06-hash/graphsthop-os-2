@@ -16,7 +16,7 @@ import {
     Users,
     Clock
 } from 'lucide-react';
-import { useNetworkSyncStore } from '@asgard/shared/stores';
+import { useNetworkSyncStore } from '@bonilo/shared/stores';
 import styles from './NetworkSyncSetup.module.css';
 
 interface NetworkSyncSetupProps {

@@ -5,7 +5,7 @@ import {
     getExpiryStatusConfig,
     formatDaysRemaining,
     getSuggestedDiscount
-} from '@asgard/shared';
+} from '@bonilo/shared';
 import styles from './ExpiryWarningModal.module.css';
 
 interface ExpiryWarningModalProps {

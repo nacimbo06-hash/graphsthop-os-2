@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Server, Monitor, Wifi, WifiOff, Users, Settings } from 'lucide-react';
-import { useNetworkSyncStore } from '@asgard/shared/stores';
+import { useNetworkSyncStore } from '@bonilo/shared/stores';
 import { NetworkSyncSetup } from './NetworkSyncSetup';
 import styles from './NetworkSyncIndicator.module.css';
 

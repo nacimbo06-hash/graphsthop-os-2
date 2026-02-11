@@ -14,7 +14,7 @@
  * - Protocol: ESC/POS compatible
  */
 
-import type { ReceiptData } from '@asgard/shared';
+import type { ReceiptData } from '@bonilo/shared';
 import { formatCurrency, formatDateShort, formatDateTime } from '../utils/formatters';
 
 // ===== CONFIGURATION =====

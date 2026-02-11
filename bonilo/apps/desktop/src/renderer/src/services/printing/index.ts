@@ -5,7 +5,7 @@
  */
 
 // Types
-export * from '@asgard/shared';
+export * from '@bonilo/shared';
 
 // Commands
 export { ESCPOS } from './commands/escpos';

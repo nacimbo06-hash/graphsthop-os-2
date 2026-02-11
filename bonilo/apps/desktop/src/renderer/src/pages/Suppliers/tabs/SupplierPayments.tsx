@@ -13,7 +13,7 @@ import {
     X,
     Eye,
 } from 'lucide-react';
-import { usePurchasesStore, type GoodsReceipt } from '@asgard/shared/stores';
+import { usePurchasesStore, type GoodsReceipt } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import styles from './SupplierPayments.module.css';

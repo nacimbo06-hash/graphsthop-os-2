@@ -1,5 +1,18 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useProductsStore, useSalesStore } from '@asgard/shared/stores';
+import {
+    useProductsStore,
+    useSalesStore,
+    useCustomersStore,
+    usePurchasesStore,
+    useLotsStore,
+    useStockMovementsStore,
+} from '@bonilo/shared/stores';
+import {
+    useCashSessionStore,
+    useExpensesStore,
+    useSafeStore,
+    useSinkingFundsStore,
+} from '@bonilo/shared/stores/treasury';
 
 interface DBContextType {
     isReady: boolean;
@@ -34,10 +47,20 @@ export const DBProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                 const { db } = await import('@bonilo/shared/db');
                 await db.init();
 
-                // Hydrate Zustand stores from SQLite
+                // Hydrate all Zustand stores from SQLite
                 console.log('[DBProvider] Hydrating stores from SQLite...');
-                await useProductsStore.getState().hydrate();
-                await useSalesStore.getState().hydrate();
+                await Promise.all([
+                    useProductsStore.getState().hydrate(),
+                    useSalesStore.getState().hydrate(),
+                    useCustomersStore.getState().hydrate(),
+                    usePurchasesStore.getState().hydrate(),
+                    useLotsStore.getState().hydrate(),
+                    useStockMovementsStore.getState().hydrate(),
+                    useCashSessionStore.getState().hydrate(),
+                    useExpensesStore.getState().hydrate(),
+                    useSafeStore.getState().hydrate(),
+                    useSinkingFundsStore.getState().hydrate(),
+                ]);
 
                 setIsReady(true);
                 console.log('[DBProvider] ✅ Database ready, stores hydrated');

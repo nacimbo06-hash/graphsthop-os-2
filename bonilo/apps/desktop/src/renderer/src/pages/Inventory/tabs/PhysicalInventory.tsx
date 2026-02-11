@@ -24,7 +24,7 @@ import {
     Tooltip as RechartsTooltip,
     Legend
 } from 'recharts';
-import { useProductsStore } from '@asgard/shared/stores';
+import { useProductsStore } from '@bonilo/shared/stores';
 import { useToast } from '../../../components/feedback/Toast';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
 import styles from './PhysicalInventory.module.css';

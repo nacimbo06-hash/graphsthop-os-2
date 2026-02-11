@@ -16,7 +16,7 @@ import {
     UserPlus,
     Save,
 } from 'lucide-react';
-import { usePurchasesStore, type Supplier } from '@asgard/shared/stores';
+import { usePurchasesStore, type Supplier } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';

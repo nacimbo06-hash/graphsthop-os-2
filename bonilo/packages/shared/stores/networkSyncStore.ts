@@ -86,7 +86,7 @@ export const useNetworkSyncStore = create<NetworkSyncState>()(
                     const client = getSyncClient();
                     if (!client) {
                         console.warn('Sync client not available');
-                        return;
+                        return false;
                     }
                     const connected = await client.connect(address, port);
 
@@ -100,7 +100,7 @@ export const useNetworkSyncStore = create<NetworkSyncState>()(
                         });
 
                         // Set up connection listener
-                        client.onConnection((isConnected) => {
+                        client.onConnection?.((isConnected: boolean) => {
                             set({
                                 clientConnected: isConnected,
                                 pendingChanges: client.getStatus().queueSize

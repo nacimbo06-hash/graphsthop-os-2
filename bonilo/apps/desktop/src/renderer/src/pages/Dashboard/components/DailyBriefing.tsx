@@ -14,7 +14,7 @@ import {
     ShoppingBag,
     Percent,
 } from 'lucide-react';
-import { useProductsStore, useSalesStore } from '@asgard/shared/stores';
+import { useProductsStore, useSalesStore } from '@bonilo/shared/stores';
 import { BoniloIntelligence } from '../../../services/ai/intelligenceService';
 import type { DailyBriefing as DailyBriefingType, ABCProduct } from '../../../services/ai/intelligenceService';
 import { useSettings } from '../../../contexts/SettingsContext';

@@ -30,8 +30,14 @@
       "@shared/*": [
         "../../packages/shared/*"
       ],
+      "@bonilo/shared": [
+        "../../packages/shared/index.ts"
+      ],
       "@bonilo/shared/*": [
         "../../packages/shared/*"
+      ],
+      "@asgard/shared": [
+        "../../packages/shared/index.ts"
       ],
       "@asgard/shared/*": [
         "../../packages/shared/*"

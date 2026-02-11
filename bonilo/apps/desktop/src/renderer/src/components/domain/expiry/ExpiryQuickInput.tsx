@@ -10,7 +10,7 @@ import {
     getExpiryStatusConfig,
     type ShelfLifeCategory,
     type QuickDatePreset,
-} from '@asgard/shared';
+} from '@bonilo/shared';
 import styles from './ExpiryQuickInput.module.css';
 
 interface ExpiryQuickInputProps {

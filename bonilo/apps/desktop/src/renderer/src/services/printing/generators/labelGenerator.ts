@@ -5,7 +5,7 @@
  */
 
 import { ZPL } from '../commands/zpl';
-import type { LabelData } from '@asgard/shared';
+import type { LabelData } from '@bonilo/shared';
 import { formatCurrency } from '../../../utils/formatters';
 
 /**

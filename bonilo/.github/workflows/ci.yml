@@ -20,22 +20,22 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: apps/desktop-os/package-lock.json
+          cache-dependency-path: apps/desktop/package-lock.json
 
       - name: Install dependencies
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm ci
 
       - name: Run TypeScript type checking
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm run typecheck
 
       - name: Run ESLint
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm run lint
 
       - name: Run tests
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm test
 
       - name: Upload coverage report
@@ -43,7 +43,7 @@ jobs:
         if: always()
         with:
           name: coverage-report
-          path: apps/desktop-os/coverage/
+          path: apps/desktop/coverage/
           if-no-files-found: ignore
 
   security-audit:
@@ -59,14 +59,14 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: apps/desktop-os/package-lock.json
+          cache-dependency-path: apps/desktop/package-lock.json
 
       - name: Install dependencies
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm ci
 
       - name: Run npm audit
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm audit --audit-level=moderate
         continue-on-error: true
 

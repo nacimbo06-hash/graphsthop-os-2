@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { customersRepo } from '../db';
 
 export interface Customer {
     id: string;
@@ -30,14 +30,19 @@ export interface CreditTransaction {
 interface CustomersState {
     customers: Customer[];
     transactions: CreditTransaction[];
+    isLoading: boolean;
+    isHydrated: boolean;
+
+    // Lifecycle
+    hydrate: () => Promise<void>;
 
     // Actions
-    addCustomer: (customer: Omit<Customer, 'id' | 'loyaltyPoints' | 'currentCredit' | 'lastVisit' | 'lastPaymentDate' | 'createdAt'>) => void;
-    updateCustomer: (id: string, updates: Partial<Customer>) => void;
-    deleteCustomer: (id: string) => void;
+    addCustomer: (customer: Omit<Customer, 'id' | 'loyaltyPoints' | 'currentCredit' | 'lastVisit' | 'lastPaymentDate' | 'createdAt'>) => Promise<void>;
+    updateCustomer: (id: string, updates: Partial<Customer>) => Promise<void>;
+    deleteCustomer: (id: string) => Promise<void>;
 
-    addLoyaltyPoints: (id: string, points: number) => void;
-    updateCredit: (id: string, amount: number, type: CreditTransaction['type'], saleId?: string, notes?: string) => void;
+    addLoyaltyPoints: (id: string, points: number) => Promise<void>;
+    updateCredit: (id: string, amount: number, type: CreditTransaction['type'], saleId?: string, notes?: string) => Promise<void>;
 
     // Getters
     getCustomerById: (id: string) => Customer | undefined;
@@ -49,105 +54,130 @@ interface CustomersState {
     getTotalOutstandingCredit: () => number;
 }
 
-const initialCustomers: Customer[] = [];
-
 export const useCustomersStore = create<CustomersState>()(
-    persist(
-        (set, get) => ({
-            customers: initialCustomers,
-            transactions: [],
+    (set, get) => ({
+        customers: [],
+        transactions: [],
+        isLoading: false,
+        isHydrated: false,
 
-            addCustomer: (data) => {
-                const newCustomer: Customer = {
-                    ...data,
-                    id: `cust_${Date.now()}`,
-                    loyaltyPoints: 0,
-                    currentCredit: 0,
-                    lastVisit: null,
-                    lastPaymentDate: null,
-                    createdAt: new Date().toISOString(),
-                    barcode: data.barcode || `CUST-${data.phone || Date.now()}`,
-                };
-                set(state => ({ customers: [...state.customers, newCustomer] }));
-            },
+        hydrate: async () => {
+            if (get().isHydrated) return;
+            set({ isLoading: true });
+            try {
+                const [customers, transactions] = await Promise.all([
+                    customersRepo.loadAll(),
+                    customersRepo.loadTransactions(),
+                ]);
+                set({ customers, transactions, isHydrated: true, isLoading: false });
+                console.log(`[CustomersStore] Hydrated ${customers.length} customers from DB`);
+            } catch (error) {
+                console.error('[CustomersStore] Failed to hydrate:', error);
+                set({ isLoading: false });
+            }
+        },
 
-            updateCustomer: (id, updates) => {
-                set(state => ({
-                    customers: state.customers.map(c => c.id === id ? { ...c, ...updates } : c)
-                }));
-            },
+        addCustomer: async (data) => {
+            const newCustomer: Customer = {
+                ...data,
+                id: `cust_${Date.now()}`,
+                loyaltyPoints: 0,
+                currentCredit: 0,
+                lastVisit: null,
+                lastPaymentDate: null,
+                createdAt: new Date().toISOString(),
+                barcode: data.barcode || `CUST-${data.phone || Date.now()}`,
+            };
+            await customersRepo.create(newCustomer);
+            set(state => ({ customers: [...state.customers, newCustomer] }));
+        },
 
-            deleteCustomer: (id) => {
-                set(state => ({
-                    customers: state.customers.filter(c => c.id !== id)
-                }));
-            },
+        updateCustomer: async (id, updates) => {
+            await customersRepo.update(id, updates);
+            set(state => ({
+                customers: state.customers.map(c => c.id === id ? { ...c, ...updates } : c)
+            }));
+        },
 
-            addLoyaltyPoints: (id, points) => {
-                set(state => ({
-                    customers: state.customers.map(c =>
-                        c.id === id ? { ...c, loyaltyPoints: c.loyaltyPoints + points } : c
-                    )
-                }));
-            },
+        deleteCustomer: async (id) => {
+            await customersRepo.remove(id);
+            set(state => ({
+                customers: state.customers.filter(c => c.id !== id)
+            }));
+        },
 
-            updateCredit: (id, amount, type, saleId, notes) => {
-                const transaction: CreditTransaction = {
-                    id: `txn_${Date.now()}`,
-                    customerId: id,
-                    amount,
-                    type,
-                    date: new Date().toISOString(),
-                    saleId,
-                    notes,
-                };
+        addLoyaltyPoints: async (id, points) => {
+            const customer = get().customers.find(c => c.id === id);
+            if (!customer) return;
+            const newPoints = customer.loyaltyPoints + points;
+            await customersRepo.updateLoyaltyPoints(id, newPoints);
+            set(state => ({
+                customers: state.customers.map(c =>
+                    c.id === id ? { ...c, loyaltyPoints: newPoints } : c
+                )
+            }));
+        },
 
-                const isPayment = type === 'payment' || amount < 0;
+        updateCredit: async (id, amount, type, saleId, notes) => {
+            const customer = get().customers.find(c => c.id === id);
+            if (!customer) return;
 
-                set(state => ({
-                    customers: state.customers.map(c =>
-                        c.id === id
-                            ? {
-                                ...c,
-                                currentCredit: c.currentCredit + amount,
-                                lastPaymentDate: isPayment ? new Date().toISOString() : c.lastPaymentDate,
-                            }
-                            : c
-                    ),
-                    transactions: [transaction, ...state.transactions]
-                }));
-            },
+            const transaction: CreditTransaction = {
+                id: `txn_${Date.now()}`,
+                customerId: id,
+                amount,
+                type,
+                date: new Date().toISOString(),
+                saleId,
+                notes,
+            };
 
-            getCustomerById: (id) => get().customers.find(c => c.id === id),
+            const isPayment = type === 'payment' || amount < 0;
+            const newBalance = customer.currentCredit + amount;
+            const lastPaymentDate = isPayment ? new Date().toISOString() : null;
 
-            getCustomerByBarcode: (barcode) => get().customers.find(c => c.barcode === barcode),
+            await customersRepo.addCreditTransaction(transaction, newBalance, lastPaymentDate);
 
-            getTotalCredit: () => get().customers.reduce((sum, c) => sum + c.currentCredit, 0),
+            set(state => ({
+                customers: state.customers.map(c =>
+                    c.id === id
+                        ? {
+                            ...c,
+                            currentCredit: newBalance,
+                            lastPaymentDate: isPayment ? new Date().toISOString() : c.lastPaymentDate,
+                        }
+                        : c
+                ),
+                transactions: [transaction, ...state.transactions]
+            }));
+        },
 
-            getLoyalCustomers: (minPoints = 1000) =>
-                get().customers.filter(c => c.loyaltyPoints >= minPoints),
+        getCustomerById: (id) => get().customers.find(c => c.id === id),
 
-            getCustomersWithCredit: () =>
-                get().customers.filter(c => c.currentCredit > 0),
+        getCustomerByBarcode: (barcode) => get().customers.find(c => c.barcode === barcode),
 
-            getOverdueCustomers: (days) => {
-                const now = new Date();
-                return get().customers.filter(c => {
-                    if (c.currentCredit <= 0) return false;
-                    if (!c.lastPaymentDate) return true; // Never paid = overdue
-                    const lastPayment = new Date(c.lastPaymentDate);
-                    const daysSincePayment = Math.floor((now.getTime() - lastPayment.getTime()) / (1000 * 60 * 60 * 24));
-                    return daysSincePayment > days;
-                });
-            },
+        getTotalCredit: () => get().customers.reduce((sum, c) => sum + c.currentCredit, 0),
 
-            getTotalOutstandingCredit: () =>
-                get().customers.reduce((sum, c) => sum + Math.max(0, c.currentCredit), 0),
-        }),
-        {
-            name: 'customers-storage',
-        }
-    )
+        getLoyalCustomers: (minPoints = 1000) =>
+            get().customers.filter(c => c.loyaltyPoints >= minPoints),
+
+        getCustomersWithCredit: () =>
+            get().customers.filter(c => c.currentCredit > 0),
+
+        getOverdueCustomers: (days) => {
+            const now = new Date();
+            return get().customers.filter(c => {
+                if (c.currentCredit <= 0) return false;
+                if (!c.lastPaymentDate) return true; // Never paid = overdue
+                const lastPayment = new Date(c.lastPaymentDate);
+                const daysSincePayment = Math.floor((now.getTime() - lastPayment.getTime()) / (1000 * 60 * 60 * 24));
+                return daysSincePayment > days;
+            });
+        },
+
+        getTotalOutstandingCredit: () =>
+            get().customers.reduce((sum, c) => sum + Math.max(0, c.currentCredit), 0),
+    })
 );
 
 export default useCustomersStore;

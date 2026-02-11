@@ -465,16 +465,7 @@ export const downloadAsPDF = (html: string, filename: string): void => {
 export const printZReport = (data: ZReportData): void => {
     const html = generateZReportHTML(data);
 
-    // Check if we are in Electron and have access to native printing
-    if (window.electronAPI && window.electronAPI.printReceipt) {
-        window.electronAPI.printReceipt(html)
-            .catch(err => {
-                console.error('Silent printing failed, falling back to window.print', err);
-                printContent(html);
-            });
-    } else {
-        printContent(html);
-    }
+    printContent(html);
 };
 
 /**
@@ -491,15 +482,5 @@ export const exportZReportPDF = (data: ZReportData): void => {
  */
 export const printReceipt = (data: ReceiptData): void => {
     const html = generateReceiptHTML(data);
-
-    // Check if we are in Electron and have access to native printing
-    if (window.electronAPI && window.electronAPI.printReceipt) {
-        window.electronAPI.printReceipt(html)
-            .catch(err => {
-                console.error('Silent printing failed, falling back to window.print', err);
-                printContent(html);
-            });
-    } else {
-        printContent(html);
-    }
+    printContent(html);
 };

@@ -16,7 +16,7 @@ import {
     type ExpiryStatus,
     getExpiryStatusConfig,
     formatDaysRemaining,
-} from '@asgard/shared';
+} from '@bonilo/shared';
 import styles from './ExpiryAlertWidget.module.css';
 
 interface ExpiryAlertWidgetProps {

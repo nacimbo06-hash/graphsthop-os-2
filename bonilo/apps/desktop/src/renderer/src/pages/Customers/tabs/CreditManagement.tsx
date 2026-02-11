@@ -10,7 +10,7 @@ import {
     X,
     Calendar,
 } from 'lucide-react';
-import { useCustomersStore, type Customer } from '@asgard/shared/stores';
+import { useCustomersStore, type Customer } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast/Toast';
 import styles from './CreditManagement.module.css';

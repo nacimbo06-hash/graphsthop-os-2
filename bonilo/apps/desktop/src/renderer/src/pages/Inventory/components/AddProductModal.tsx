@@ -20,8 +20,8 @@ import {
     Truck,
 } from 'lucide-react';
 import { generateSKU, generateDesignation, generateShortName, validatePrices, validateSKU } from '../../../utils/skuGenerator';
-import { CATEGORIES, UNITS_OF_MEASURE, COMMON_BRANDS, PRODUCT_NATURES, getGroupedUnits } from '@asgard/shared';
-import type { Product } from '@asgard/shared';
+import { CATEGORIES, UNITS_OF_MEASURE, COMMON_BRANDS, PRODUCT_NATURES, getGroupedUnits } from '@bonilo/shared';
+import type { Product } from '@bonilo/shared';
 import { useToast } from '../../../components/feedback/Toast';
 import { formatCurrency } from '../../../utils/formatters';
 import { getAutoEmoji, getSuggestedEmojis, POPULAR_EMOJIS } from '../../../utils/emojiMapper';

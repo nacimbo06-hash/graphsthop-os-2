@@ -38,7 +38,7 @@ import {
 import { useSettings } from '../../contexts/SettingsContext';
 import { useToast } from '../../components/feedback/Toast';
 import { ConfirmModal } from '../../components/feedback/ConfirmModal';
-import { useNetworkSyncStore } from '@asgard/shared/stores';
+import { useNetworkSyncStore } from '@bonilo/shared/stores';
 import styles from './Settings.module.css';
 
 // Helper component for debounced inputs

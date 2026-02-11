@@ -200,9 +200,215 @@ CREATE TABLE IF NOT EXISTS users (
 PRAGMA user_version = 1;
 `;
 
+const MIGRATION_002 = `
+-- New tables for v2: safe_transactions, sinking_funds, sinking_fund_transactions,
+-- lots, lot_movements, purchase_orders, purchase_order_items, goods_receipts, goods_receipt_items,
+-- credit_transactions, cash_movements, stock_movements
+
+CREATE TABLE IF NOT EXISTS safe_transactions (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,
+  amount REAL NOT NULL,
+  reason TEXT DEFAULT '',
+  performed_by TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_safe_tx_created ON safe_transactions(created_at);
+
+CREATE TABLE IF NOT EXISTS sinking_funds (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  icon TEXT DEFAULT '',
+  color TEXT DEFAULT '',
+  target_amount REAL NOT NULL DEFAULT 0,
+  current_balance REAL NOT NULL DEFAULT 0,
+  due_day INTEGER NOT NULL DEFAULT 1,
+  is_recurring INTEGER NOT NULL DEFAULT 1,
+  category TEXT NOT NULL DEFAULT 'custom',
+  last_contribution TEXT DEFAULT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS sinking_fund_transactions (
+  id TEXT PRIMARY KEY,
+  fund_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  amount REAL NOT NULL,
+  reason TEXT DEFAULT '',
+  performed_by TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY(fund_id) REFERENCES sinking_funds(id)
+);
+CREATE INDEX IF NOT EXISTS idx_sf_tx_fund ON sinking_fund_transactions(fund_id);
+
+CREATE TABLE IF NOT EXISTS lots (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
+  product_name TEXT DEFAULT '',
+  product_barcode TEXT DEFAULT '',
+  lot_number TEXT DEFAULT '',
+  batch_number TEXT DEFAULT '',
+  quantity REAL NOT NULL DEFAULT 0,
+  original_quantity REAL NOT NULL DEFAULT 0,
+  expiry_date TEXT NOT NULL,
+  received_date TEXT NOT NULL,
+  supplier_id TEXT DEFAULT '',
+  supplier_name TEXT DEFAULT '',
+  goods_receipt_id TEXT DEFAULT '',
+  purchase_price REAL NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'ok',
+  days_remaining INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_lots_product ON lots(product_id);
+CREATE INDEX IF NOT EXISTS idx_lots_expiry ON lots(expiry_date);
+
+CREATE TABLE IF NOT EXISTS lot_movements (
+  id TEXT PRIMARY KEY,
+  lot_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  quantity REAL NOT NULL,
+  reason TEXT DEFAULT '',
+  reference TEXT DEFAULT '',
+  created_by TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY(lot_id) REFERENCES lots(id)
+);
+CREATE INDEX IF NOT EXISTS idx_lot_mov_lot ON lot_movements(lot_id);
+
+CREATE TABLE IF NOT EXISTS purchase_orders (
+  id TEXT PRIMARY KEY,
+  po_number TEXT NOT NULL,
+  supplier_id TEXT NOT NULL,
+  supplier_name TEXT DEFAULT '',
+  date TEXT NOT NULL,
+  expected_date TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'draft',
+  subtotal REAL NOT NULL DEFAULT 0,
+  tax_amount REAL NOT NULL DEFAULT 0,
+  total REAL NOT NULL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_po_supplier ON purchase_orders(supplier_id);
+
+CREATE TABLE IF NOT EXISTS purchase_order_items (
+  id TEXT PRIMARY KEY,
+  po_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  product_name TEXT DEFAULT '',
+  product_barcode TEXT DEFAULT '',
+  product_emoji TEXT DEFAULT '',
+  ordered_qty REAL NOT NULL DEFAULT 0,
+  received_qty REAL NOT NULL DEFAULT 0,
+  purchase_price REAL NOT NULL DEFAULT 0,
+  total REAL NOT NULL DEFAULT 0,
+  expiry_date TEXT DEFAULT '',
+  lot_number TEXT DEFAULT '',
+  unit TEXT DEFAULT 'unit',
+  FOREIGN KEY(po_id) REFERENCES purchase_orders(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_poi_po ON purchase_order_items(po_id);
+
+CREATE TABLE IF NOT EXISTS goods_receipts (
+  id TEXT PRIMARY KEY,
+  gr_number TEXT NOT NULL,
+  po_id TEXT DEFAULT '',
+  supplier_id TEXT NOT NULL,
+  supplier_name TEXT DEFAULT '',
+  date TEXT NOT NULL,
+  invoice_number TEXT DEFAULT '',
+  total REAL NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending',
+  paid_from TEXT DEFAULT '',
+  is_paid INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_gr_supplier ON goods_receipts(supplier_id);
+
+CREATE TABLE IF NOT EXISTS goods_receipt_items (
+  id TEXT PRIMARY KEY,
+  gr_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  product_name TEXT DEFAULT '',
+  product_barcode TEXT DEFAULT '',
+  product_emoji TEXT DEFAULT '',
+  ordered_qty REAL NOT NULL DEFAULT 0,
+  received_qty REAL NOT NULL DEFAULT 0,
+  purchase_price REAL NOT NULL DEFAULT 0,
+  total REAL NOT NULL DEFAULT 0,
+  expiry_date TEXT DEFAULT '',
+  lot_number TEXT DEFAULT '',
+  unit TEXT DEFAULT 'unit',
+  FOREIGN KEY(gr_id) REFERENCES goods_receipts(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_gri_gr ON goods_receipt_items(gr_id);
+
+CREATE TABLE IF NOT EXISTS credit_transactions (
+  id TEXT PRIMARY KEY,
+  customer_id TEXT NOT NULL,
+  amount REAL NOT NULL,
+  type TEXT NOT NULL,
+  date TEXT NOT NULL DEFAULT (datetime('now')),
+  sale_id TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  FOREIGN KEY(customer_id) REFERENCES customers(id)
+);
+CREATE INDEX IF NOT EXISTS idx_credit_tx_customer ON credit_transactions(customer_id);
+
+CREATE TABLE IF NOT EXISTS cash_movements (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  amount REAL NOT NULL,
+  reason TEXT DEFAULT '',
+  category TEXT DEFAULT '',
+  reference TEXT DEFAULT '',
+  provision_type TEXT DEFAULT '',
+  created_by TEXT DEFAULT '',
+  payment_method TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY(session_id) REFERENCES cash_sessions(id)
+);
+CREATE INDEX IF NOT EXISTS idx_cash_mov_session ON cash_movements(session_id);
+
+CREATE TABLE IF NOT EXISTS stock_movements (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
+  product_name TEXT DEFAULT '',
+  product_emoji TEXT DEFAULT '',
+  type TEXT NOT NULL,
+  quantity REAL NOT NULL,
+  previous_stock REAL NOT NULL DEFAULT 0,
+  new_stock REAL NOT NULL DEFAULT 0,
+  reason TEXT DEFAULT '',
+  performed_by TEXT DEFAULT '',
+  reference TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_stock_mov_product ON stock_movements(product_id);
+CREATE INDEX IF NOT EXISTS idx_stock_mov_created ON stock_movements(created_at);
+
+-- Add missing columns to customers table
+ALTER TABLE customers ADD COLUMN city TEXT DEFAULT '';
+ALTER TABLE customers ADD COLUMN loyalty_points REAL DEFAULT 0;
+ALTER TABLE customers ADD COLUMN last_visit TEXT DEFAULT NULL;
+ALTER TABLE customers ADD COLUMN last_payment_date TEXT DEFAULT NULL;
+ALTER TABLE customers ADD COLUMN barcode TEXT DEFAULT '';
+
+-- Add missing columns to suppliers table
+ALTER TABLE suppliers ADD COLUMN city TEXT DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN ice TEXT DEFAULT '';
+ALTER TABLE suppliers ADD COLUMN nif TEXT DEFAULT '';
+
+PRAGMA user_version = 2;
+`;
+
 // Ordered list of migrations
 const MIGRATIONS = [
     { version: 1, sql: MIGRATION_001 },
+    { version: 2, sql: MIGRATION_002 },
 ];
 
 class BoniloDatabase {
@@ -241,7 +447,7 @@ class BoniloDatabase {
     private async runMigrations(): Promise<void> {
         if (!this.db) return;
 
-        const result = await this.db.select<[{ user_version: number }]>('PRAGMA user_version;');
+        const result = await this.db.select('PRAGMA user_version;') as [{ user_version: number }];
         const currentVersion = result[0]?.user_version ?? 0;
 
         for (const migration of MIGRATIONS) {

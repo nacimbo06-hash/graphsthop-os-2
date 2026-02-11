@@ -1,13 +1,13 @@
 /**
  * Sinking Funds Store - SuperMarket Control OS
- * 
+ *
  * Manages provisions (salaries, bank credit, fixed charges).
  * Part of the treasury store split for better maintainability.
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { SinkingFund, SinkingFundTransaction, CashMovement } from '@shared/types/treasury';
+import { sinkingFundsRepo } from '../../db';
 
 // ============================================
 // DEFAULT DATA
@@ -29,7 +29,7 @@ const defaultSinkingFunds: SinkingFund[] = [
     },
     {
         id: 'bankCredit',
-        name: 'Crédit Bancaire',
+        name: 'Credit Bancaire',
         icon: '🏦',
         color: '#4A7B8C',
         targetAmount: 50000,
@@ -62,6 +62,11 @@ const defaultSinkingFunds: SinkingFund[] = [
 interface SinkingFundsState {
     // State
     sinkingFunds: SinkingFund[];
+    isLoading: boolean;
+    isHydrated: boolean;
+
+    // Lifecycle
+    hydrate: () => Promise<void>;
 
     // Actions
     contributeToFund: (
@@ -70,10 +75,10 @@ interface SinkingFundsState {
         reason: string,
         performedBy: string,
         onMovement?: (movement: Omit<CashMovement, 'id' | 'sessionId' | 'createdAt'>) => void
-    ) => void;
-    withdrawFromFund: (fundId: string, amount: number, reason: string, performedBy: string) => boolean;
-    updateFundTarget: (fundId: string, newTarget: number) => void;
-    addSinkingFund: (fund: Omit<SinkingFund, 'id' | 'currentBalance' | 'lastContribution' | 'history'>) => void;
+    ) => Promise<void>;
+    withdrawFromFund: (fundId: string, amount: number, reason: string, performedBy: string) => Promise<boolean>;
+    updateFundTarget: (fundId: string, newTarget: number) => Promise<void>;
+    addSinkingFund: (fund: Omit<SinkingFund, 'id' | 'currentBalance' | 'lastContribution' | 'history'>) => Promise<void>;
 
     // Getters
     getDailyProvisionTarget: () => { salaries: number; bankCredit: number; fixedCharges: number; total: number };
@@ -86,153 +91,176 @@ interface SinkingFundsState {
 // ============================================
 
 export const useSinkingFundsStore = create<SinkingFundsState>()(
-    persist(
-        (set, get) => ({
-            sinkingFunds: defaultSinkingFunds,
+    (set, get) => ({
+        sinkingFunds: defaultSinkingFunds,
+        isLoading: false,
+        isHydrated: false,
 
-            // ========== FUND ACTIONS ==========
+        hydrate: async () => {
+            if (get().isHydrated) return;
+            set({ isLoading: true });
+            try {
+                // Seed defaults if DB is empty
+                await sinkingFundsRepo.seedDefaults(defaultSinkingFunds);
+                const funds = await sinkingFundsRepo.loadAll();
+                set({ sinkingFunds: funds.length > 0 ? funds : defaultSinkingFunds, isHydrated: true, isLoading: false });
+                console.log(`[SinkingFundsStore] Hydrated ${funds.length} funds from DB`);
+            } catch (error) {
+                console.error('[SinkingFundsStore] Failed to hydrate:', error);
+                set({ isLoading: false });
+            }
+        },
 
-            contributeToFund: (fundId, amount, reason, performedBy, onMovement) => {
-                const { sinkingFunds } = get();
-                const fund = sinkingFunds.find(f => f.id === fundId);
+        // ========== FUND ACTIONS ==========
 
-                const transaction: SinkingFundTransaction = {
-                    id: crypto.randomUUID(),
-                    fundId,
-                    type: 'contribution',
+        contributeToFund: async (fundId, amount, reason, performedBy, onMovement) => {
+            const { sinkingFunds } = get();
+            const fund = sinkingFunds.find(f => f.id === fundId);
+
+            const transaction: SinkingFundTransaction = {
+                id: crypto.randomUUID(),
+                fundId,
+                type: 'contribution',
+                amount,
+                reason,
+                date: new Date().toISOString(),
+                performedBy,
+            };
+
+            // Notify session store via callback (if provided)
+            if (onMovement && fund) {
+                onMovement({
+                    type: 'transfer_to_provision',
                     amount,
-                    reason,
-                    date: new Date(),
-                    performedBy,
-                };
+                    reason: `Provision ${fund.name}: ${reason}`,
+                    provisionType: fund.category,
+                    createdBy: performedBy,
+                });
+            }
 
-                // Notify session store via callback (if provided)
-                if (onMovement && fund) {
-                    onMovement({
-                        type: 'transfer_to_provision',
-                        amount,
-                        reason: `Provision ${fund.name}: ${reason}`,
-                        provisionType: fund.category,
-                        createdBy: performedBy,
-                    });
-                }
+            const newBalance = (fund?.currentBalance || 0) + amount;
+            const now = new Date().toISOString();
 
-                set(state => ({
-                    sinkingFunds: state.sinkingFunds.map(f =>
-                        f.id === fundId
-                            ? {
-                                ...f,
-                                currentBalance: f.currentBalance + amount,
-                                lastContribution: new Date(),
-                                history: [transaction, ...f.history],
-                            }
-                            : f
-                    ),
-                }));
-            },
+            await sinkingFundsRepo.addTransaction(transaction);
+            await sinkingFundsRepo.updateBalance(fundId, newBalance, now);
 
-            withdrawFromFund: (fundId, amount, reason, performedBy) => {
-                const { sinkingFunds } = get();
-                const fund = sinkingFunds.find(f => f.id === fundId);
-                if (!fund || amount > fund.currentBalance) {
-                    console.error('[ERROR] Insufficient fund balance');
-                    return false;
-                }
+            set(state => ({
+                sinkingFunds: state.sinkingFunds.map(f =>
+                    f.id === fundId
+                        ? {
+                            ...f,
+                            currentBalance: newBalance,
+                            lastContribution: now,
+                            history: [transaction, ...f.history],
+                        }
+                        : f
+                ),
+            }));
+        },
 
-                const transaction: SinkingFundTransaction = {
-                    id: crypto.randomUUID(),
-                    fundId,
-                    type: 'withdrawal',
-                    amount,
-                    reason,
-                    date: new Date(),
-                    performedBy,
-                };
+        withdrawFromFund: async (fundId, amount, reason, performedBy) => {
+            const { sinkingFunds } = get();
+            const fund = sinkingFunds.find(f => f.id === fundId);
+            if (!fund || amount > fund.currentBalance) {
+                console.error('[ERROR] Insufficient fund balance');
+                return false;
+            }
 
-                set(state => ({
-                    sinkingFunds: state.sinkingFunds.map(f =>
-                        f.id === fundId
-                            ? {
-                                ...f,
-                                currentBalance: f.currentBalance - amount,
-                                history: [transaction, ...f.history],
-                            }
-                            : f
-                    ),
-                }));
+            const transaction: SinkingFundTransaction = {
+                id: crypto.randomUUID(),
+                fundId,
+                type: 'withdrawal',
+                amount,
+                reason,
+                date: new Date().toISOString(),
+                performedBy,
+            };
 
-                return true;
-            },
+            const newBalance = fund.currentBalance - amount;
 
-            updateFundTarget: (fundId, newTarget) => {
-                set(state => ({
-                    sinkingFunds: state.sinkingFunds.map(f =>
-                        f.id === fundId ? { ...f, targetAmount: newTarget } : f
-                    ),
-                }));
-            },
+            await sinkingFundsRepo.addTransaction(transaction);
+            await sinkingFundsRepo.updateBalance(fundId, newBalance, null);
 
-            addSinkingFund: (fund) => {
-                const newFund: SinkingFund = {
-                    ...fund,
-                    id: crypto.randomUUID(),
-                    currentBalance: 0,
-                    lastContribution: null,
-                    history: [],
-                };
+            set(state => ({
+                sinkingFunds: state.sinkingFunds.map(f =>
+                    f.id === fundId
+                        ? {
+                            ...f,
+                            currentBalance: newBalance,
+                            history: [transaction, ...f.history],
+                        }
+                        : f
+                ),
+            }));
 
-                set(state => ({
-                    sinkingFunds: [...state.sinkingFunds, newFund],
-                }));
-            },
+            return true;
+        },
 
-            // ========== GETTERS ==========
+        updateFundTarget: async (fundId, newTarget) => {
+            await sinkingFundsRepo.updateTarget(fundId, newTarget);
+            set(state => ({
+                sinkingFunds: state.sinkingFunds.map(f =>
+                    f.id === fundId ? { ...f, targetAmount: newTarget } : f
+                ),
+            }));
+        },
 
-            getDailyProvisionTarget: () => {
-                const { sinkingFunds } = get();
-                const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        addSinkingFund: async (fund) => {
+            const newFund: SinkingFund = {
+                ...fund,
+                id: crypto.randomUUID(),
+                currentBalance: 0,
+                lastContribution: null,
+                history: [],
+            };
 
-                const salaries = (sinkingFunds.find(f => f.category === 'salaries')?.targetAmount || 0) / daysInMonth;
-                const bankCredit = (sinkingFunds.find(f => f.category === 'bankCredit')?.targetAmount || 0) / daysInMonth;
-                const fixedCharges = (sinkingFunds.find(f => f.category === 'fixedCharges')?.targetAmount || 0) / daysInMonth;
+            await sinkingFundsRepo.create(newFund);
 
-                return {
-                    salaries: Math.round(salaries),
-                    bankCredit: Math.round(bankCredit),
-                    fixedCharges: Math.round(fixedCharges),
-                    total: Math.round(salaries + bankCredit + fixedCharges),
-                };
-            },
+            set(state => ({
+                sinkingFunds: [...state.sinkingFunds, newFund],
+            }));
+        },
 
-            getProvisionProgress: () => {
-                const { sinkingFunds } = get();
-                const currentDay = new Date().getDate();
-                const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-                const expectedProgress = currentDay / daysInMonth;
+        // ========== GETTERS ==========
 
-                const calcProgress = (category: string) => {
-                    const fund = sinkingFunds.find(f => f.category === category);
-                    if (!fund) return 0;
-                    const expectedNow = fund.targetAmount * expectedProgress;
-                    return expectedNow > 0 ? Math.min(100, (fund.currentBalance / expectedNow) * 100) : 0;
-                };
+        getDailyProvisionTarget: () => {
+            const { sinkingFunds } = get();
+            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
 
-                return {
-                    salaries: Math.round(calcProgress('salaries')),
-                    bankCredit: Math.round(calcProgress('bankCredit')),
-                    fixedCharges: Math.round(calcProgress('fixedCharges')),
-                };
-            },
+            const salaries = (sinkingFunds.find(f => f.category === 'salaries')?.targetAmount || 0) / daysInMonth;
+            const bankCredit = (sinkingFunds.find(f => f.category === 'bankCredit')?.targetAmount || 0) / daysInMonth;
+            const fixedCharges = (sinkingFunds.find(f => f.category === 'fixedCharges')?.targetAmount || 0) / daysInMonth;
 
-            getTotalProvisions: () => {
-                return get().sinkingFunds.reduce((sum, f) => sum + f.currentBalance, 0);
-            },
-        }),
-        {
-            name: 'treasury-storage-v2',
-            partialize: (state) => ({
-                sinkingFunds: state.sinkingFunds,
-            }),
-        }
-    )
+            return {
+                salaries: Math.round(salaries),
+                bankCredit: Math.round(bankCredit),
+                fixedCharges: Math.round(fixedCharges),
+                total: Math.round(salaries + bankCredit + fixedCharges),
+            };
+        },
+
+        getProvisionProgress: () => {
+            const { sinkingFunds } = get();
+            const currentDay = new Date().getDate();
+            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+            const expectedProgress = currentDay / daysInMonth;
+
+            const calcProgress = (category: string) => {
+                const fund = sinkingFunds.find(f => f.category === category);
+                if (!fund) return 0;
+                const expectedNow = fund.targetAmount * expectedProgress;
+                return expectedNow > 0 ? Math.min(100, (fund.currentBalance / expectedNow) * 100) : 0;
+            };
+
+            return {
+                salaries: Math.round(calcProgress('salaries')),
+                bankCredit: Math.round(calcProgress('bankCredit')),
+                fixedCharges: Math.round(calcProgress('fixedCharges')),
+            };
+        },
+
+        getTotalProvisions: () => {
+            return get().sinkingFunds.reduce((sum, f) => sum + f.currentBalance, 0);
+        },
+    })
 );

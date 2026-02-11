@@ -1,13 +1,13 @@
 /**
  * Expenses Store - SuperMarket Control OS
- * 
+ *
  * Manages expense tracking and payment.
  * Part of the treasury store split for better maintainability.
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Expense, ExpenseCategory, CashMovement } from '@shared/types/treasury';
+import { expensesRepo } from '../../db';
 
 // ============================================
 // DEFAULT DATA
@@ -32,13 +32,18 @@ interface ExpensesState {
     // State
     expenses: Expense[];
     expenseCategories: ExpenseCategory[];
+    isLoading: boolean;
+    isHydrated: boolean;
+
+    // Lifecycle
+    hydrate: () => Promise<void>;
 
     // Actions
     addExpense: (
         expense: Omit<Expense, 'id' | 'createdAt' | 'isPaid' | 'paidFrom'>,
         isPaid?: boolean,
         paidFrom?: 'cash' | 'safe' | 'provision'
-    ) => Expense;
+    ) => Promise<Expense>;
     markExpenseAsPaid: (
         expenseId: string,
         paidFrom: 'cash' | 'safe' | 'provision',
@@ -49,8 +54,8 @@ interface ExpensesState {
             onWithdrawFromFund?: (fundId: string, amount: number, reason: string, performedBy: string) => boolean;
             getFundByCategory?: (category: string) => { id: string } | undefined;
         }
-    ) => void;
-    deleteExpense: (expenseId: string) => void;
+    ) => Promise<void>;
+    deleteExpense: (expenseId: string) => Promise<void>;
 
     // Getters
     getTodayExpenses: () => number;
@@ -62,91 +67,103 @@ interface ExpensesState {
 // ============================================
 
 export const useExpensesStore = create<ExpensesState>()(
-    persist(
-        (set, get) => ({
-            expenses: [],
-            expenseCategories: defaultExpenseCategories,
+    (set, get) => ({
+        expenses: [],
+        expenseCategories: defaultExpenseCategories,
+        isLoading: false,
+        isHydrated: false,
 
-            // ========== EXPENSE ACTIONS ==========
+        hydrate: async () => {
+            if (get().isHydrated) return;
+            set({ isLoading: true });
+            try {
+                const expenses = await expensesRepo.loadAll();
+                set({ expenses, isHydrated: true, isLoading: false });
+                console.log(`[ExpensesStore] Hydrated ${expenses.length} expenses from DB`);
+            } catch (error) {
+                console.error('[ExpensesStore] Failed to hydrate:', error);
+                set({ isLoading: false });
+            }
+        },
 
-            addExpense: (expense, isPaid = false, paidFrom) => {
-                const newExpense: Expense = {
-                    ...expense,
-                    id: crypto.randomUUID(),
-                    createdAt: new Date(),
-                    isPaid,
-                    paidFrom: paidFrom || null,
-                };
+        // ========== EXPENSE ACTIONS ==========
 
-                set(state => ({
-                    expenses: [newExpense, ...state.expenses],
-                }));
+        addExpense: async (expense, isPaid = false, paidFrom) => {
+            const newExpense: Expense = {
+                ...expense,
+                id: crypto.randomUUID(),
+                createdAt: new Date().toISOString(),
+                isPaid,
+                paidFrom: paidFrom || null,
+            };
 
-                return newExpense;
-            },
+            await expensesRepo.create(newExpense);
 
-            markExpenseAsPaid: (expenseId, paidFrom, performedBy, callbacks) => {
-                const { expenses } = get();
-                const expense = expenses.find(e => e.id === expenseId);
-                if (!expense || expense.isPaid) return;
+            set(state => ({
+                expenses: [newExpense, ...state.expenses],
+            }));
 
-                // Handle the financial impact via callbacks
-                if (paidFrom === 'cash' && callbacks?.onMovement) {
-                    callbacks.onMovement({
-                        type: 'expense',
-                        amount: expense.amount,
-                        reason: `Paiement dépense: ${expense.description}`,
-                        createdBy: performedBy,
-                    });
-                } else if (paidFrom === 'safe' && callbacks?.onWithdrawFromSafe) {
-                    callbacks.onWithdrawFromSafe(
+            return newExpense;
+        },
+
+        markExpenseAsPaid: async (expenseId, paidFrom, performedBy, callbacks) => {
+            const { expenses } = get();
+            const expense = expenses.find(e => e.id === expenseId);
+            if (!expense || expense.isPaid) return;
+
+            // Handle the financial impact via callbacks
+            if (paidFrom === 'cash' && callbacks?.onMovement) {
+                callbacks.onMovement({
+                    type: 'expense',
+                    amount: expense.amount,
+                    reason: `Paiement depense: ${expense.description}`,
+                    createdBy: performedBy,
+                });
+            } else if (paidFrom === 'safe' && callbacks?.onWithdrawFromSafe) {
+                callbacks.onWithdrawFromSafe(
+                    expense.amount,
+                    `Paiement depense: ${expense.description}`,
+                    performedBy
+                );
+            } else if (paidFrom === 'provision' && callbacks?.onWithdrawFromFund && callbacks?.getFundByCategory) {
+                const fund = callbacks.getFundByCategory(expense.category.toLowerCase());
+                if (fund) {
+                    callbacks.onWithdrawFromFund(
+                        fund.id,
                         expense.amount,
-                        `Paiement dépense: ${expense.description}`,
+                        `Paiement depense: ${expense.description}`,
                         performedBy
                     );
-                } else if (paidFrom === 'provision' && callbacks?.onWithdrawFromFund && callbacks?.getFundByCategory) {
-                    const fund = callbacks.getFundByCategory(expense.category.toLowerCase());
-                    if (fund) {
-                        callbacks.onWithdrawFromFund(
-                            fund.id,
-                            expense.amount,
-                            `Paiement dépense: ${expense.description}`,
-                            performedBy
-                        );
-                    }
                 }
+            }
 
-                set(state => ({
-                    expenses: state.expenses.map(e =>
-                        e.id === expenseId ? { ...e, isPaid: true, paidFrom } : e
-                    ),
-                }));
-            },
+            await expensesRepo.update(expenseId, { isPaid: true, paidFrom, paymentMethod: paidFrom });
 
-            deleteExpense: (expenseId) => {
-                set(state => ({
-                    expenses: state.expenses.filter(e => e.id !== expenseId),
-                }));
-            },
+            set(state => ({
+                expenses: state.expenses.map(e =>
+                    e.id === expenseId ? { ...e, isPaid: true, paidFrom } : e
+                ),
+            }));
+        },
 
-            // ========== GETTERS ==========
+        deleteExpense: async (expenseId) => {
+            await expensesRepo.remove(expenseId);
+            set(state => ({
+                expenses: state.expenses.filter(e => e.id !== expenseId),
+            }));
+        },
 
-            getTodayExpenses: () => {
-                const today = new Date().toDateString();
-                return get().expenses
-                    .filter(e => e.isPaid && new Date(e.createdAt).toDateString() === today)
-                    .reduce((sum, e) => sum + e.amount, 0);
-            },
+        // ========== GETTERS ==========
 
-            getUnpaidExpenses: () => {
-                return get().expenses.filter(e => !e.isPaid);
-            },
-        }),
-        {
-            name: 'treasury-storage-v2',
-            partialize: (state) => ({
-                expenses: state.expenses,
-            }),
-        }
-    )
+        getTodayExpenses: () => {
+            const today = new Date().toDateString();
+            return get().expenses
+                .filter(e => e.isPaid && new Date(e.createdAt).toDateString() === today)
+                .reduce((sum, e) => sum + e.amount, 0);
+        },
+
+        getUnpaidExpenses: () => {
+            return get().expenses.filter(e => !e.isPaid);
+        },
+    })
 );

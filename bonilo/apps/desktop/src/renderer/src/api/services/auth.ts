@@ -7,7 +7,7 @@
 import { apiClient, ApiResponse } from '../client';
 import { API_CONFIG, ENDPOINTS, API_STORAGE_KEYS } from '../config';
 import { secureStorage } from '../../services/secureStorage';
-import type { User } from '@asgard/shared';
+import type { User } from '@bonilo/shared';
 
 // ===== TYPES =====
 

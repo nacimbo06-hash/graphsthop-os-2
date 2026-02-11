@@ -29,7 +29,7 @@ import {
     useLotsStore,
     type Product,
     type PurchaseItem
-} from '@asgard/shared/stores';
+} from '@bonilo/shared/stores';
 import { useSettings } from '../../contexts/SettingsContext';
 import { useToast } from '../../components/feedback/Toast';
 import styles from './GoodsReceipt.module.css';

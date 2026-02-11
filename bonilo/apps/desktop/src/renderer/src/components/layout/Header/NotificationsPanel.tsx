@@ -15,7 +15,7 @@ import {
     Users,
     Settings,
 } from 'lucide-react';
-import { useNotificationsStore, type AppNotification } from '@asgard/shared/stores';
+import { useNotificationsStore, type AppNotification } from '@bonilo/shared/stores';
 import styles from './NotificationsPanel.module.css';
 
 interface NotificationsPanelProps {

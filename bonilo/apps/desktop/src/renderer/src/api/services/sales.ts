@@ -7,7 +7,7 @@
 
 import { apiClient, ApiResponse } from '../client';
 import { API_CONFIG, ENDPOINTS } from '../config';
-import type { Sale } from '@asgard/shared';
+import type { Sale } from '@bonilo/shared';
 
 // ===== TYPES =====
 

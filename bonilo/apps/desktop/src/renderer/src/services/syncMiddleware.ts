@@ -4,7 +4,7 @@
  */
 
 import { getSyncClient } from './syncClient';
-import { useNetworkSyncStore } from '@asgard/shared/stores';
+import { useNetworkSyncStore } from '@bonilo/shared/stores';
 
 /**
  * Sync a specific item to the network

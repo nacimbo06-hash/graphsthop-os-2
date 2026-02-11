@@ -21,7 +21,7 @@ import {
     type PurchaseOrder,
     type PurchaseItem,
     type Product
-} from '@asgard/shared/stores';
+} from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import styles from './PurchaseOrders.module.css';

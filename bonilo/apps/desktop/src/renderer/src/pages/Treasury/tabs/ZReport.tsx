@@ -18,7 +18,7 @@ import {
     PiggyBank,
     ArrowRight,
 } from 'lucide-react';
-import { useTreasuryStore, useAuthStore, type CashSession, type CashMovement } from '@asgard/shared/stores';
+import { useTreasuryStore, useAuthStore, type CashSession, type CashMovement } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import styles from './ZReport.module.css';

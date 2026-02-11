@@ -126,7 +126,7 @@ export function generateTestProducts(count: number = 50000): TestProduct[] {
  * Load test products into the products store
  */
 export async function loadTestProductsToStore(count: number = 50000): Promise<void> {
-    const { useProductsStore } = await import('../stores/productsStore');
+    const { useProductsStore } = await import('@bonilo/shared/stores');
 
     console.log('[StressTest] Loading products into store...');
     const products = generateTestProducts(count);
@@ -135,8 +135,8 @@ export async function loadTestProductsToStore(count: number = 50000): Promise<vo
     const batchSize = 5000;
     for (let i = 0; i < products.length; i += batchSize) {
         const batch = products.slice(i, i + batchSize);
-        useProductsStore.setState(state => ({
-            products: [...state.products, ...batch]
+        useProductsStore.setState((state) => ({
+            products: [...state.products, ...batch as any[]]
         }));
 
         // Allow UI to breathe

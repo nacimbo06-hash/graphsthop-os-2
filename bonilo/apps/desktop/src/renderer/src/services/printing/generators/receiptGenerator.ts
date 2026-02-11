@@ -5,7 +5,7 @@
  */
 
 import { ESCPOS, stringToBytes, padRight, padLeft } from '../commands/escpos';
-import type { ReceiptData } from '@asgard/shared';
+import type { ReceiptData } from '@bonilo/shared';
 import { formatCurrency, formatDateTime as formatDate } from '../../../utils/formatters';
 
 /**

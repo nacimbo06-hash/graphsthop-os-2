@@ -21,7 +21,7 @@ import {
 import { SuppliersList } from './tabs/SuppliersList';
 import { PurchaseOrders } from './tabs/PurchaseOrders';
 import { SupplierPayments } from './tabs/SupplierPayments';
-import { usePurchasesStore } from '@asgard/shared/stores';
+import { usePurchasesStore } from '@bonilo/shared/stores';
 import { useSettings } from '../../contexts/SettingsContext';
 import styles from './SuppliersHub.module.css';
 

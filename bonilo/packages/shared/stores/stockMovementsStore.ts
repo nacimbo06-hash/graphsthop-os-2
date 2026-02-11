@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { stockMovementsRepo } from '../db';
 
 export interface StockMovement {
     id: string;
@@ -18,9 +18,14 @@ export interface StockMovement {
 
 interface StockMovementsState {
     movements: StockMovement[];
+    isLoading: boolean;
+    isHydrated: boolean;
+
+    // Lifecycle
+    hydrate: () => Promise<void>;
 
     // Actions
-    addMovement: (movement: Omit<StockMovement, 'id' | 'date'>) => void;
+    addMovement: (movement: Omit<StockMovement, 'id' | 'date'>) => Promise<void>;
 
     // Getters
     getMovementsByDate: (date: Date) => StockMovement[];
@@ -31,57 +36,68 @@ interface StockMovementsState {
 }
 
 export const useStockMovementsStore = create<StockMovementsState>()(
-    persist(
-        (set, get) => ({
-            movements: [],
+    (set, get) => ({
+        movements: [],
+        isLoading: false,
+        isHydrated: false,
 
-            addMovement: (movement) => {
-                const newMovement: StockMovement = {
-                    ...movement,
-                    id: crypto.randomUUID(),
-                    date: new Date().toISOString(),
-                };
-                set(state => ({
-                    movements: [newMovement, ...state.movements],
-                }));
-            },
+        hydrate: async () => {
+            if (get().isHydrated) return;
+            set({ isLoading: true });
+            try {
+                const movements = await stockMovementsRepo.loadAll();
+                set({ movements, isHydrated: true, isLoading: false });
+                console.log(`[StockMovementsStore] Hydrated ${movements.length} movements from DB`);
+            } catch (error) {
+                console.error('[StockMovementsStore] Failed to hydrate:', error);
+                set({ isLoading: false });
+            }
+        },
 
-            getMovementsByDate: (date) => {
-                const dateStr = date.toDateString();
-                return get().movements.filter(
-                    m => new Date(m.date).toDateString() === dateStr
-                );
-            },
+        addMovement: async (movement) => {
+            const newMovement: StockMovement = {
+                ...movement,
+                id: crypto.randomUUID(),
+                date: new Date().toISOString(),
+            };
+            await stockMovementsRepo.create(newMovement);
+            set(state => ({
+                movements: [newMovement, ...state.movements],
+            }));
+        },
 
-            getMovementsByProduct: (productId) => {
-                return get().movements.filter(m => m.productId === productId);
-            },
+        getMovementsByDate: (date) => {
+            const dateStr = date.toDateString();
+            return get().movements.filter(
+                m => new Date(m.date).toDateString() === dateStr
+            );
+        },
 
-            getTodayMovements: () => {
-                const today = new Date().toDateString();
-                return get().movements.filter(
-                    m => new Date(m.date).toDateString() === today
-                );
-            },
+        getMovementsByProduct: (productId) => {
+            return get().movements.filter(m => m.productId === productId);
+        },
 
-            getTodayEntries: () => {
-                const today = new Date().toDateString();
-                return get().movements
-                    .filter(m => new Date(m.date).toDateString() === today && m.type === 'entry')
-                    .reduce((sum, m) => sum + m.quantity, 0);
-            },
+        getTodayMovements: () => {
+            const today = new Date().toDateString();
+            return get().movements.filter(
+                m => new Date(m.date).toDateString() === today
+            );
+        },
 
-            getTodayExits: () => {
-                const today = new Date().toDateString();
-                return get().movements
-                    .filter(m => new Date(m.date).toDateString() === today && (m.type === 'sale' || m.type === 'exit'))
-                    .reduce((sum, m) => sum + m.quantity, 0);
-            },
-        }),
-        {
-            name: 'stock-movements-storage',
-        }
-    )
+        getTodayEntries: () => {
+            const today = new Date().toDateString();
+            return get().movements
+                .filter(m => new Date(m.date).toDateString() === today && m.type === 'entry')
+                .reduce((sum, m) => sum + m.quantity, 0);
+        },
+
+        getTodayExits: () => {
+            const today = new Date().toDateString();
+            return get().movements
+                .filter(m => new Date(m.date).toDateString() === today && (m.type === 'sale' || m.type === 'exit'))
+                .reduce((sum, m) => sum + m.quantity, 0);
+        },
+    })
 );
 
 export default useStockMovementsStore;

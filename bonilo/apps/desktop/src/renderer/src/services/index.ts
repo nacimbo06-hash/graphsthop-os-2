@@ -5,7 +5,7 @@ export type {
     ReceiptData,
     LabelData,
     DocumentData
-} from '@asgard/shared';
+} from '@bonilo/shared';
 
 // Legacy export (original printerService - still works)
 export { PrinterService } from './printerService';

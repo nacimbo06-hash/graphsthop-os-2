@@ -7,7 +7,7 @@
 
 import { apiClient, ApiResponse } from '../client';
 import { API_CONFIG, ENDPOINTS } from '../config';
-import type { Product } from '@asgard/shared';
+import type { Product } from '@bonilo/shared';
 
 // ===== TYPES =====
 

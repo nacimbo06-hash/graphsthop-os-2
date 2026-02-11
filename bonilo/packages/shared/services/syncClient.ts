@@ -8,6 +8,7 @@ export interface SyncClient {
   disconnect(): void;
   startServer(port: number): Promise<void>;
   getStatus(): { connected: boolean; queueSize: number };
+  onConnection?(callback: (isConnected: boolean) => void): void;
 }
 
 // Mock implementation for now

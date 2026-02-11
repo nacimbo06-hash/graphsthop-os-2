@@ -18,10 +18,10 @@ import {
     JonyLabel,
     type PriceLabelData,
     type LabelType,
-} from '../../services/jonyPrintDesigner';
+} from '../../../services/jonyPrintDesigner';
 import type { ReceiptData } from '@asgard/shared';
 import { useSalesStore, useProductsStore } from '@asgard/shared/stores';
-import { useSettings } from '../../contexts/SettingsContext';
+import { useSettings } from '../../../contexts/SettingsContext';
 import styles from './PrintPreview.module.css';
 
 // Default demo receipt data (used when no real data is available)

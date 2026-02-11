@@ -10,8 +10,8 @@
  *   5. Anomaly Detection (Z-score on daily totals)
  */
 
-import type { Product } from '@asgard/shared/types/product';
-import type { Sale } from '@asgard/shared/types/sales';
+import type { Product } from '@bonilo/shared/types/product';
+import type { Sale } from '@bonilo/shared/types/sales';
 import {
     ForecastingEngine,
     AnomalyDetector,

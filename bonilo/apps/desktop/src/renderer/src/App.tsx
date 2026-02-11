@@ -12,7 +12,7 @@ import { SyncProvider } from './providers/SyncProvider';
 import { DBProvider } from './providers/DBProvider';
 
 // Auth Store
-import { useAuthStore } from '@asgard/shared/stores';
+import { useAuthStore } from '@bonilo/shared/stores';
 
 // Layout (keep eager - shared across all routes)
 import { MainLayout } from './components/layout/MainLayout';
@@ -36,7 +36,7 @@ const Onboarding = lazy(() => import('./pages/Onboarding/Onboarding').then(m => 
 import './styles/globals.css';
 import { useSettings } from './contexts/SettingsContext';
 
-import { ROUTES } from '@asgard/shared/constants';
+import { ROUTES } from '@bonilo/shared/constants';
 
 // Loading Fallback Component
 const PageLoader: React.FC = () => (
@@ -199,17 +199,17 @@ const AppContent: React.FC = () => {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Dashboard />} />
-            <Route path="pos" element={<POS />} />
-            <Route path="treasury" element={<Treasury />} />
-            <Route path="inventory" element={<Inventory />} />
-            <Route path="customers" element={<Customers />} />
-            <Route path="suppliers" element={<Suppliers />} />
-            <Route path="print" element={<PrintCenter />} />
-            <Route path="reports" element={<ReportsHub />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="users" element={<UsersManagement />} />
-            <Route path="help" element={<Help />} />
+            <Route index element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+            <Route path="pos" element={<ErrorBoundary><POS /></ErrorBoundary>} />
+            <Route path="treasury" element={<ErrorBoundary><Treasury /></ErrorBoundary>} />
+            <Route path="inventory" element={<ErrorBoundary><Inventory /></ErrorBoundary>} />
+            <Route path="customers" element={<ErrorBoundary><Customers /></ErrorBoundary>} />
+            <Route path="suppliers" element={<ErrorBoundary><Suppliers /></ErrorBoundary>} />
+            <Route path="print" element={<ErrorBoundary><PrintCenter /></ErrorBoundary>} />
+            <Route path="reports" element={<ErrorBoundary><ReportsHub /></ErrorBoundary>} />
+            <Route path="settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+            <Route path="users" element={<ErrorBoundary><UsersManagement /></ErrorBoundary>} />
+            <Route path="help" element={<ErrorBoundary><Help /></ErrorBoundary>} />
           </Route>
 
           {/* Catch all - redirect to home or login */}

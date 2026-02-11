@@ -49,7 +49,7 @@ import {
     useTreasuryStore,
     useProductsStore,
     useAuthStore
-} from '@asgard/shared/stores';
+} from '@bonilo/shared/stores';
 import { formatCurrencyCompact } from '../../utils/formatters';
 import styles from './CommandCenter.module.css';
 

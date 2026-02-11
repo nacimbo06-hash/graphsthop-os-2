@@ -48,7 +48,7 @@ import {
     useTreasuryStore,
     useProductsStore,
     useCustomersStore
-} from '@asgard/shared/stores';
+} from '@bonilo/shared/stores';
 import { InsightsGenerator, type AIInsight } from '../../services/ai/forecastingService';
 import { BoniloIntelligence } from '../../services/ai/intelligenceService';
 import { ExpiryAlertService } from '../../services/expiryAlertService';

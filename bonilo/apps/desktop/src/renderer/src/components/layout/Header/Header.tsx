@@ -18,7 +18,7 @@ import { GlobalSearch } from './GlobalSearch';
 import { NotificationsPanel } from './NotificationsPanel';
 import { UserSwitcher } from './UserSwitcher';
 import { SyncIndicator } from '../../domain/sync/SyncIndicator';
-import { useAuthStore, ROLE_LABELS, useNotificationsStore } from '@asgard/shared/stores';
+import { useAuthStore, ROLE_LABELS, useNotificationsStore } from '@bonilo/shared/stores';
 import styles from './Header.module.css';
 
 interface HeaderProps {

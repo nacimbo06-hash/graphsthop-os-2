@@ -7,8 +7,8 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import { api, API_CONFIG } from '../api';
-import type { Product } from '@asgard/shared/product';
-import type { Sale } from '@asgard/shared/sales';
+import type { Product } from '@bonilo/shared/types/product';
+import type { Sale } from '@bonilo/shared/types/sales';
 import type { ApiResponse } from '../api/client';
 import type {
     ProductFilters,

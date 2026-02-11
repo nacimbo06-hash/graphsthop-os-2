@@ -13,10 +13,10 @@ import {
     X,
     Save,
 } from 'lucide-react';
-import type { Product } from '@asgard/shared/product';
+import type { Product } from '@bonilo/shared/types/product';
 import { useToast } from '../../../components/feedback/Toast';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
-import { useProductsStore } from '@asgard/shared/stores';
+import { useProductsStore } from '@bonilo/shared/stores';
 import { formatCurrency } from '../../../utils/formatters';
 import styles from './BundleManagement.module.css';
 

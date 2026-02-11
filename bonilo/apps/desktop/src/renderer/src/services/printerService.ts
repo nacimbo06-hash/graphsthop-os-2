@@ -18,7 +18,7 @@ import type {
     ReceiptData,
     LabelData,
     DocumentData
-} from '@asgard/shared';
+} from '@bonilo/shared';
 
 // Placeholder for WebUSB type
 type USBDevice = any;
@@ -379,7 +379,7 @@ class PrinterServiceClass {
         try {
             // Find the bulk OUT endpoint
             const endpoint = this.connectedDevice.configuration?.interfaces[0]
-                ?.alternate.endpoints.find(e => e.direction === 'out');
+                ?.alternate.endpoints.find((e: { direction: string }) => e.direction === 'out');
 
             if (!endpoint) {
                 throw new Error('No output endpoint found');

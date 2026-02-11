@@ -9,7 +9,7 @@ import {
     Wifi,
     WifiOff,
 } from 'lucide-react';
-import { useSyncStore } from '@asgard/shared/stores';
+import { useSyncStore } from '@bonilo/shared/stores';
 import styles from './SyncIndicator.module.css';
 
 export const SyncIndicator: React.FC = () => {

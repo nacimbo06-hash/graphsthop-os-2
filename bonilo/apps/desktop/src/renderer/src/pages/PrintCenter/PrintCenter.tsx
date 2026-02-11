@@ -23,7 +23,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
-import { useProductsStore } from '@asgard/shared/stores';
+import { useProductsStore } from '@bonilo/shared/stores';
 import { formatCurrency } from '../../utils/formatters';
 import styles from './PrintCenter.module.css';
 
@@ -692,7 +692,7 @@ ${allLabelsHTML.map(html => {
                                             {isSelected && <Check size={14} />}
                                         </div>
                                         <span className={styles.productEmoji}>
-                                            {product.emoji || product.image || '📦'}
+                                            {product.emoji || '📦'}
                                         </span>
                                         <div className={styles.productInfo} onClick={() => toggleProduct(product.id)}>
                                             <span className={styles.productName}>

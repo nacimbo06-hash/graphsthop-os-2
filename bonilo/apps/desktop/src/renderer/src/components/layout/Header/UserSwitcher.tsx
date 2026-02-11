@@ -8,7 +8,7 @@ import {
     Key,
     X,
 } from 'lucide-react';
-import { useAuthStore, PREDEFINED_USERS } from '@asgard/shared/stores';
+import { useAuthStore, PREDEFINED_USERS } from '@bonilo/shared/stores';
 import styles from './UserSwitcher.module.css';
 
 export const UserSwitcher: React.FC = () => {

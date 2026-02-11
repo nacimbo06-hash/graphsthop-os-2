@@ -14,8 +14,8 @@ import {
     getSuggestedDiscount,
     sortByFEFO,
     selectLotsForSale,
-} from '@asgard/shared';
-import type { Product } from '@asgard/shared';
+} from '@bonilo/shared';
+import type { Product } from '@bonilo/shared';
 
 /**
  * Create a ProductLot from a perishable product

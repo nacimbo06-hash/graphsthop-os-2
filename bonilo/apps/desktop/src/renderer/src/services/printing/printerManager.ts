@@ -17,7 +17,7 @@ import type {
     DocumentData,
     PrintResult,
     PrintErrorType
-} from '@asgard/shared';
+} from '@bonilo/shared';
 
 // Placeholder for WebUSB type
 type USBDevice = any;

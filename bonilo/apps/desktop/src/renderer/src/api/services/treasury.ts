@@ -7,7 +7,7 @@
 
 import { apiClient, ApiResponse } from '../client';
 import { API_CONFIG, ENDPOINTS } from '../config';
-import type { CashSession, CashMovement, Expense } from '@asgard/shared';
+import type { CashSession, CashMovement, Expense } from '@bonilo/shared';
 
 // ===== TYPES =====
 

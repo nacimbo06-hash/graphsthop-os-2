@@ -37,7 +37,7 @@ import {
     useCustomersStore,
     useStockMovementsStore,
     useAuthStore
-} from '@asgard/shared/stores';
+} from '@bonilo/shared/stores';
 import { useToast } from '../../components/feedback/Toast';
 import { ConfirmModal } from '../../components/feedback/ConfirmModal';
 import styles from './POS.module.css';
@@ -462,11 +462,10 @@ export const POS: React.FC = () => {
             updateCredit(customerObj.id, total, 'purchase', saleId, `Achat POS ${receiptNumber}`);
         }
 
-        // 5. Silent Printing via Electron API
-        if (autoPrint && window.electronAPI) {
+        // 5. Silent Printing
+        if (autoPrint) {
             try {
-                const html = generateReceiptHTML(saleId, receiptNumber, cart, total, Math.max(0, change), customerObj?.name || null, selectedPayment);
-                await window.electronAPI.printReceipt(html);
+                window.print();
                 toast.success('Ticket imprimé');
             } catch (err) {
                 console.error('Print error:', err);
@@ -1059,7 +1058,7 @@ export const POS: React.FC = () => {
                             <div className={styles.saleDetailProducts}>
                                 <h3>Produits</h3>
                                 <div className={styles.productsList}>
-                                    {selectedSaleDetail.items.map((p, idx) => (
+                                    {selectedSaleDetail.items.map((p: any, idx: number) => (
                                         <div key={idx} className={styles.productRow}>
                                             <span className={styles.productName}>{p.productName}</span>
                                             <span className={styles.productQty}>x{p.quantity}</span>
@@ -1083,14 +1082,8 @@ export const POS: React.FC = () => {
                             <button
                                 className={styles.confirmBtn}
                                 onClick={async () => {
-                                    if (window.electronAPI) {
-                                        const html = generateReceiptHTML(selectedSaleDetail.id, selectedSaleDetail.id, selectedSaleDetail.items.map(i => ({ ...i, price: i.unitPrice, name: i.productName })), selectedSaleDetail.totalAmount, 0, selectedSaleDetail.customerName, selectedSaleDetail.paymentMethod);
-                                        await window.electronAPI.printReceipt(html);
-                                        toast.success('Ticket réimprimé');
-                                    } else {
-                                        toast.info('Réimpression du ticket via navigateur...');
-                                        window.print();
-                                    }
+                                    toast.info('Réimpression du ticket via navigateur...');
+                                    window.print();
                                 }}
                             >
                                 <Printer size={16} />

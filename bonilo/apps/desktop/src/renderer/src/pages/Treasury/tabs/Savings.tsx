@@ -16,7 +16,7 @@ import {
     Edit2,
     Banknote,
 } from 'lucide-react';
-import { useTreasuryStore, useAuthStore, type SinkingFund } from '@asgard/shared/stores';
+import { useTreasuryStore, useAuthStore, type SinkingFund } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import styles from './Savings.module.css';
 

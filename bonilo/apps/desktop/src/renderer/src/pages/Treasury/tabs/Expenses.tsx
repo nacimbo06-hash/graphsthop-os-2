@@ -20,7 +20,7 @@ import {
     CheckCircle,
     AlertCircle,
 } from 'lucide-react';
-import { useTreasuryStore, type Expense } from '@asgard/shared/stores';
+import { useTreasuryStore, type Expense } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
 import styles from './Expenses.module.css';

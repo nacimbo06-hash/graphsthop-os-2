@@ -5,7 +5,7 @@
  * Used for price labels and product tags.
  */
 
-import type { LabelData } from '@asgard/shared';
+import type { LabelData } from '@bonilo/shared';
 
 // ===== BASE COMMANDS =====
 

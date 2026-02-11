@@ -9,7 +9,7 @@ import {
     ArrowRight,
     Shield,
 } from 'lucide-react';
-import { useAuthStore, ROLE_LABELS } from '@asgard/shared/stores';
+import { useAuthStore, ROLE_LABELS } from '@bonilo/shared/stores';
 import styles from './Login.module.css';
 import igoLogo from '../../assets/igo-logo.svg';
 

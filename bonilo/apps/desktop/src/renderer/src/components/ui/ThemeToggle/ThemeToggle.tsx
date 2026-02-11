@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { useThemeStore } from '@asgard/shared/stores';
+import { useThemeStore } from '@bonilo/shared/stores';
 import styles from './ThemeToggle.module.css';
 
 export const ThemeToggle: React.FC = () => {

@@ -8,7 +8,7 @@ import {
     ArrowUpRight,
     ArrowDownLeft,
 } from 'lucide-react';
-import { useStockMovementsStore, type StockMovement } from '@asgard/shared/stores';
+import { useStockMovementsStore, type StockMovement } from '@bonilo/shared/stores';
 import styles from './StockMovements.module.css';
 
 export const StockMovements: React.FC = () => {

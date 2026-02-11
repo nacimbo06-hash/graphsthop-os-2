@@ -1,6 +1,6 @@
 /**
  * Treasury Facade Hook - SuperMarket Control OS
- * 
+ *
  * Provides backwards-compatible API combining all treasury stores.
  * Use this for gradual migration from useTreasuryStore.
  */
@@ -9,7 +9,6 @@ import { useCashSessionStore } from './cashSessionStore';
 import { useSafeStore } from './safeStore';
 import { useSinkingFundsStore } from './sinkingFundsStore';
 import { useExpensesStore } from './expensesStore';
-import type { CashMovement } from '@shared/types/treasury';
 
 // Re-export types for backwards compatibility
 export type {
@@ -24,7 +23,7 @@ export type {
 
 /**
  * Combined treasury facade hook
- * 
+ *
  * This hook provides the same API as the original useTreasuryStore
  * but internally uses the split stores. Use this for backwards
  * compatibility during migration.
@@ -39,9 +38,9 @@ export const useTreasuryFacade = () => {
     // ========== CROSS-STORE ACTIONS ==========
 
     // Deposit to safe with automatic movement recording
-    const depositToSafe = (amount: number, reason: string, performedBy: string) => {
+    const depositToSafe = async (amount: number, reason: string, performedBy: string) => {
         const shouldRecordMovement = cashSession.currentSession?.status === 'open';
-        safe.depositToSafe(
+        await safe.depositToSafe(
             amount,
             reason,
             performedBy,
@@ -50,9 +49,9 @@ export const useTreasuryFacade = () => {
     };
 
     // Contribute to fund with automatic movement recording
-    const contributeToFund = (fundId: string, amount: number, reason: string, performedBy: string) => {
+    const contributeToFund = async (fundId: string, amount: number, reason: string, performedBy: string) => {
         const shouldRecordMovement = cashSession.currentSession?.status === 'open';
-        provisions.contributeToFund(
+        await provisions.contributeToFund(
             fundId,
             amount,
             reason,
@@ -62,31 +61,40 @@ export const useTreasuryFacade = () => {
     };
 
     // Mark expense as paid with cross-store coordination
-    const markExpenseAsPaid = (
+    const markExpenseAsPaid = async (
         expenseId: string,
         paidFrom: 'cash' | 'safe' | 'provision',
         performedBy: string = 'System'
     ) => {
-        expenses.markExpenseAsPaid(expenseId, paidFrom, performedBy, {
+        await expenses.markExpenseAsPaid(expenseId, paidFrom, performedBy, {
             onMovement: cashSession.currentSession?.status === 'open'
                 ? cashSession.addMovement
                 : undefined,
-            onWithdrawFromSafe: safe.withdrawFromSafe,
-            onWithdrawFromFund: provisions.withdrawFromFund,
+            onWithdrawFromSafe: (amount: number, reason: string, performedBy: string) => {
+                // Fire and forget - the sync callback interface expects boolean
+                safe.withdrawFromSafe(amount, reason, performedBy);
+                return safe.safeBalance >= amount;
+            },
+            onWithdrawFromFund: (fundId: string, amount: number, reason: string, performedBy: string) => {
+                const fund = provisions.sinkingFunds.find(f => f.id === fundId);
+                if (!fund || amount > fund.currentBalance) return false;
+                provisions.withdrawFromFund(fundId, amount, reason, performedBy);
+                return true;
+            },
             getFundByCategory: (category: string) =>
                 provisions.sinkingFunds.find(f => f.category === category),
         });
     };
 
     // Add expense with optional immediate payment
-    const addExpense = (
+    const addExpense = async (
         expense: Parameters<typeof expenses.addExpense>[0],
         isPaid: boolean = false,
         paidFrom?: 'cash' | 'safe' | 'provision'
     ) => {
-        const newExpense = expenses.addExpense(expense, isPaid, paidFrom);
+        const newExpense = await expenses.addExpense(expense, isPaid, paidFrom);
         if (isPaid && paidFrom) {
-            markExpenseAsPaid(newExpense.id, paidFrom);
+            await markExpenseAsPaid(newExpense.id, paidFrom);
         }
     };
 
