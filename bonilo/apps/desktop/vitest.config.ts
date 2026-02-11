@@ -22,6 +22,7 @@ export default defineConfig({
         alias: {
             '@': path.resolve(__dirname, './src/renderer/src'),
             '@shared': path.resolve(__dirname, '../../packages/shared'),
+            '@bonilo/shared': path.resolve(__dirname, '../../packages/shared'),
             '@asgard/shared': path.resolve(__dirname, '../../packages/shared'),
         },
     },

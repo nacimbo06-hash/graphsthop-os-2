@@ -20,31 +20,31 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: apps/desktop-os/package-lock.json
+          cache-dependency-path: apps/desktop/package-lock.json
 
       - name: Install dependencies
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm ci
 
       - name: Run Prettier check
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npx prettier --check "src/**/*.{ts,tsx}" --config .prettierrc || echo "Prettier check completed"
         continue-on-error: true
 
       - name: Run ESLint
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm run lint
 
       - name: Run TypeScript type checking
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm run typecheck
 
       - name: Run tests
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm test
 
       - name: Check test coverage
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: |
           npm run test:coverage || true
           echo "Coverage report generated"

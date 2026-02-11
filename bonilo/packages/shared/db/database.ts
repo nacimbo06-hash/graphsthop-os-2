@@ -11,11 +11,11 @@
 
 // Dynamic import for Tauri database to support non-Tauri environments (browser/tests)
 const getTauriDb = async () => {
-    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-        const { default: Database } = await import('@tauri-apps/plugin-sql');
-        return Database;
-    }
-    return null;
+  if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+    const { default: Database } = await import('@tauri-apps/plugin-sql');
+    return Database;
+  }
+  return null;
 };
 
 // Import migration SQL as raw strings
@@ -201,10 +201,6 @@ PRAGMA user_version = 1;
 `;
 
 const MIGRATION_002 = `
--- New tables for v2: safe_transactions, sinking_funds, sinking_fund_transactions,
--- lots, lot_movements, purchase_orders, purchase_order_items, goods_receipts, goods_receipt_items,
--- credit_transactions, cash_movements, stock_movements
-
 CREATE TABLE IF NOT EXISTS safe_transactions (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL,
@@ -407,107 +403,107 @@ PRAGMA user_version = 2;
 
 // Ordered list of migrations
 const MIGRATIONS = [
-    { version: 1, sql: MIGRATION_001 },
-    { version: 2, sql: MIGRATION_002 },
+  { version: 1, sql: MIGRATION_001 },
+  { version: 2, sql: MIGRATION_002 },
 ];
 
 class BoniloDatabase {
-    private db: any = null;
-    private initialized = false;
+  private db: any = null;
+  private initialized = false;
 
-    async init(): Promise<any> {
-        if (this.db && this.initialized) return this.db;
+  async init(): Promise<any> {
+    if (this.db && this.initialized) return this.db;
 
-        try {
-            const DatabasePlugin = await getTauriDb();
-            if (!DatabasePlugin) {
-                console.warn('[BoniloDB] ⚠️ Not in Tauri environment. Database operations will be mocked.');
-                this.initialized = true;
-                return null;
-            }
+    try {
+      const DatabasePlugin = await getTauriDb();
+      if (!DatabasePlugin) {
+        console.warn('[BoniloDB] ⚠️ Not in Tauri environment. Database operations will be mocked.');
+        this.initialized = true;
+        return null;
+      }
 
-            this.db = await DatabasePlugin.load('sqlite:bonilo.db');
+      this.db = await DatabasePlugin.load('sqlite:bonilo.db');
 
-            // Enable WAL mode and foreign keys
-            await this.db.execute('PRAGMA journal_mode = WAL;');
-            await this.db.execute('PRAGMA synchronous = NORMAL;');
-            await this.db.execute('PRAGMA foreign_keys = ON;');
+      // Enable WAL mode and foreign keys
+      await this.db.execute('PRAGMA journal_mode = WAL;');
+      await this.db.execute('PRAGMA synchronous = NORMAL;');
+      await this.db.execute('PRAGMA foreign_keys = ON;');
 
-            await this.runMigrations();
+      await this.runMigrations();
 
-            this.initialized = true;
-            console.log('[BoniloDB] ✅ Database initialized successfully');
-            return this.db;
-        } catch (error) {
-            console.error('[BoniloDB] ❌ Failed to initialize database:', error);
-            throw error;
+      this.initialized = true;
+      console.log('[BoniloDB] ✅ Database initialized successfully');
+      return this.db;
+    } catch (error) {
+      console.error('[BoniloDB] ❌ Failed to initialize database:', error);
+      throw error;
+    }
+  }
+
+  private async runMigrations(): Promise<void> {
+    if (!this.db) return;
+
+    const result = await this.db.select('PRAGMA user_version;') as [{ user_version: number }];
+    const currentVersion = result[0]?.user_version ?? 0;
+
+    for (const migration of MIGRATIONS) {
+      if (migration.version > currentVersion) {
+        const statements = migration.sql
+          .split(';')
+          .map(s => s.trim())
+          .filter(s => s.length > 0 && !s.startsWith('--'));
+
+        for (const stmt of statements) {
+          await this.db.execute(stmt + ';');
         }
+      }
     }
+  }
 
-    private async runMigrations(): Promise<void> {
-        if (!this.db) return;
+  getDb(): any {
+    return this.db;
+  }
 
-        const result = await this.db.select('PRAGMA user_version;') as [{ user_version: number }];
-        const currentVersion = result[0]?.user_version ?? 0;
+  async select<T = any>(query: string, params: any[] = []): Promise<T[]> {
+    if (!this.db) return [];
+    return this.db.select(query, params);
+  }
 
-        for (const migration of MIGRATIONS) {
-            if (migration.version > currentVersion) {
-                const statements = migration.sql
-                    .split(';')
-                    .map(s => s.trim())
-                    .filter(s => s.length > 0 && !s.startsWith('--'));
+  async execute(query: string, params: any[] = []): Promise<any> {
+    if (!this.db) return { rowsAffected: 0, lastInsertId: 0 };
+    return this.db.execute(query, params);
+  }
 
-                for (const stmt of statements) {
-                    await this.db.execute(stmt + ';');
-                }
-            }
-        }
+  async transaction(operations: Array<{ query: string; params?: any[] }>): Promise<void> {
+    if (!this.db) return;
+    await this.db.execute('BEGIN TRANSACTION;');
+    try {
+      for (const op of operations) {
+        await this.db.execute(op.query, op.params || []);
+      }
+      await this.db.execute('COMMIT;');
+    } catch (error) {
+      await this.db.execute('ROLLBACK;');
+      throw error;
     }
+  }
 
-    getDb(): any {
-        return this.db;
-    }
+  async insert(table: string, data: Record<string, any>): Promise<string> {
+    const keys = Object.keys(data);
+    const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+    const values = Object.values(data);
+    const query = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
+    await this.execute(query, values);
+    return data.id as string;
+  }
 
-    async select<T = any>(query: string, params: any[] = []): Promise<T[]> {
-        if (!this.db) return [];
-        return this.db.select(query, params);
-    }
-
-    async execute(query: string, params: any[] = []): Promise<any> {
-        if (!this.db) return { rowsAffected: 0, lastInsertId: 0 };
-        return this.db.execute(query, params);
-    }
-
-    async transaction(operations: Array<{ query: string; params?: any[] }>): Promise<void> {
-        if (!this.db) return;
-        await this.db.execute('BEGIN TRANSACTION;');
-        try {
-            for (const op of operations) {
-                await this.db.execute(op.query, op.params || []);
-            }
-            await this.db.execute('COMMIT;');
-        } catch (error) {
-            await this.db.execute('ROLLBACK;');
-            throw error;
-        }
-    }
-
-    async insert(table: string, data: Record<string, any>): Promise<string> {
-        const keys = Object.keys(data);
-        const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
-        const values = Object.values(data);
-        const query = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
-        await this.execute(query, values);
-        return data.id as string;
-    }
-
-    async update(table: string, id: string, data: Record<string, any>): Promise<void> {
-        const keys = Object.keys(data);
-        const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
-        const values = [...Object.values(data), id];
-        const query = `UPDATE ${table} SET ${setClause} WHERE id = $${keys.length + 1}`;
-        await this.execute(query, values);
-    }
+  async update(table: string, id: string, data: Record<string, any>): Promise<void> {
+    const keys = Object.keys(data);
+    const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
+    const values = [...Object.values(data), id];
+    const query = `UPDATE ${table} SET ${setClause} WHERE id = $${keys.length + 1}`;
+    await this.execute(query, values);
+  }
 }
 
 export const db = new BoniloDatabase();

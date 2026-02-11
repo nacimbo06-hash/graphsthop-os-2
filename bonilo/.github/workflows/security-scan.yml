@@ -20,14 +20,14 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: apps/desktop-os/package-lock.json
+          cache-dependency-path: apps/desktop/package-lock.json
 
       - name: Install dependencies
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: npm ci
 
       - name: Run npm audit
-        working-directory: apps/desktop-os
+        working-directory: apps/desktop
         run: |
           npm audit --audit-level=moderate --json > audit-report.json || true
           npm audit --audit-level=moderate
@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: security-audit-report
-          path: apps/desktop-os/audit-report.json
+          path: apps/desktop/audit-report.json
           if-no-files-found: ignore
 
       - name: Check for secrets with TruffleHog

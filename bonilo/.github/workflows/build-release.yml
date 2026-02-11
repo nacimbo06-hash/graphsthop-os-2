@@ -10,7 +10,7 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,23 +20,18 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: apps/desktop-os/package-lock.json
 
       - name: Install dependencies
-        working-directory: apps/desktop-os
         run: npm ci
 
       - name: Run TypeScript type checking
-        working-directory: apps/desktop-os
         run: npm run typecheck
 
       - name: Run ESLint
-        working-directory: apps/desktop-os
         run: npm run lint
 
       - name: Run tests
-        working-directory: apps/desktop-os
-        run: npm test
+        run: npm run test --workspace=apps/desktop
 
   build:
     name: Build ${{ matrix.name }}
@@ -51,15 +46,9 @@ jobs:
           - platform: macos-latest
             args: '--target x86_64-apple-darwin'
             name: macOS-x64
-          - platform: ubuntu-22.04
-            args: ''
-            name: Linux
-          - platform: windows-latest
-            args: ''
-            name: Windows
 
     runs-on: ${{ matrix.platform }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,21 +58,24 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: apps/desktop-os/package-lock.json
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
 
-      - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libudev-dev
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            apps/desktop/src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('apps/desktop/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Install frontend dependencies
-        working-directory: apps/desktop-os
         run: npm ci
 
       - name: Build Tauri app
@@ -91,24 +83,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          projectPath: apps/desktop-os
+          projectPath: apps/desktop
           tagName: ${{ github.ref_name }}
-          releaseName: 'IGO Desktop v__VERSION__'
+          releaseName: 'Bonilo v__VERSION__'
           releaseBody: |
             ## Changes in this Release
-            
+
             See the [CHANGELOG.md](../CHANGELOG.md) for details.
-            
-            ### Security
-            - All passwords are now securely hashed using bcrypt
-            - JWT tokens are encrypted before storage
-            - SQL injection prevention enhanced
-            
+
             ### Downloads
             - **macOS (Apple Silicon)**: `.dmg` file
-            - **macOS (Intel)**: `.dmg` file  
-            - **Linux**: `.deb` or `.AppImage` file
-            - **Windows**: `.msi` or `.exe` file
+            - **macOS (Intel)**: `.dmg` file
           releaseDraft: true
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
           args: ${{ matrix.args }}
@@ -116,12 +101,8 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: igo-desktop-${{ matrix.name }}
+          name: bonilo-desktop-${{ matrix.name }}
           path: |
-            apps/desktop-os/src-tauri/target/release/bundle/**/*.dmg
-            apps/desktop-os/src-tauri/target/release/bundle/**/*.app
-            apps/desktop-os/src-tauri/target/release/bundle/**/*.deb
-            apps/desktop-os/src-tauri/target/release/bundle/**/*.AppImage
-            apps/desktop-os/src-tauri/target/release/bundle/**/*.msi
-            apps/desktop-os/src-tauri/target/release/bundle/**/*.exe
+            apps/desktop/src-tauri/target/release/bundle/**/*.dmg
+            apps/desktop/src-tauri/target/release/bundle/**/*.app
           if-no-files-found: ignore

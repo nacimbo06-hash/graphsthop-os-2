@@ -1,0 +1,1 @@
+const o=(t,r="DA")=>new Intl.NumberFormat("fr-DZ").format(Math.round(t))+" "+r,a=t=>new Intl.NumberFormat("fr-DZ",{notation:"compact",maximumFractionDigits:1}).format(t)+" DA",n=t=>t.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});export{n as a,a as b,o as f};

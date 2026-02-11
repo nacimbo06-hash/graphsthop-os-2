@@ -53,6 +53,7 @@
   --color-bg-primary: var(--color-surface);
   --color-bg-secondary: var(--color-background);
   --color-bg-tertiary: var(--color-border-light);
+  --color-bg-hover: #F3F4F6;
 
   /* Text Colors */
   --color-text-primary: #2C2C2C;
@@ -237,6 +238,7 @@
   --color-bg-primary: var(--color-surface);
   --color-bg-secondary: var(--color-background);
   --color-bg-tertiary: var(--color-border-light);
+  --color-bg-hover: #333333;
 
   /* Text Colors */
   --color-text-primary: #F5F0EA;
