@@ -12,6 +12,7 @@ export interface SaleItem {
     total: number;
     taxAmount?: number;
     discountPercent?: number;
+    stockQuantity?: number;
 }
 
 export interface Sale {

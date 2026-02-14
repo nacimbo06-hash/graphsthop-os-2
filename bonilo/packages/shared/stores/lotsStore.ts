@@ -111,7 +111,7 @@ export const useLotsStore = create<LotsState>()(
 
             const newLot: ProductLot = {
                 ...lotData,
-                id: `lot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                id: crypto.randomUUID(),
                 status,
                 daysRemaining,
                 createdAt: new Date().toISOString(),
@@ -119,7 +119,7 @@ export const useLotsStore = create<LotsState>()(
 
             // Add movement record
             const movement: LotMovement = {
-                id: `mov_${Date.now()}`,
+                id: crypto.randomUUID(),
                 lotId: newLot.id,
                 productId: newLot.productId,
                 type: 'receipt',
@@ -159,7 +159,7 @@ export const useLotsStore = create<LotsState>()(
 
             // Add movement record
             const movement: LotMovement = {
-                id: `mov_${Date.now()}`,
+                id: crypto.randomUUID(),
                 lotId,
                 productId: lot.productId,
                 type: 'sale',
@@ -186,7 +186,7 @@ export const useLotsStore = create<LotsState>()(
 
             // Add disposal movement
             const movement: LotMovement = {
-                id: `mov_${Date.now()}`,
+                id: crypto.randomUUID(),
                 lotId,
                 productId: lot.productId,
                 type: 'disposal',

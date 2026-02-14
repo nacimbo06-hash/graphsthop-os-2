@@ -11,12 +11,20 @@ interface SalesState {
     hydrate: () => Promise<void>;
 
     // Actions
-    addSale: (sale: Omit<Sale, 'id' | 'receiptNumber' | 'timestamp'>, costMap?: Record<string, number>) => Promise<Sale>;
+    addSale: (
+        saleData: Omit<Sale, 'id' | 'receiptNumber' | 'timestamp'>,
+        costMap?: Record<string, number>,
+        customerCredit?: {
+            newBalance: number;
+            lastPaymentDate: string | null;
+        },
+        treasuryMovement?: {
+            sessionId: string;
+            movementId: string;
+            createdBy: string;
+        }
+    ) => Promise<Sale>;
     getSaleById: (id: string) => Sale | undefined;
-    getTodaySales: () => Sale[];
-    getWeekSales: () => Sale[];
-    getMonthSales: () => Sale[];
-    getSalesByPeriod: (start: Date, end: Date) => Sale[];
     getTodayTotal: () => number;
     getWeekTotal: () => number;
     getMonthTotal: () => number;
@@ -45,16 +53,16 @@ export const useSalesStore = create<SalesState>()(
         },
 
         // Record a sale — DB first in a transaction, then update memory
-        addSale: async (saleData, costMap = {}) => {
+        addSale: async (saleData, costMap = {}, customerCredit, treasuryMovement) => {
             const newSale: Sale = {
                 ...saleData,
-                id: `sale_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                id: crypto.randomUUID(),
                 receiptNumber: `REC-${Date.now().toString().slice(-6)}`,
                 timestamp: new Date().toISOString(),
             };
 
-            // Write to DB atomically (sale + items + stock decrement + movements)
-            await salesRepo.recordSale(newSale, costMap);
+            // Write to DB atomically (sale + items + stock decrement + movements + optional customer credit + optional treasury movement)
+            await salesRepo.recordSale(newSale, costMap, customerCredit, treasuryMovement);
 
             // Update in-memory state
             set(state => ({

@@ -36,7 +36,7 @@ export const useSyncStore = create<SyncState>()(
 
             addPendingOperation: (operation) => {
                 const newOperation: PendingOperation = {
-                    id: Date.now().toString(),
+                    id: crypto.randomUUID(),
                     ...operation,
                     timestamp: new Date(),
                     retryCount: 0,

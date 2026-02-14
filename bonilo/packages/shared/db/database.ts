@@ -401,10 +401,18 @@ ALTER TABLE suppliers ADD COLUMN nif TEXT DEFAULT '';
 PRAGMA user_version = 2;
 `;
 
+const MIGRATION_003 = `
+ALTER TABLE expenses ADD COLUMN is_paid INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE expenses ADD COLUMN paid_from TEXT DEFAULT NULL;
+
+PRAGMA user_version = 3;
+`;
+
 // Ordered list of migrations
 const MIGRATIONS = [
   { version: 1, sql: MIGRATION_001 },
   { version: 2, sql: MIGRATION_002 },
+  { version: 3, sql: MIGRATION_003 },
 ];
 
 class BoniloDatabase {
@@ -490,18 +498,18 @@ class BoniloDatabase {
 
   async insert(table: string, data: Record<string, any>): Promise<string> {
     const keys = Object.keys(data);
-    const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+    const placeholders = keys.map((_, i) => `$${i + 1} `).join(', ');
     const values = Object.values(data);
-    const query = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
+    const query = `INSERT INTO ${table} (${keys.join(', ')}) VALUES(${placeholders})`;
     await this.execute(query, values);
     return data.id as string;
   }
 
   async update(table: string, id: string, data: Record<string, any>): Promise<void> {
     const keys = Object.keys(data);
-    const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
+    const setClause = keys.map((k, i) => `${k} = $${i + 1} `).join(', ');
     const values = [...Object.values(data), id];
-    const query = `UPDATE ${table} SET ${setClause} WHERE id = $${keys.length + 1}`;
+    const query = `UPDATE ${table} SET ${setClause} WHERE id = $${keys.length + 1} `;
     await this.execute(query, values);
   }
 }

@@ -80,7 +80,7 @@ export const useCustomersStore = create<CustomersState>()(
         addCustomer: async (data) => {
             const newCustomer: Customer = {
                 ...data,
-                id: `cust_${Date.now()}`,
+                id: crypto.randomUUID(),
                 loyaltyPoints: 0,
                 currentCredit: 0,
                 lastVisit: null,
@@ -123,7 +123,7 @@ export const useCustomersStore = create<CustomersState>()(
             if (!customer) return;
 
             const transaction: CreditTransaction = {
-                id: `txn_${Date.now()}`,
+                id: crypto.randomUUID(),
                 customerId: id,
                 amount,
                 type,

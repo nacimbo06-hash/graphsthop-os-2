@@ -233,20 +233,62 @@ export const purchasesRepo = {
         return receipts;
     },
 
-    async createGoodsReceipt(receipt: GoodsReceipt): Promise<void> {
+    async createGoodsReceipt(
+        receipt: GoodsReceipt,
+        treasuryMovement?: {
+            sessionId: string;
+            movementId: string;
+            createdBy: string;
+        }
+    ): Promise<void> {
+        const now = new Date().toISOString();
         const ops: Array<{ query: string; params?: any[] }> = [];
+
         ops.push({
             query: `INSERT INTO goods_receipts (id, gr_number, po_id, supplier_id, supplier_name, date, invoice_number, total, status, paid_from, is_paid, created_at)
               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
             params: [receipt.id, receipt.grNumber, receipt.poId || '', receipt.supplierId, receipt.supplierName, receipt.date, receipt.invoiceNumber || '', receipt.total, receipt.status, receipt.paidFrom || '', receipt.isPaid ? 1 : 0, receipt.createdAt],
         });
+
         for (const item of receipt.items) {
+            const movementId = crypto.randomUUID();
+
             ops.push({
                 query: `INSERT INTO goods_receipt_items (id, gr_id, product_id, product_name, product_barcode, product_emoji, ordered_qty, received_qty, purchase_price, total, expiry_date, lot_number, unit)
                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
                 params: [item.id, receipt.id, item.productId, item.productName, item.productBarcode, item.productEmoji, item.orderedQty, item.receivedQty, item.purchasePrice, item.total, item.expiryDate || '', item.lotNumber || '', item.unit],
             });
+
+            // Atomic stock update
+            ops.push({
+                query: `UPDATE products SET stock = stock + $1, updated_at = $2 WHERE id = $3`,
+                params: [item.receivedQty, now, item.productId],
+            });
+
+            // Record inventory movement
+            ops.push({
+                query: `INSERT INTO inventory_movements (id, product_id, type, qty_change, stock_after, reference_id, created_at)
+                  VALUES ($1, $2, 'entry', $3, (SELECT stock FROM products WHERE id = $4), $5, $6)`,
+                params: [movementId, item.productId, item.receivedQty, item.productId, receipt.grNumber, now],
+            });
         }
+
+        // Handle treasury movement if applicable
+        if (receipt.paidFrom === 'cash' && treasuryMovement) {
+            ops.push({
+                query: `INSERT INTO cash_movements (id, session_id, type, amount, reason, created_by, created_at)
+                        VALUES ($1, $2, 'withdrawal', $3, $4, $5, $6)`,
+                params: [
+                    treasuryMovement.movementId,
+                    treasuryMovement.sessionId,
+                    receipt.total,
+                    `Achat marchandise: ${receipt.grNumber} (${receipt.supplierName})`,
+                    treasuryMovement.createdBy,
+                    now
+                ],
+            });
+        }
+
         await db.transaction(ops);
     },
 

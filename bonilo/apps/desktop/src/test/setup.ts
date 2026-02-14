@@ -26,6 +26,9 @@ Object.defineProperty(global, 'crypto', {
             decrypt: vi.fn(),
         },
         getRandomValues: vi.fn((arr: Uint8Array) => arr),
+        randomUUID: vi.fn(() => {
+            return '12345678-1234-1234-1234-123456789012'; // Consistently mock or use a random one
+        }),
     },
 });
 

@@ -77,7 +77,14 @@ interface PurchasesState {
     addPurchaseOrder: (order: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt'>) => Promise<void>;
     updatePurchaseOrder: (id: string, updates: Partial<PurchaseOrder>) => Promise<void>;
 
-    addGoodsReceipt: (receipt: Omit<GoodsReceipt, 'id' | 'grNumber' | 'createdAt'>) => Promise<void>;
+    addGoodsReceipt: (
+        receipt: Omit<GoodsReceipt, 'id' | 'grNumber' | 'createdAt'>,
+        treasuryMovement?: {
+            sessionId: string;
+            movementId: string;
+            createdBy: string;
+        }
+    ) => Promise<void>;
     confirmGoodsReceipt: (id: string) => Promise<void>;
     payGoodsReceipt: (id: string, paidFrom: 'cash' | 'safe' | 'provision') => Promise<void>;
 
@@ -116,7 +123,7 @@ export const usePurchasesStore = create<PurchasesState>()(
         addSupplier: async (supplierData) => {
             const newSupplier: Supplier = {
                 ...supplierData,
-                id: `sup_${Date.now()}`,
+                id: crypto.randomUUID(),
             };
             await purchasesRepo.createSupplier(newSupplier);
             set(state => ({ suppliers: [...state.suppliers, newSupplier] }));
@@ -139,7 +146,7 @@ export const usePurchasesStore = create<PurchasesState>()(
         addPurchaseOrder: async (orderData) => {
             const newOrder: PurchaseOrder = {
                 ...orderData,
-                id: `po_${Date.now()}`,
+                id: crypto.randomUUID(),
                 poNumber: `BC-${new Date().getFullYear()}-${String(get().purchaseOrders.length + 1).padStart(3, '0')}`,
                 createdAt: new Date().toISOString(),
             };
@@ -154,14 +161,14 @@ export const usePurchasesStore = create<PurchasesState>()(
             }));
         },
 
-        addGoodsReceipt: async (receiptData) => {
+        addGoodsReceipt: async (receiptData, treasuryMovement) => {
             const newReceipt: GoodsReceipt = {
                 ...receiptData,
-                id: `gr_${Date.now()}`,
+                id: crypto.randomUUID(),
                 grNumber: `BE-${new Date().getFullYear()}-${String(get().goodsReceipts.length + 1).padStart(3, '0')}`,
                 createdAt: new Date().toISOString(),
             };
-            await purchasesRepo.createGoodsReceipt(newReceipt);
+            await purchasesRepo.createGoodsReceipt(newReceipt, treasuryMovement);
             set(state => ({ goodsReceipts: [newReceipt, ...state.goodsReceipts] }));
         },
 

@@ -1,0 +1,75 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/Users/nxiiib/Desktop/GRAPHSHOP OS/bonilo/apps/desktop[39m
+
+[90mstdout[2m | src/test/integration/treasury_atomic.test.ts[2m > [22m[2mTreasury Atomic Transactions Integration
+[22m[39m[BoniloDB] ✅ Database initialized successfully
+
+[90mstdout[2m | src/test/integration/treasury_atomic.test.ts[2m > [22m[2mTreasury Atomic Transactions Integration
+[22m[39mTables: [
+  [32m'products'[39m,
+  [32m'sales'[39m,
+  [32m'sale_items'[39m,
+  [32m'inventory_movements'[39m,
+  [32m'customers'[39m,
+  [32m'suppliers'[39m,
+  [32m'cash_sessions'[39m,
+  [32m'expenses'[39m,
+  [32m'settings'[39m,
+  [32m'users'[39m,
+  [32m'safe_transactions'[39m,
+  [32m'sinking_funds'[39m,
+  [32m'sinking_fund_transactions'[39m,
+  [32m'lots'[39m,
+  [32m'lot_movements'[39m,
+  [32m'purchase_orders'[39m,
+  [32m'purchase_order_items'[39m,
+  [32m'goods_receipts'[39m,
+  [32m'goods_receipt_items'[39m,
+  [32m'credit_transactions'[39m,
+  [32m'cash_movements'[39m,
+  [32m'stock_movements'[39m
+]
+
+[90mstdout[2m | src/test/integration/treasury_atomic.test.ts[2m > [22m[2mTreasury Atomic Transactions Integration
+[22m[39mExpenses Columns: [
+  [32m'id'[39m,
+  [32m'category'[39m,
+  [32m'description'[39m,
+  [32m'amount'[39m,
+  [32m'payment_method'[39m,
+  [32m'reference'[39m,
+  [32m'created_by'[39m,
+  [32m'created_at'[39m,
+  [32m'paid_from'[39m
+]
+
+ [31m❯[39m src/test/integration/treasury_atomic.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 23[2mms[22m[39m
+     [32m✓[39m should record a contribution to fund and update balance atomically[32m 1[2mms[22m[39m
+     [32m✓[39m should record a transfer to safe atomically[32m 0[2mms[22m[39m
+[31m     [31m×[31m should record an expense payment from safe atomically[39m[32m 3[2mms[22m[39m
+     [32m✓[39m should record a session closure with multiple transfers atomically[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/test/integration/treasury_atomic.test.ts[2m > [22mTreasury Atomic Transactions Integration[2m > [22mshould record an expense payment from safe atomically
+[31m[1mSqliteError[22m: no such column: is_paid[39m
+[90m [2m❯[22m Database.prepare ../../node_modules/better-sqlite3/lib/methods/wrappers.js:[2m5:21[22m[39m
+[36m [2m❯[22m Object.execute src/test/integration/treasury_atomic.test.ts:[2m20:41[22m[39m
+    [90m 18| [39m                    execute: async (sql: string, params: any[] = []) =…
+    [90m 19| [39m                        const convertedSql = sql.replace(/\$\d+/g, '?'…
+    [90m 20| [39m                        [35mconst[39m stmt [33m=[39m db[33m.[39m[34mprepare[39m(convertedSql)[33m;[39m
+    [90m   | [39m                                        [31m^[39m
+    [90m 21| [39m                        [35mconst[39m result [33m=[39m stmt[33m.[39m[34mrun[39m([33m...[39mparams)[33m;[39m
+    [90m 22| [39m                        return { rowsAffected: result.changes, lastIns…
+[90m [2m❯[22m BoniloDatabase.transaction ../../packages/shared/db/database.ts:[2m491:23[22m[39m
+[90m [2m❯[22m Object.recordExpensePayment ../../packages/shared/db/treasuryRepo.ts:[2m120:9[22m[39m
+[90m [2m❯[22m src/test/integration/treasury_atomic.test.ts:[2m138:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 15:24:44
+[2m   Duration [22m 738ms[2m (transform 68ms, setup 71ms, import 55ms, tests 23ms, environment 501ms)[22m
+

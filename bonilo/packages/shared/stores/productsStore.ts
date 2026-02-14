@@ -54,7 +54,7 @@ export const useProductsStore = create<ProductsState>()(
         addProduct: async (productData) => {
             const newProduct: Product = {
                 ...productData,
-                id: `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                id: crypto.randomUUID(),
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             };

@@ -400,13 +400,30 @@ export const POS: React.FC = () => {
             productId: item.productId.replace('-pack', ''),
             productName: item.name,
             quantity: item.quantity,
+            stockQuantity: (item.isBundle && item.unitsInBundle)
+                ? item.quantity * item.unitsInBundle
+                : item.quantity,
             unitPrice: item.price,
             total: item.price * item.quantity,
         }));
 
         const customerObj = customers.find(c => c.id === selectedCustomer);
+        const isCreditSale = selectedPayment === 'credit' && !!customerObj;
 
-        addSale({
+        // Prepare customer credit data for atomic transaction
+        const customerCredit = isCreditSale ? {
+            newBalance: customerObj!.currentCredit + total,
+            lastPaymentDate: null
+        } : undefined;
+
+        // Prepare treasury movement for atomic transaction
+        const treasuryMovement = (currentSession && selectedPayment === 'cash') ? {
+            sessionId: currentSession.id,
+            movementId: crypto.randomUUID(),
+            createdBy: user ? `${user.firstName} ${user.lastName}` : 'Caissier',
+        } : undefined;
+
+        await addSale({
             items: saleItems,
             subtotal,
             taxAmount: vatAmount,
@@ -418,49 +435,7 @@ export const POS: React.FC = () => {
             cashierId: user?.id || 'unknown',
             cashierName: user ? `${user.firstName} ${user.lastName}` : 'Caissier',
             status: 'completed',
-        });
-
-        // 2. Record in Treasury Store if session is open
-        if (currentSession) {
-            addMovement({
-                type: 'sale',
-                amount: total,
-                reason: `Vente ${itemCount} articles`,
-                reference: receiptNumber,
-                createdBy: user ? `${user.firstName} ${user.lastName}` : 'Caissier',
-                paymentMethod: selectedPayment as any,
-            });
-        }
-
-        // 3. Update stock for each item and track movements (ALWAYS, regardless of session)
-        cart.forEach(item => {
-            const quantity = item.isBundle && item.unitsInBundle
-                ? item.quantity * item.unitsInBundle
-                : item.quantity;
-            const productId = item.productId.replace('-pack', '');
-            const product = products.find(p => p.id === productId);
-
-            if (product) {
-                addStockMovement({
-                    type: 'sale',
-                    productId: productId,
-                    productName: product.name,
-                    productEmoji: product.emoji,
-                    quantity: quantity,
-                    previousStock: product.stock,
-                    newStock: product.stock - quantity,
-                    reason: `Vente ${receiptNumber}`,
-                    performedBy: 'Caissier',
-                    reference: receiptNumber,
-                });
-                updateStock(productId, quantity, 'remove');
-            }
-        });
-
-        // 4. Update Customer Credit if applicable
-        if (selectedPayment === 'credit' && customerObj) {
-            updateCredit(customerObj.id, total, 'purchase', saleId, `Achat POS ${receiptNumber}`);
-        }
+        }, {}, customerCredit, treasuryMovement);
 
         // 5. Silent Printing
         if (autoPrint) {

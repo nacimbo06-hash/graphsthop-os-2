@@ -67,7 +67,19 @@ function rowToSaleItem(row: SaleItemRow): SaleItem {
 }
 
 export const salesRepo = {
-    async recordSale(sale: Sale, costMap: Record<string, number>): Promise<void> {
+    async recordSale(
+        sale: Sale,
+        costMap: Record<string, number>,
+        customerCredit?: {
+            newBalance: number;
+            lastPaymentDate: string | null;
+        },
+        treasuryMovement?: {
+            sessionId: string;
+            movementId: string;
+            createdBy: string;
+        }
+    ): Promise<void> {
         const now = new Date().toISOString();
         const operations: Array<{ query: string; params?: any[] }> = [];
 
@@ -78,9 +90,10 @@ export const salesRepo = {
         });
 
         for (const item of sale.items) {
-            const itemId = `si_${Date.now()}_${Math.random()}`;
-            const movId = `mov_${Date.now()}_${Math.random()}`;
+            const itemId = crypto.randomUUID();
+            const movId = crypto.randomUUID();
             const cost = costMap[item.productId] || 0;
+            const stockQty = item.stockQuantity ?? item.quantity;
 
             operations.push({
                 query: `INSERT INTO sale_items (id, sale_id, product_id, product_name, quantity, unit_price, total, tax_amount, discount_percent, cost_at_sale, created_at)
@@ -90,13 +103,45 @@ export const salesRepo = {
 
             operations.push({
                 query: `UPDATE products SET stock = MAX(0, stock - $1), updated_at = $2 WHERE id = $3`,
-                params: [item.quantity, now, item.productId]
+                params: [stockQty, now, item.productId]
             });
 
             operations.push({
                 query: `INSERT INTO inventory_movements (id, product_id, type, qty_change, stock_after, reference_id, created_at)
-                VALUES ($1, $2, 'sale', $3, (SELECT MAX(0, stock - $4) FROM products WHERE id = $5), $6, $7)`,
-                params: [movId, item.productId, -item.quantity, item.quantity, item.productId, sale.id, now]
+                VALUES ($1, $2, 'sale', $3, (SELECT stock FROM products WHERE id = $4), $5, $6)`,
+                params: [movId, item.productId, -stockQty, item.productId, sale.id, now]
+            });
+        }
+
+        // Handle customer credit if applicable
+        if (sale.paymentMethod === 'credit' && sale.customerId && customerCredit) {
+            const txId = crypto.randomUUID();
+            operations.push({
+                query: `INSERT INTO credit_transactions (id, customer_id, amount, type, date, sale_id, notes)
+                        VALUES ($1, $2, $3, 'purchase', $4, $5, $6)`,
+                params: [txId, sale.customerId, sale.totalAmount, now, sale.id, `Achat POS ${sale.receiptNumber}`]
+            });
+
+            operations.push({
+                query: `UPDATE customers SET current_balance = $1, last_payment_date = COALESCE($2, last_payment_date), updated_at = $3 WHERE id = $4`,
+                params: [customerCredit.newBalance, customerCredit.lastPaymentDate, now, sale.customerId]
+            });
+        }
+
+        // 4. Handle treasury movement if applicable
+        if (sale.paymentMethod === 'cash' && treasuryMovement) {
+            operations.push({
+                query: `INSERT INTO cash_movements (id, session_id, type, amount, reason, reference, created_by, payment_method, created_at)
+                        VALUES ($1, $2, 'sale', $3, $4, $5, $6, 'cash', $7)`,
+                params: [
+                    treasuryMovement.movementId,
+                    treasuryMovement.sessionId,
+                    sale.totalAmount,
+                    `Vente POS ${sale.receiptNumber}`,
+                    sale.receiptNumber,
+                    treasuryMovement.createdBy,
+                    now
+                ],
             });
         }
 

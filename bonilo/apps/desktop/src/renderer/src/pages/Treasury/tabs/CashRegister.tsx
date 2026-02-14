@@ -43,6 +43,8 @@ export const CashRegister: React.FC = () => {
         getCurrentBalance,
         getDailyProvisionTarget,
         getProvisionProgress,
+        performBulkTransfers,
+        closeSessionWithTransfers,
     } = useTreasuryStore();
 
     // Modal states
@@ -108,14 +110,20 @@ export const CashRegister: React.FC = () => {
         setOpeningAmount('');
     };
 
-    // Handle session close with transfers
-    const handleCloseSession = () => {
+    // Handle session close
+    const handleCloseSession = async () => {
         const amount = parseFloat(closingAmount);
         if (isNaN(amount) || amount < 0) return;
-        closeSession(amount, closingNotes);
-        setShowCloseModal(false);
-        setClosingAmount('');
-        setClosingNotes('');
+
+        try {
+            await closeSessionWithTransfers(amount, closingNotes, {}, userName);
+            toast.success('Session clôturée');
+            setShowCloseModal(false);
+            setClosingAmount('');
+            setClosingNotes('');
+        } catch (error) {
+            toast.error('Erreur lors de la clôture');
+        }
     };
 
     // Handle deposit
@@ -149,33 +157,37 @@ export const CashRegister: React.FC = () => {
     };
 
     // Handle transfers to safe and provisions
-    const handleTransfers = () => {
+    const handleTransfers = async () => {
         const safeAmount = parseFloat(transferToSafe) || 0;
         const salariesAmount = parseFloat(transferSalaries) || 0;
         const bankCreditAmount = parseFloat(transferBankCredit) || 0;
         const chargesAmount = parseFloat(transferCharges) || 0;
 
-        // Transfer to safe
-        if (safeAmount > 0) {
-            depositToSafe(safeAmount, 'Transfert fin de journée', userName);
-        }
+        if (safeAmount === 0 && salariesAmount === 0 && bankCreditAmount === 0 && chargesAmount === 0) return;
 
-        // Contribute to provisions
-        if (salariesAmount > 0) {
-            contributeToFund('salaries', salariesAmount, 'Provision journalière', userName);
-        }
-        if (bankCreditAmount > 0) {
-            contributeToFund('bankCredit', bankCreditAmount, 'Provision journalière', userName);
-        }
-        if (chargesAmount > 0) {
-            contributeToFund('fixedCharges', chargesAmount, 'Provision journalière', userName);
-        }
+        try {
+            await performBulkTransfers(
+                {
+                    safe: safeAmount,
+                    funds: {
+                        salaries: salariesAmount,
+                        bankCredit: bankCreditAmount,
+                        fixedCharges: chargesAmount,
+                    },
+                },
+                'Transfert manuel',
+                userName
+            );
 
-        setShowTransferModal(false);
-        setTransferToSafe('');
-        setTransferSalaries('');
-        setTransferBankCredit('');
-        setTransferCharges('');
+            toast.success('Transferts effectués avec succès');
+            setShowTransferModal(false);
+            setTransferToSafe('');
+            setTransferSalaries('');
+            setTransferBankCredit('');
+            setTransferCharges('');
+        } catch (error) {
+            toast.error('Erreur lors des transferts');
+        }
     };
 
     // Get movement icon

@@ -43,6 +43,7 @@ export const ZReport: React.FC = () => {
         depositToSafe,
         contributeToFund,
         getDailyProvisionTarget,
+        closeSessionWithTransfers,
     } = useTreasuryStore();
 
     // Modal states
@@ -509,39 +510,43 @@ export const ZReport: React.FC = () => {
     };
 
 
-    // Handle close with transfers
-    const handleClose = () => {
+    // Handle close with atomic transfers
+    const handleClose = async () => {
         const amount = parseFloat(closingAmount);
         if (isNaN(amount) || amount < 0) return;
 
-        // Process transfers first
         const safeAmount = parseFloat(transferToSafe) || 0;
         const salariesAmount = parseFloat(transferSalaries) || 0;
         const bankCreditAmount = parseFloat(transferBankCredit) || 0;
         const chargesAmount = parseFloat(transferCharges) || 0;
 
-        if (safeAmount > 0) {
-            depositToSafe(safeAmount, 'Clôture journée', userName);
-        }
-        if (salariesAmount > 0) {
-            contributeToFund('salaries', salariesAmount, 'Clôture journée', userName);
-        }
-        if (bankCreditAmount > 0) {
-            contributeToFund('bankCredit', bankCreditAmount, 'Clôture journée', userName);
-        }
-        if (chargesAmount > 0) {
-            contributeToFund('fixedCharges', chargesAmount, 'Clôture journée', userName);
-        }
+        try {
+            await closeSessionWithTransfers(
+                amount,
+                closingNotes,
+                {
+                    safe: safeAmount,
+                    funds: {
+                        salaries: salariesAmount,
+                        bankCredit: bankCreditAmount,
+                        fixedCharges: chargesAmount,
+                    },
+                },
+                userName
+            );
 
-        // Close session
-        closeSession(amount, closingNotes);
-        setShowCloseModal(false);
-        setClosingAmount('');
-        setClosingNotes('');
-        setTransferToSafe('');
-        setTransferSalaries('');
-        setTransferBankCredit('');
-        setTransferCharges('');
+            toast.success('Session clôturée avec succès');
+            setShowCloseModal(false);
+            setClosingAmount('');
+            setClosingNotes('');
+            setTransferToSafe('');
+            setTransferSalaries('');
+            setTransferBankCredit('');
+            setTransferCharges('');
+        } catch (error) {
+            console.error('Error closing session:', error);
+            toast.error('Erreur lors de la clôture de session');
+        }
     };
 
     // No session state
