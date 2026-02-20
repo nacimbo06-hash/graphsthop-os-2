@@ -78,7 +78,9 @@ describe('SalesStore', () => {
         expect(sale.totalAmount).toBe(285.6);
         expect(salesRepo.recordSale).toHaveBeenCalledWith(
             expect.objectContaining({ totalAmount: 285.6 }),
-            {}
+            {},
+            undefined,
+            undefined
         );
         expect(useSalesStore.getState().sales).toHaveLength(1);
     });
@@ -89,7 +91,9 @@ describe('SalesStore', () => {
 
         expect(salesRepo.recordSale).toHaveBeenCalledWith(
             expect.anything(),
-            costMap
+            costMap,
+            undefined,
+            undefined
         );
     });
 

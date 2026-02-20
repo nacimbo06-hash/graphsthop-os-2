@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 
-// initialize mock window
+// Initialize mock window for Tauri detection
 if (typeof window === 'undefined') {
     (global as any).window = {};
 }
@@ -13,21 +13,19 @@ vi.mock('@tauri-apps/plugin-sql', async () => {
 
     return {
         default: {
-            load: async () => {
-                return {
-                    execute: async (sql: string, params: any[] = []) => {
-                        const convertedSql = sql.replace(/\$\d+/g, '?');
-                        const stmt = db.prepare(convertedSql);
-                        const result = stmt.run(...params);
-                        return { rowsAffected: result.changes, lastInsertId: Number(result.lastInsertRowid) };
-                    },
-                    select: async (sql: string, params: any[] = []) => {
-                        const convertedSql = sql.replace(/\$\d+/g, '?');
-                        const stmt = db.prepare(convertedSql);
-                        return stmt.all(...params);
-                    }
-                };
-            }
+            load: async () => ({
+                execute: async (sql: string, params: any[] = []) => {
+                    const convertedSql = sql.replace(/\$\d+/g, '?');
+                    const stmt = db.prepare(convertedSql);
+                    const result = stmt.run(...params);
+                    return { rowsAffected: result.changes, lastInsertId: Number(result.lastInsertRowid) };
+                },
+                select: async (sql: string, params: any[] = []) => {
+                    const convertedSql = sql.replace(/\$\d+/g, '?');
+                    const stmt = db.prepare(convertedSql);
+                    return stmt.all(...params);
+                }
+            })
         }
     };
 });
@@ -53,7 +51,6 @@ describe('Treasury Atomic Transactions Integration', () => {
     });
 
     it('should record a contribution to fund and update balance atomically', async () => {
-        const sessionId = 'session_1';
         const movement = {
             id: 'mov_1',
             type: 'transfer_to_provision',
@@ -71,9 +68,8 @@ describe('Treasury Atomic Transactions Integration', () => {
             performedBy: 'u1',
             date: new Date().toISOString()
         };
-        const newBalance = 1500;
 
-        await treasuryRepo.recordContributionToFund(sessionId, movement as any, fundTx as any, newBalance);
+        await treasuryRepo.recordContributionToFund('session_1', movement as any, fundTx as any, 1500);
 
         // Verify cash movement
         const movements = await db.select('SELECT * FROM cash_movements WHERE id = $1', ['mov_1']);
@@ -90,7 +86,6 @@ describe('Treasury Atomic Transactions Integration', () => {
     });
 
     it('should record a transfer to safe atomically', async () => {
-        const sessionId = 'session_1';
         const movement = {
             id: 'mov_2',
             type: 'transfer_to_safe',
@@ -106,7 +101,7 @@ describe('Treasury Atomic Transactions Integration', () => {
             performedBy: 'u1'
         };
 
-        await treasuryRepo.recordTransferToSafe(sessionId, movement as any, safeTx as any);
+        await treasuryRepo.recordTransferToSafe('session_1', movement as any, safeTx as any);
 
         // Verify cash movement
         const movements = await db.select('SELECT * FROM cash_movements WHERE id = $1', ['mov_2']);
@@ -155,7 +150,6 @@ describe('Treasury Atomic Transactions Integration', () => {
         await db.execute(`INSERT INTO cash_sessions (id, cashier_id, cashier_name, opened_at, opening_amount, status) 
                          VALUES ('session_clos_1', 'u1', 'Test', '${new Date().toISOString()}', 1000, 'open')`);
 
-        const sessionId = 'session_clos_1';
         const updates = {
             closing_amount: 3000,
             expected_amount: 3000,
@@ -207,10 +201,10 @@ describe('Treasury Atomic Transactions Integration', () => {
             }
         ];
 
-        await treasuryRepo.recordSessionClosure(sessionId, updates as any, transfers as any);
+        await treasuryRepo.recordSessionClosure('session_clos_1', updates as any, transfers as any);
 
         // Verify session status
-        const session = await db.select('SELECT status, closing_amount FROM cash_sessions WHERE id = $1', [sessionId]);
+        const session = await db.select('SELECT status, closing_amount FROM cash_sessions WHERE id = $1', ['session_clos_1']);
         expect(session[0].status).toBe('closed');
         expect(session[0].closing_amount).toBe(3000);
 

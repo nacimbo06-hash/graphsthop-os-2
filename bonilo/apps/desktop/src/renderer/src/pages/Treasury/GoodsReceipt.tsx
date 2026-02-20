@@ -283,7 +283,7 @@ export const GoodsReceipt: React.FC = () => {
         setShowConfirmModal(true);
     };
 
-    const handleConfirmReceipt = () => {
+    const handleConfirmReceipt = async () => {
         if (!selectedSupplier) return;
 
         // 1. Create Goods Receipt
@@ -305,7 +305,7 @@ export const GoodsReceipt: React.FC = () => {
         const treasuryMovement = (isPaid && paymentSource === 'cash' && currentSession) ? {
             sessionId: currentSession.id,
             movementId: crypto.randomUUID(),
-            createdBy: user?.firstName || 'Staff'
+            createdBy: 'Staff'
         } : undefined;
 
         await addGoodsReceipt({
@@ -320,26 +320,27 @@ export const GoodsReceipt: React.FC = () => {
             paidFrom: isPaid ? paymentSource : undefined,
         }, treasuryMovement);
 
-        // 2. Lot creation (remains in UI/Store for now as it's separate from stock entry)
-        if (line.expiryDate || line.product.isPerishable) {
-            addLot({
-                productId: line.product.id,
-                productName: line.product.name,
-                productBarcode: line.product.barcode,
-                lotNumber: line.lotNumber || `LOT-${receiptNumber.slice(-4)}-${line.product.sku || line.product.id.slice(-4)}`,
-                quantity: line.totalUnits, // Use totalUnits
-                originalQuantity: line.totalUnits,
-                expiryDate: line.expiryDate
-                    ? line.expiryDate.toISOString()
-                    : new Date(Date.now() + (line.product.shelfLifeDays || 30) * 24 * 60 * 60 * 1000).toISOString(),
-                receivedDate: new Date().toISOString(),
-                supplierId: selectedSupplier.id,
-                supplierName: selectedSupplier.name,
-                goodsReceiptId: receiptNumber,
-                purchasePrice: line.purchasePrice,
-            });
+        // 2. Lot creation for perishable items
+        for (const line of receiptLines) {
+            if (line.expiryDate || line.product.isPerishable) {
+                addLot({
+                    productId: line.product.id,
+                    productName: line.product.name,
+                    productBarcode: line.product.barcode,
+                    lotNumber: line.lotNumber || `LOT-${receiptNumber.slice(-4)}-${line.product.sku || line.product.id.slice(-4)}`,
+                    quantity: line.totalUnits,
+                    originalQuantity: line.totalUnits,
+                    expiryDate: line.expiryDate
+                        ? line.expiryDate.toISOString()
+                        : new Date(Date.now() + (line.product.shelfLifeDays || 30) * 24 * 60 * 60 * 1000).toISOString(),
+                    receivedDate: new Date().toISOString(),
+                    supplierId: selectedSupplier.id,
+                    supplierName: selectedSupplier.name,
+                    goodsReceiptId: receiptNumber,
+                    purchasePrice: line.purchasePrice,
+                });
+            }
         }
-    });
 
     // 3. Handle treasury if paid
     if (isPaid) {

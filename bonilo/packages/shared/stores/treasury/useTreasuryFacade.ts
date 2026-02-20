@@ -11,6 +11,15 @@ import { useSinkingFundsStore } from './sinkingFundsStore';
 import { useExpensesStore } from './expensesStore';
 import { treasuryRepo } from '../../db/treasuryRepo';
 import { db } from '../../db/database';
+import type {
+    CashSession,
+    CashMovement,
+    SinkingFund,
+    SinkingFundTransaction,
+    SafeTransaction,
+    Expense,
+    ExpenseCategory
+} from '@shared/types/treasury';
 
 // Re-export types for backwards compatibility
 export type {
@@ -21,7 +30,7 @@ export type {
     SafeTransaction,
     Expense,
     ExpenseCategory
-} from '@shared/types/treasury';
+};
 
 /**
  * Combined treasury facade hook

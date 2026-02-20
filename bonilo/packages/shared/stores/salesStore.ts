@@ -25,6 +25,10 @@ interface SalesState {
         }
     ) => Promise<Sale>;
     getSaleById: (id: string) => Sale | undefined;
+    getTodaySales: () => Sale[];
+    getWeekSales: () => Sale[];
+    getMonthSales: () => Sale[];
+    getSalesByPeriod: (start: Date, end: Date) => Sale[];
     getTodayTotal: () => number;
     getWeekTotal: () => number;
     getMonthTotal: () => number;

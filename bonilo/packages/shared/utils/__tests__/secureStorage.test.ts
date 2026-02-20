@@ -1,16 +1,30 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+// @vitest-environment jsdom
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { secureStorage } from '../secureStorage';
 
 describe('Shared SecureStorage', () => {
+    let getItemSpy: ReturnType<typeof vi.spyOn>;
+    let setItemSpy: ReturnType<typeof vi.spyOn>;
+    let removeItemSpy: ReturnType<typeof vi.spyOn>;
+
     beforeEach(() => {
-        vi.clearAllMocks();
+        localStorage.clear();
+        // Reset singleton internal state so init() runs fresh each test
+        (secureStorage as any).initialized = false;
+        (secureStorage as any).encryptionKey = null;
+        getItemSpy = vi.spyOn(Storage.prototype, 'getItem');
+        setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+        removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     describe('Encryption/Decryption', () => {
         it('should encrypt and decrypt data correctly', async () => {
             const mockKey = {} as CryptoKey;
-            
-            // Setup crypto mocks
+
             vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue(mockKey);
             vi.spyOn(crypto.subtle, 'exportKey').mockResolvedValue(new ArrayBuffer(32));
             vi.spyOn(crypto.subtle, 'encrypt').mockImplementation(async () => {
@@ -30,12 +44,12 @@ describe('Shared SecureStorage', () => {
 
         it('should handle corrupted data gracefully', async () => {
             const mockKey = {} as CryptoKey;
-            
+
             vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue(mockKey);
             vi.spyOn(crypto.subtle, 'exportKey').mockResolvedValue(new ArrayBuffer(32));
             vi.spyOn(crypto.subtle, 'decrypt').mockRejectedValue(new Error('Decryption failed'));
-            
-            vi.mocked(localStorage.getItem).mockReturnValue('corrupted-data');
+
+            getItemSpy.mockReturnValue('corrupted-data');
 
             await secureStorage.init();
             const result = await secureStorage.getItem('corrupted-key');
@@ -46,7 +60,7 @@ describe('Shared SecureStorage', () => {
 
     describe('Key Management', () => {
         it('should generate new key if none exists', async () => {
-            vi.mocked(localStorage.getItem).mockReturnValue(null);
+            getItemSpy.mockReturnValue(null);
             const generateKeySpy = vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue({} as CryptoKey);
             vi.spyOn(crypto.subtle, 'exportKey').mockResolvedValue(new ArrayBuffer(32));
 
@@ -64,7 +78,7 @@ describe('Shared SecureStorage', () => {
                 key: btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(32)))),
                 createdAt: Date.now(),
             };
-            vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(existingKey));
+            getItemSpy.mockReturnValue(JSON.stringify(existingKey));
             const importKeySpy = vi.spyOn(crypto.subtle, 'importKey').mockResolvedValue({} as CryptoKey);
 
             await secureStorage.init();
@@ -83,7 +97,7 @@ describe('Shared SecureStorage', () => {
             await secureStorage.init();
             await secureStorage.setItem('my-key', 'my-value');
 
-            expect(localStorage.setItem).toHaveBeenCalledWith(
+            expect(setItemSpy).toHaveBeenCalledWith(
                 'secure_my-key',
                 expect.any(String)
             );
@@ -91,7 +105,7 @@ describe('Shared SecureStorage', () => {
 
         it('should remove items with correct prefix', () => {
             secureStorage.removeItem('test-key');
-            expect(localStorage.removeItem).toHaveBeenCalledWith('secure_test-key');
+            expect(removeItemSpy).toHaveBeenCalledWith('secure_test-key');
         });
     });
 });
