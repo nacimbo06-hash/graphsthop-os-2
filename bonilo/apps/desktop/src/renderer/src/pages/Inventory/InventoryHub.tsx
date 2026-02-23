@@ -26,6 +26,7 @@ import { AddProductModal } from './components/AddProductModal';
 import { GoodsReceipt } from '../Treasury/GoodsReceipt';
 
 import { useProductsStore, type Product } from '@bonilo/shared/stores';
+import { CATEGORIES } from '@bonilo/shared';
 import { useToast } from '../../components/feedback/Toast';
 import styles from './InventoryHub.module.css';
 
@@ -352,36 +353,18 @@ export const InventoryHub: React.FC = () => {
         // Product successfully added to store and persisted
     };
 
-    // Helper function to get category name from ID
+    // Helper function to get category name from ID — uses shared CATEGORIES as SSOT
     const getCategoryName = (categoryId?: string): string => {
-        const categoryMap: Record<string, string> = {
-            'beverages': 'Boissons',
-            'dairy': 'Produits laitiers',
-            'grocery': 'Épicerie',
-            'biscuits': 'Biscuiterie',
-            'fruits': 'Fruits & Légumes',
-            'meat': 'Viandes',
-            'frozen': 'Surgélés',
-            'hygiene': 'Hygiène',
-            'cleaning': 'Entretien',
-        };
-        return categoryMap[categoryId || ''] || 'Épicerie';
+        if (!categoryId) return 'Épicerie';
+        const found = CATEGORIES.find(c => c.id === categoryId);
+        return found?.name || 'Épicerie';
     };
 
-    // Helper function to get emoji from category ID
+    // Helper function to get emoji from category ID — uses shared CATEGORIES as SSOT
     const getCategoryEmoji = (categoryId?: string): string => {
-        const emojiMap: Record<string, string> = {
-            'beverages': '🥤',
-            'dairy': '🥛',
-            'grocery': '🛒',
-            'biscuits': '🍪',
-            'fruits': '🍎',
-            'meat': '🥩',
-            'frozen': '❄️',
-            'hygiene': '🧴',
-            'cleaning': '🧹',
-        };
-        return emojiMap[categoryId || ''] || '📦';
+        if (!categoryId) return '📦';
+        const found = CATEGORIES.find(c => c.id === categoryId);
+        return found?.icon || '📦';
     };
 
     const handleEditRequest = (product: Product) => {

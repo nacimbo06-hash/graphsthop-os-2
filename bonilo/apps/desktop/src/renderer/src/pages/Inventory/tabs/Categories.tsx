@@ -11,6 +11,7 @@ import {
     Search,
 } from 'lucide-react';
 import { useProductsStore } from '@bonilo/shared/stores';
+import { CATEGORIES } from '@bonilo/shared';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
@@ -23,18 +24,13 @@ interface Category {
     color: string;
 }
 
-const defaultCategories: Category[] = [
-    { id: 'beverages', name: 'Boissons', emoji: '🥤', color: '#4A7B8C' },
-    { id: 'dairy', name: 'Produits laitiers', emoji: '🥛', color: '#7B6B8A' },
-    { id: 'grocery', name: 'Épicerie', emoji: '🛒', color: '#5A9A6B' },
-    { id: 'biscuits', name: 'Biscuiterie', emoji: '🍪', color: '#C8956C' },
-    { id: 'fruits', name: 'Fruits & Légumes', emoji: '🍎', color: '#C75B3F' },
-    { id: 'meat', name: 'Viandes & Charcuterie', emoji: '🥩', color: '#B55A4A' },
-    { id: 'frozen', name: 'Surgélés', emoji: '🧊', color: '#5B8FA8' },
-    { id: 'hygiene', name: 'Hygiène & Beauté', emoji: '🧴', color: '#B07388' },
-    { id: 'cleaning', name: 'Entretien', emoji: '🧹', color: '#5A9A6B' },
-    { id: 'snacks', name: 'Snacks', emoji: '🍿', color: '#D4875A' },
-];
+// Map shared CATEGORIES to the local shape (icon → emoji)
+const defaultCategories: Category[] = CATEGORIES.map(c => ({
+    id: c.id,
+    name: c.name,
+    emoji: c.icon,
+    color: c.color,
+}));
 
 export const Categories: React.FC = () => {
     const { products } = useProductsStore();

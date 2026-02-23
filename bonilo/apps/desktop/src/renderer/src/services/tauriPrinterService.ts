@@ -1,4 +1,17 @@
-import { invoke } from '@tauri-apps/api/core';
+// Lazy import — only loads @tauri-apps/api when actually called
+// This prevents crashes when running in browser-only mode (Vite dev server)
+let _invoke: ((cmd: string, args?: any) => Promise<any>) | null = null;
+
+async function getInvoke() {
+    if (_invoke) return _invoke;
+    try {
+        const tauriCore = await import('@tauri-apps/api/core');
+        _invoke = tauriCore.invoke;
+        return _invoke;
+    } catch {
+        throw new Error('[TauriPrinter] @tauri-apps/api not available — not running in Tauri');
+    }
+}
 
 export interface PrinterInfo {
     port: string;
@@ -22,6 +35,7 @@ export interface ReceiptData {
  * List available thermal printers (serial ports)
  */
 export async function listPrinters(): Promise<PrinterInfo[]> {
+    const invoke = await getInvoke();
     return invoke<PrinterInfo[]>('list_printers');
 }
 
@@ -29,6 +43,7 @@ export async function listPrinters(): Promise<PrinterInfo[]> {
  * Print a receipt to a thermal printer using ESC/POS
  */
 export async function printReceipt(portName: string, receipt: ReceiptData): Promise<void> {
+    const invoke = await getInvoke();
     const formattedReceipt = {
         lines: receipt.lines.map(line => ({
             text: line.text,
@@ -47,6 +62,7 @@ export async function printReceipt(portName: string, receipt: ReceiptData): Prom
  * Send raw bytes to printer (advanced)
  */
 export async function printRaw(portName: string, data: number[]): Promise<void> {
+    const invoke = await getInvoke();
     return invoke('print_raw', { portName, data });
 }
 

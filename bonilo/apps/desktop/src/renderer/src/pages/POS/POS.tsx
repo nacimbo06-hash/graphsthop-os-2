@@ -38,21 +38,19 @@ import {
     useStockMovementsStore,
     useAuthStore
 } from '@bonilo/shared/stores';
+import { CATEGORIES } from '@bonilo/shared';
 import { useToast } from '../../components/feedback/Toast';
 import { ConfirmModal } from '../../components/feedback/ConfirmModal';
+import { useBarcodeScanner } from '../../hooks';
+import { printerManager } from '../../services/printing';
 import styles from './POS.module.css';
 import { formatCurrency, formatTime } from '../../utils/formatters';
 
-// Product categories
-const categories = [
+// Product categories — derived from shared CATEGORIES (SSOT)
+const posCategories = [
     { id: 'favorites', name: 'Favoris ⭐', color: '#F59E0B' },
     { id: 'all', name: 'Tous', color: '#3D7C4F' },
-    { id: 'beverages', name: 'Boissons', color: '#34C759' },
-    { id: 'dairy', name: 'Laitiers', color: '#8B5CF6' },
-    { id: 'bakery', name: 'Boulangerie', color: '#F97316' },
-    { id: 'grocery', name: 'Épicerie', color: '#06B6D4' },
-    { id: 'snacks', name: 'Snacks', color: '#EC4899' },
-    { id: 'cleaning', name: 'Entretien', color: '#10B981' },
+    ...CATEGORIES.map(c => ({ id: c.id, name: c.name, color: c.color })),
 ];
 
 
@@ -104,6 +102,8 @@ export const POS: React.FC = () => {
     // Settings hooks - TVA and other settings from context
     const { tvaEnabled, tvaRate: settingsTvaRate } = useTVA();
     const posSettings = usePOSSettings();
+
+
 
     // Transform store products to POS format with memoization
     const storeProducts = useMemo(() => {
@@ -176,7 +176,8 @@ export const POS: React.FC = () => {
                 const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     product.sku.toLowerCase().includes(searchQuery.toLowerCase());
                 const matchesCategory = selectedCategory === 'all' ||
-                    (selectedCategory === 'favorites' ? product.isFavorite : product.category === selectedCategory);
+                    (selectedCategory === 'favorites' ? product.isFavorite :
+                        product.categoryId === selectedCategory || product.category === CATEGORIES.find(c => c.id === selectedCategory)?.name);
                 return matchesSearch && matchesCategory;
             })
             .sort((a, b) => {
@@ -228,6 +229,33 @@ export const POS: React.FC = () => {
             }];
         });
     }, []);
+
+    // ========== BARCODE SCANNER HOOK ==========
+    // Captures rapid keystrokes globally (USB/BT scanner detection)
+    // Works without input focus — just scan anywhere on the POS screen
+    useBarcodeScanner(useCallback((barcode: string) => {
+        // 1. Check if it's a customer barcode
+        const customer = getCustomerByBarcode(barcode);
+        if (customer) {
+            setSelectedCustomer(customer.id);
+            toast.success(`Client identifié: ${customer.name} ✨`);
+            return;
+        }
+
+        // 2. Check if it matches a product barcode or SKU
+        const product = products.find(p => p.barcode === barcode || p.sku === barcode);
+        if (product) {
+            const posProduct = storeProducts.find(p => p.id === product.id);
+            if (posProduct) {
+                addToCart(posProduct, false);
+                toast.success(`✅ ${product.name} ajouté`);
+                return;
+            }
+        }
+
+        // 3. Nothing found
+        toast.error(`Produit introuvable: ${barcode}`);
+    }, [products, storeProducts, getCustomerByBarcode, addToCart, toast]));
 
     // Handle product click - show pack selector if applicable
     const handleProductClick = useCallback((product: POSProduct) => {
@@ -437,14 +465,55 @@ export const POS: React.FC = () => {
             status: 'completed',
         }, {}, customerCredit, treasuryMovement);
 
-        // 5. Silent Printing
+        // 5. Thermal Printing via PrinterManager
         if (autoPrint) {
             try {
-                window.print();
-                toast.success('Ticket imprimé');
+                const storeSettings = JSON.parse(localStorage.getItem('bonilo-settings') || '{}');
+                const printed = await printerManager.printReceipt({
+                    storeInfo: {
+                        name: storeSettings.storeName || 'Bonilo POS',
+                        address: storeSettings.storeAddress || '',
+                        phone: storeSettings.storePhone || '',
+                    },
+                    transactionId: receiptNumber,
+                    date: new Date(),
+                    cashier: user ? `${user.firstName} ${user.lastName}` : 'Caissier',
+                    items: saleItems.map(item => ({
+                        name: item.productName,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice,
+                        total: item.total,
+                    })),
+                    subtotal,
+                    vat: vatAmount > 0 ? { rate: settingsTvaRate, amount: vatAmount } : undefined,
+                    discount: discountAmount > 0 ? { type: 'percentage' as const, value: discountPercent, amount: discountAmount } : undefined,
+                    total,
+                    paymentMethod: selectedPayment === 'cash' ? 'Espèces' :
+                        selectedPayment === 'cib' ? 'CIB' :
+                            selectedPayment === 'dahabia' ? 'Dahabia' :
+                                selectedPayment === 'credit' ? 'Crédit' : selectedPayment,
+                    amountPaid: parseFloat(amountReceived || '0'),
+                    change: Math.max(0, change),
+                    footer: 'Merci pour votre visite! 🙏',
+                });
+
+                if (printed) {
+                    toast.success('Ticket imprimé 🖨️');
+                } else {
+                    toast.info('Impression navigateur utilisée');
+                }
             } catch (err) {
                 console.error('Print error:', err);
                 toast.error('Erreur d\'impression');
+            }
+        }
+
+        // 6. Open cash drawer on cash payment
+        if (selectedPayment === 'cash') {
+            try {
+                await printerManager.openCashDrawer();
+            } catch (err) {
+                console.log('[POS] Cash drawer not available:', err);
             }
         }
 
@@ -550,7 +619,7 @@ export const POS: React.FC = () => {
 
                 {/* Categories */}
                 <div className={styles.categories}>
-                    {categories.map(cat => (
+                    {posCategories.map(cat => (
                         <button
                             key={cat.id}
                             className={`${styles.catBtn} ${selectedCategory === cat.id ? styles.active : ''}`}

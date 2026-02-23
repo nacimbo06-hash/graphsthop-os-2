@@ -2,6 +2,10 @@
  * Printer Manager - Device Discovery and Connection Management
  * 
  * Handles USB printer discovery, connection, and print job execution.
+ * Supports:
+ *  - Tauri serial port (native, via Rust backend) — preferred
+ *  - WebUSB (browser fallback)
+ *  - Browser window.print() (last resort fallback)
  */
 
 import { ESCPOS } from './commands/escpos';
@@ -9,6 +13,7 @@ import { ZPL } from './commands/zpl';
 import { generateReceiptBytes } from './generators/receiptGenerator';
 import { generateLabelPage } from './generators/labelGenerator';
 import { JonyHTML } from '../jonyPrintDesigner';
+import * as TauriPrinter from '../tauriPrinterService';
 import type {
     PrinterConfig,
     PrintJob,
@@ -22,15 +27,88 @@ import type {
 // Placeholder for WebUSB type
 type USBDevice = any;
 
+// Detect if we're running inside Tauri
+const isTauri = (): boolean => {
+    try {
+        return !!(window as any).__TAURI_INTERNALS__;
+    } catch {
+        return false;
+    }
+};
+
 // ===== PRINTER MANAGER CLASS =====
 
 class PrinterManager {
     private connectedDevice: USBDevice | null = null;
     private printers: PrinterConfig[] = [];
     private printQueue: PrintJob[] = [];
+    private _serialPort: string | null = null; // Active serial port for Tauri printing
 
     constructor() {
         this.loadPrinters();
+        // Auto-discover serial printers if in Tauri
+        if (isTauri()) {
+            this.discoverSerialPrinters();
+        }
+    }
+
+    // ========== TAURI SERIAL ==========
+
+    /** Discover serial printers via Tauri Rust backend */
+    async discoverSerialPrinters(): Promise<TauriPrinter.PrinterInfo[]> {
+        if (!isTauri()) return [];
+        try {
+            const ports = await TauriPrinter.listPrinters();
+            // Auto-register discovered serial printers
+            for (const port of ports) {
+                const exists = this.printers.find(
+                    p => p.connectionType === 'serial' && (p as any).port === port.port
+                );
+                if (!exists) {
+                    this.printers.push({
+                        id: `serial-${port.port.replace(/\//g, '-')}`,
+                        name: port.name || `Imprimante ${port.port}`,
+                        type: 'thermal',
+                        connectionType: 'serial' as any,
+                        port: port.port,
+                        paperWidth: 80,
+                        isDefault: this.printers.filter(p => p.type === 'thermal').length === 0,
+                        status: 'online',
+                    } as any);
+                }
+            }
+            this.savePrinters();
+            console.log(`[PrinterManager] Discovered ${ports.length} serial printer(s)`);
+            return ports;
+        } catch (err) {
+            console.warn('[PrinterManager] Serial discovery failed:', err);
+            return [];
+        }
+    }
+
+    /** Send ESC/POS bytes via Tauri serial port */
+    private async sendToSerial(data: Uint8Array, port?: string): Promise<boolean> {
+        const targetPort = port || this._serialPort;
+        if (!targetPort) {
+            console.error('[PrinterManager] No serial port configured');
+            return false;
+        }
+        try {
+            await TauriPrinter.printRaw(targetPort, Array.from(data));
+            return true;
+        } catch (err) {
+            console.error('[PrinterManager] Serial send failed:', err);
+            return false;
+        }
+    }
+
+    /** Get the serial port for a printer config, or the first available */
+    private getSerialPort(printer?: PrinterConfig): string | null {
+        if (printer && (printer as any).port) return (printer as any).port;
+        const serialPrinter = this.printers.find(
+            p => (p.connectionType as any) === 'serial' && p.status === 'online'
+        );
+        return (serialPrinter as any)?.port || this._serialPort;
     }
 
     // ========== CONFIGURATION ==========
@@ -156,15 +234,43 @@ class PrinterManager {
         const targetPrinter = printer || this.getDefaultPrinter('thermal');
 
         if (!targetPrinter) {
+            // If Tauri is available and we have a serial port, use it directly
+            if (isTauri()) {
+                const port = this.getSerialPort();
+                if (port) {
+                    const bytes = generateReceiptBytes(data, 80);
+                    return this.sendToSerial(bytes, port);
+                }
+            }
             return this.browserPrintReceipt(data);
         }
 
-        switch (targetPrinter.connectionType) {
-            case 'usb':
+        switch (targetPrinter.connectionType as string) {
+            case 'serial': {
+                // Tauri serial port — send ESC/POS bytes through Rust backend
+                const port = this.getSerialPort(targetPrinter);
+                if (port) {
+                    const bytes = generateReceiptBytes(data, (targetPrinter.paperWidth as 58 | 80) || 80);
+                    return this.sendToSerial(bytes, port);
+                }
+                console.warn('[PrinterManager] Serial printer has no port, falling back to browser');
+                return this.browserPrintReceipt(data);
+            }
+
+            case 'usb': {
                 const bytes = generateReceiptBytes(data, targetPrinter.paperWidth as 58 | 80);
                 return this.sendToUSB(bytes);
+            }
 
             case 'network':
+                // Network printing via Tauri (send raw bytes over TCP)
+                if (isTauri()) {
+                    const bytes = generateReceiptBytes(data, (targetPrinter.paperWidth as 58 | 80) || 80);
+                    // For now, network printers use the same raw send mechanism
+                    console.log('[PrinterManager] Network printing — trying serial fallback');
+                    const port = this.getSerialPort(targetPrinter);
+                    if (port) return this.sendToSerial(bytes, port);
+                }
                 console.log('Network printing not yet implemented');
                 return this.browserPrintReceipt(data);
 
@@ -242,10 +348,21 @@ class PrinterManager {
     // ========== CASH DRAWER ==========
 
     async openCashDrawer(): Promise<boolean> {
+        // Try Tauri serial first (most common for POS hardware)
+        if (isTauri()) {
+            const port = this.getSerialPort();
+            if (port) {
+                console.log('[PrinterManager] Opening cash drawer via serial:', port);
+                return this.sendToSerial(ESCPOS.OPEN_DRAWER, port);
+            }
+        }
+
+        // Fall back to WebUSB
         if (this.connectedDevice) {
             return this.sendToUSB(ESCPOS.OPEN_DRAWER);
         }
-        console.warn('No USB printer connected for cash drawer');
+
+        console.warn('[PrinterManager] No printer connected for cash drawer');
         return false;
     }
 

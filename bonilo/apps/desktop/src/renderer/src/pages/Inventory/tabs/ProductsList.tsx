@@ -20,10 +20,15 @@ import { useNavigate } from 'react-router-dom';
 import { TableVirtuoso } from 'react-virtuoso';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useProductsStore, type Product } from '@bonilo/shared/stores';
+import { CATEGORIES } from '@bonilo/shared';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
 import styles from './ProductsList.module.css';
 
-const categories = ['Toutes', 'Boissons', 'Produits laitiers', 'Épicerie', 'Biscuiterie', 'Fruits & Légumes', 'Viandes', 'Surgélés'];
+// Build category filter list from SSOT
+const categoryFilters = [
+    { id: 'all', name: 'Toutes' },
+    ...CATEGORIES.map(c => ({ id: c.id, name: c.name })),
+];
 
 interface ProductsListProps {
     onEdit?: (product: Product) => void;
@@ -37,7 +42,7 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
     const { products, deleteProduct, toggleFavorite, updateProduct } = useProductsStore();
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('Toutes');
+    const [selectedCategory, setSelectedCategory] = useState('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [sortBy, setSortBy] = useState<string>('name');
     const navigate = useNavigate();
@@ -56,7 +61,7 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
     const [productToDelete, setProductToDelete] = useState<{ id: string, name: string } | null>(null);
 
     const filteredProducts = useMemo(() => products.filter(p =>
-        (selectedCategory === 'Toutes' || p.category === selectedCategory) &&
+        (selectedCategory === 'all' || p.categoryId === selectedCategory || p.category === CATEGORIES.find(c => c.id === selectedCategory)?.name) &&
         (p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.designation?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.variety?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -142,7 +147,8 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
     const handleBulkCategory = () => {
         if (!targetCategory) return;
         selectedIds.forEach(id => {
-            updateProduct(id, { category: targetCategory });
+            const cat = CATEGORIES.find(c => c.id === targetCategory);
+            updateProduct(id, { category: cat?.name || targetCategory, categoryId: targetCategory });
         });
         setSelectedIds(new Set());
         setShowBulkCategoryModal(false);
@@ -174,8 +180,8 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                     >
-                        {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
+                        {categoryFilters.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
                     </select>
 
@@ -463,8 +469,8 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
                                     className={styles.categorySelect}
                                 >
                                     <option value="">Choisir une catégorie...</option>
-                                    {categories.filter(c => c !== 'Toutes').map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                    {CATEGORIES.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
                                     ))}
                                 </select>
                             </div>

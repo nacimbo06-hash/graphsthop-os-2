@@ -59,16 +59,16 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
 // All available modules
 export const ALL_MODULES: ModuleId[] = [
     'dashboard', 'pos', 'treasury', 'inventory',
-    'customers', 'reports', 'print', 'settings', 'users', 'help'
+    'customers', 'suppliers', 'reports', 'print', 'settings', 'users', 'help'
 ];
 
 // Default module access per role
 export const DEFAULT_MODULE_ACCESS: Record<UserRole, ModuleId[]> = {
     owner: ALL_MODULES, // Full access
-    manager: ['dashboard', 'pos', 'treasury', 'inventory', 'customers', 'reports', 'print', 'settings', 'help'],
+    manager: ['dashboard', 'pos', 'treasury', 'inventory', 'customers', 'suppliers', 'reports', 'print', 'settings', 'help'],
     cashier: ['dashboard', 'pos', 'customers', 'help'],
-    stock_manager: ['dashboard', 'inventory', 'reports', 'print', 'help'],
-    accountant: ['dashboard', 'treasury', 'reports', 'help'],
+    stock_manager: ['dashboard', 'inventory', 'suppliers', 'reports', 'print', 'help'],
+    accountant: ['dashboard', 'treasury', 'suppliers', 'reports', 'help'],
 };
 
 // Predefined users - EMPTY for production, users created during setup
@@ -187,10 +187,10 @@ export const useAuthStore = create<AuthState>()(
                     };
 
                     // Store token securely
-                const token = `token_${foundUser.id}_${Date.now()}`;
-                await secureStorage.setItem(SECURE_TOKEN_KEY, token);
+                    const token = `token_${foundUser.id}_${Date.now()}`;
+                    await secureStorage.setItem(SECURE_TOKEN_KEY, token);
 
-                set((state) => ({
+                    set((state) => ({
                         user: userWithLogin,
                         token: token,
                         isAuthenticated: true,
@@ -293,7 +293,7 @@ export const useAuthStore = create<AuthState>()(
 
                 // Hash password before storing
                 const hashedPassword = await bcrypt.hash(userData.password, 10);
-                
+
                 // Store hashed password in localStorage
                 const storedPasswords: Record<string, string> = JSON.parse(
                     localStorage.getItem(USER_PASSWORDS_KEY) || '{}'
@@ -343,7 +343,7 @@ export const useAuthStore = create<AuthState>()(
 
             changePassword: async (userId: string, currentPassword: string, newPassword: string) => {
                 const { user: currentUser } = get();
-                
+
                 // Users can change their own password, or owner can change any password
                 if (!currentUser || (currentUser.id !== userId && currentUser.role !== 'owner')) {
                     return false;
@@ -464,7 +464,7 @@ export const useAuthStore = create<AuthState>()(
             initializeFromSecureStorage: async () => {
                 const token = await secureStorage.getItem(SECURE_TOKEN_KEY);
                 const state = get();
-                
+
                 if (token && state.isAuthenticated && state.user) {
                     set({ token });
                 }
@@ -472,6 +472,7 @@ export const useAuthStore = create<AuthState>()(
         }),
         {
             name: 'auth-storage',
+            version: 1, // Bump version to clear old cache so new suppliers module shows up
             partialize: (state) => ({
                 user: state.user,
                 // token excluded - stored securely separately

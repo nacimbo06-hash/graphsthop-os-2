@@ -49,6 +49,7 @@ import {
     useProductsStore,
     useCustomersStore
 } from '@bonilo/shared/stores';
+import { CATEGORIES } from '@bonilo/shared';
 import { InsightsGenerator, type AIInsight } from '../../services/ai/forecastingService';
 import { BoniloIntelligence } from '../../services/ai/intelligenceService';
 import { ExpiryAlertService } from '../../services/expiryAlertService';
@@ -230,17 +231,11 @@ export const Dashboard: React.FC = () => {
 
     // Compute category breakdown from products/sales (O(n) Map lookup)
     const categoryData = useMemo(() => {
-        const categoryColors: { [key: string]: string } = {
-            'Boissons': '#3D7C4F',
-            'Épicerie': '#34C759',
-            'Produits Laitiers': '#FFD60A',
-            'Boulangerie': '#FF3B30',
-            'Snacks': '#8B5CF6',
-            'Entretien': '#06B6D4',
-            'Fruits & Légumes': '#F59E0B',
-            'Viandes': '#EF4444',
-            'default': '#6B7280',
-        };
+        // Build color map dynamically from CATEGORIES (SSOT)
+        const categoryColors: { [key: string]: string } = Object.fromEntries(
+            CATEGORIES.map(c => [c.name, c.color])
+        );
+        const defaultColor = '#6B7280';
 
         const todaySales = getTodaySales();
         // Build a Map for O(1) product lookups instead of O(n) find() per item
@@ -259,7 +254,7 @@ export const Dashboard: React.FC = () => {
             .map(([name, value]) => ({
                 name,
                 value,
-                color: categoryColors[name] || categoryColors['default'],
+                color: categoryColors[name] || defaultColor,
             }))
             .sort((a, b) => b.value - a.value)
             .slice(0, 6);

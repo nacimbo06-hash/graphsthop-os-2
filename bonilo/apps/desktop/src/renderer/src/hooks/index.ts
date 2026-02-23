@@ -14,3 +14,6 @@ export { useEventCallback, useDebouncedMemo, useIsFirstRender, useShallowMemo } 
 
 // API Hooks
 export * from './useApi';
+
+// Hardware Hooks
+export { useBarcodeScanner } from './useBarcodeScanner';
