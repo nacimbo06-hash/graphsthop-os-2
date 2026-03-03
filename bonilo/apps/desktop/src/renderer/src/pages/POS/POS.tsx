@@ -118,6 +118,7 @@ export const POS: React.FC = () => {
                 name: p.name,
                 price: p.sellingPrice,
                 sku: p.sku || p.barcode,
+                categoryId: p.categoryId,
                 category: p.categoryId || p.category?.toLowerCase().replace(/\s+/g, '') || 'grocery',
                 stock: p.stock,
                 image: p.emoji || '📦',
@@ -189,26 +190,31 @@ export const POS: React.FC = () => {
 
     // Add item to cart (handles pack selection)
     const addToCart = useCallback((product: POSProduct, asBundle: boolean = false) => {
-        // Stock validation
         const unitsNeeded = asBundle ? product.unitsPerPack : 1;
-        const existingInCart = cart.reduce((total, item) => {
-            const baseId = item.productId.replace('-pack', '');
-            if (baseId === product.id) {
-                return total + (item.isBundle && item.unitsInBundle ? item.quantity * item.unitsInBundle : item.quantity);
-            }
-            return total;
-        }, 0);
-
-        if (existingInCart + unitsNeeded > product.stock) {
-            toast.error(`Stock insuffisant: ${product.stock} disponible(s), ${existingInCart} déjà dans le panier`);
-            return;
-        }
-
         const itemPrice = asBundle && product.bundlePrice ? product.bundlePrice : product.price;
         const itemName = asBundle ? `${product.name} (Pack x${product.unitsPerPack})` : product.name;
         const itemKey = asBundle ? `${product.id}-pack` : product.id;
 
         setCart(prevCart => {
+            // Calculate existing units already in cart (from current state, not stale closure)
+            const existingInCart = prevCart.reduce((total, item) => {
+                const baseId = item.productId.replace('-pack', '');
+                if (baseId === product.id) {
+                    return total + (item.isBundle && item.unitsInBundle ? item.quantity * item.unitsInBundle : item.quantity);
+                }
+                return total;
+            }, 0);
+
+            // Stock validation — skip if negative stock is allowed
+            if (!posSettings.isNegativeStockAllowed() && existingInCart + unitsNeeded > product.stock) {
+                // We can't call toast inside setCart (side effect), so schedule it
+                setTimeout(() => {
+                    toast.error(`Stock insuffisant: ${product.stock} disponible(s), ${existingInCart} déjà dans le panier`);
+                }, 0);
+                return prevCart; // Return unchanged cart
+            }
+
+            // Add or increment
             const existingItem = prevCart.find(item => item.productId === itemKey);
             if (existingItem) {
                 return prevCart.map(item =>
@@ -228,7 +234,7 @@ export const POS: React.FC = () => {
                 unitsInBundle: asBundle ? product.unitsPerPack : 1,
             }];
         });
-    }, []);
+    }, [posSettings, toast]);
 
     // ========== BARCODE SCANNER HOOK ==========
     // Captures rapid keystrokes globally (USB/BT scanner detection)
@@ -486,13 +492,13 @@ export const POS: React.FC = () => {
                     })),
                     subtotal,
                     vat: vatAmount > 0 ? { rate: settingsTvaRate, amount: vatAmount } : undefined,
-                    discount: discountAmount > 0 ? { type: 'percentage' as const, value: discountPercent, amount: discountAmount } : undefined,
+                    discount: discountAmount > 0 ? { percent: discountPercent, amount: discountAmount } : undefined,
                     total,
                     paymentMethod: selectedPayment === 'cash' ? 'Espèces' :
                         selectedPayment === 'cib' ? 'CIB' :
                             selectedPayment === 'dahabia' ? 'Dahabia' :
                                 selectedPayment === 'credit' ? 'Crédit' : selectedPayment,
-                    amountPaid: parseFloat(amountReceived || '0'),
+                    amountReceived: parseFloat(amountReceived || '0'),
                     change: Math.max(0, change),
                     footer: 'Merci pour votre visite! 🙏',
                 });
