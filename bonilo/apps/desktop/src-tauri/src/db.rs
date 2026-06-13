@@ -25,6 +25,10 @@ pub const DB_KEY: &str = "sqlite:bonilo.db";
 pub async fn sqlite_pool<R: Runtime>(app: &AppHandle<R>) -> AppResult<Pool<Sqlite>> {
     let instances = app.state::<DbInstances>();
     let map = instances.0.read().await;
+    // With only the `sqlite` feature enabled, `DbPool` has a single variant, so
+    // the `Some(_)` arm is unreachable today; it is kept as a guard in case a
+    // future build also enables the mysql/postgres drivers.
+    #[allow(unreachable_patterns)]
     match map.get(DB_KEY) {
         Some(DbPool::Sqlite(pool)) => Ok(pool.clone()),
         Some(_) => Err(AppError::NotSqlite),
