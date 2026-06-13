@@ -56,8 +56,8 @@ export const Login: React.FC = () => {
             <div className={styles.brandPanel}>
                 <div className={styles.brandContent}>
                     <div className={styles.logo}>
-                        <img src={igoLogo} alt="IGO" style={{ width: 48, height: 48 }} />
-                        <span>IGO</span>
+                        <img src={igoLogo} alt="Bonilo" style={{ width: 48, height: 48 }} />
+                        <span>Bonilo</span>
                     </div>
                     <h1>Votre partenaire intelligent de gestion commerciale</h1>
                     <p>
@@ -86,7 +86,7 @@ export const Login: React.FC = () => {
                 </div>
 
                 <div className={styles.brandFooter}>
-                    <p>© 2026 IGO • Conçu pour l'Algérie 🇩🇿</p>
+                    <p>© 2026 Bonilo • Conçu pour l'Algérie 🇩🇿</p>
                 </div>
             </div>
 

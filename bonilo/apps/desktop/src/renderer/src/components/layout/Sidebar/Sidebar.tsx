@@ -77,7 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Logo */}
             <div className={styles.logo}>
                 <div className={styles.logoIcon}>
-                    <img src={igoLogo} alt="IGO" style={{ width: 28, height: 28 }} />
+                    <img src={igoLogo} alt="Bonilo" style={{ width: 28, height: 28 }} />
                 </div>
                 {!isCollapsed && (
                     <div className={styles.logoText}>

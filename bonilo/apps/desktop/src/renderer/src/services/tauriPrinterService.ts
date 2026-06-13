@@ -85,7 +85,7 @@ export function generateReceiptLines(sale: {
     const lines: ReceiptLine[] = [];
 
     // Header
-    lines.push({ text: sale.storeName || 'IGO', bold: true, align: 'center', size: 2 });
+    lines.push({ text: sale.storeName || 'Bonilo', bold: true, align: 'center', size: 2 });
     lines.push({ text: '================================', align: 'center' });
     lines.push({ text: `Ticket: ${sale.number}`, align: 'left' });
     lines.push({ text: `Date: ${sale.date.toLocaleDateString('fr-FR')}`, align: 'left' });

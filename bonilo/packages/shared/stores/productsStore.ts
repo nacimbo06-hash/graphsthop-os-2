@@ -1,8 +1,14 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Product } from '@bonilo/shared/types/product';
 import { productsRepo } from '../db';
 
 export type { Product };
+
+// Check if running in Tauri (SQLite available)
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+const BROWSER_STORAGE_KEY = 'bonilo-products';
 
 interface ProductsState {
     products: Product[];
@@ -30,27 +36,60 @@ interface ProductsState {
     getAllSKUs: () => string[];
 }
 
+/** Save products to localStorage (browser fallback) */
+function saveToBrowser(products: Product[]) {
+    if (!isTauri()) {
+        try {
+            localStorage.setItem(BROWSER_STORAGE_KEY, JSON.stringify(products));
+        } catch (e) {
+            console.warn('[ProductsStore] localStorage save failed:', e);
+        }
+    }
+}
+
+/** Load products from localStorage (browser fallback) */
+function loadFromBrowser(): Product[] {
+    if (!isTauri()) {
+        try {
+            const data = localStorage.getItem(BROWSER_STORAGE_KEY);
+            if (data) return JSON.parse(data);
+        } catch (e) {
+            console.warn('[ProductsStore] localStorage load failed:', e);
+        }
+    }
+    return [];
+}
+
 export const useProductsStore = create<ProductsState>()(
     (set, get) => ({
         products: [],
         isLoading: false,
         isHydrated: false,
 
-        // Load products from SQLite into memory on app start
+        // Load products into memory on app start
         hydrate: async () => {
             if (get().isHydrated) return;
             set({ isLoading: true });
             try {
-                const products = await productsRepo.loadAll();
+                let products: Product[];
+                if (isTauri()) {
+                    // Tauri mode: load from SQLite
+                    products = await productsRepo.loadAll();
+                } else {
+                    // Browser mode: load from localStorage
+                    products = loadFromBrowser();
+                }
                 set({ products, isHydrated: true, isLoading: false });
-                console.log(`[ProductsStore] ✅ Hydrated ${products.length} products from DB`);
+                console.log(`[ProductsStore] ✅ Hydrated ${products.length} products from ${isTauri() ? 'DB' : 'localStorage'}`);
             } catch (error) {
                 console.error('[ProductsStore] ❌ Failed to hydrate:', error);
-                set({ isLoading: false });
+                // Browser fallback on error
+                const products = loadFromBrowser();
+                set({ products, isHydrated: true, isLoading: false });
             }
         },
 
-        // Add a new product — write to DB first, then update memory
+        // Add a new product — write to DB/localStorage, then update memory
         addProduct: async (productData) => {
             const newProduct: Product = {
                 ...productData,
@@ -59,35 +98,47 @@ export const useProductsStore = create<ProductsState>()(
                 updatedAt: new Date().toISOString(),
             };
 
-            await productsRepo.create(newProduct);
+            if (isTauri()) {
+                await productsRepo.create(newProduct);
+            }
 
-            set((state) => ({
-                products: [...state.products, newProduct],
-            }));
+            set((state) => {
+                const updated = [...state.products, newProduct];
+                saveToBrowser(updated);
+                return { products: updated };
+            });
 
             return newProduct;
         },
 
         // Update an existing product
         updateProduct: async (id, updates) => {
-            await productsRepo.update(id, updates);
+            if (isTauri()) {
+                await productsRepo.update(id, updates);
+            }
 
-            set((state) => ({
-                products: state.products.map((p) =>
+            set((state) => {
+                const updated = state.products.map((p) =>
                     p.id === id
                         ? { ...p, ...updates, updatedAt: new Date().toISOString() }
                         : p
-                ),
-            }));
+                );
+                saveToBrowser(updated);
+                return { products: updated };
+            });
         },
 
         // Delete a product (soft delete)
         deleteProduct: async (id) => {
-            await productsRepo.softDelete(id);
+            if (isTauri()) {
+                await productsRepo.softDelete(id);
+            }
 
-            set((state) => ({
-                products: state.products.filter((p) => p.id !== id),
-            }));
+            set((state) => {
+                const updated = state.products.filter((p) => p.id !== id);
+                saveToBrowser(updated);
+                return { products: updated };
+            });
         },
 
         // Toggle favorite status
@@ -96,13 +147,17 @@ export const useProductsStore = create<ProductsState>()(
             if (!product) return;
 
             const newFav = !product.isFavorite;
-            await productsRepo.update(id, { isFavorite: newFav });
+            if (isTauri()) {
+                await productsRepo.update(id, { isFavorite: newFav });
+            }
 
-            set((state) => ({
-                products: state.products.map((p) =>
+            set((state) => {
+                const updated = state.products.map((p) =>
                     p.id === id ? { ...p, isFavorite: newFav } : p
-                ),
-            }));
+                );
+                saveToBrowser(updated);
+                return { products: updated };
+            });
         },
 
         // Update stock with DB transaction + inventory movement
@@ -135,13 +190,17 @@ export const useProductsStore = create<ProductsState>()(
                     qtyChange = 0;
             }
 
-            await productsRepo.updateStock(id, newStock, qtyChange, movementType);
+            if (isTauri()) {
+                await productsRepo.updateStock(id, newStock, qtyChange, movementType);
+            }
 
-            set((state) => ({
-                products: state.products.map((p) =>
+            set((state) => {
+                const updated = state.products.map((p) =>
                     p.id === id ? { ...p, stock: newStock, updatedAt: new Date().toISOString() } : p
-                ),
-            }));
+                );
+                saveToBrowser(updated);
+                return { products: updated };
+            });
         },
 
         // ============================================

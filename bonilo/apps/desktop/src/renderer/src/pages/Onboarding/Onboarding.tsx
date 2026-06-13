@@ -109,14 +109,14 @@ export const Onboarding: React.FC = () => {
                 {isSaving && (
                     <div className={styles.loadingOverlay}>
                         <Loader2 className={styles.spin} size={48} />
-                        <span className={styles.loadingText}>Initialisation d'IGO...</span>
+                        <span className={styles.loadingText}>Initialisation de Bonilo...</span>
                     </div>
                 )}
 
                 {/* Sidebar */}
                 <aside className={styles.sidebar}>
                     <div className={styles.logoArea}>
-                        <img src={igoLogo} alt="IGO" style={{ height: 40, marginBottom: 8 }} />
+                        <img src={igoLogo} alt="Bonilo" style={{ height: 40, marginBottom: 8 }} />
                         <span className={styles.tagline}>Votre partenaire intelligent</span>
                     </div>
 

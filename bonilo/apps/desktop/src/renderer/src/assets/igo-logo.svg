@@ -1,7 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
-  <g fill="#00D177">
-    <path d="M10,10 H40 V70 H10 Z" />
-    <path d="M100,10 H60 V70 H100 V50 H75 V40 H110 L120,45 L110,50 V70 H140 V10 H100 Z M100,30 H125 V20 H100 Z" />
-    <path d="M150,10 H190 V70 H150 Z M165,30 H175 V50 H165 Z" />
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3D7C4F"/>
+      <stop offset="100%" stop-color="#2D5D3C"/>
+    </linearGradient>
+  </defs>
+  <!-- Leaf icon -->
+  <circle cx="26" cy="30" r="22" fill="url(#bg)" opacity="0.15"/>
+  <path d="M20 38 C20 22 32 16 40 14 C36 22 34 30 34 38 Z" fill="#3D7C4F"/>
+  <path d="M20 38 C20 28 26 20 34 18" stroke="#3D7C4F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Text -->
+  <text x="56" y="38" font-family="'DM Sans', 'Nunito', sans-serif" font-weight="700" font-size="30" fill="#FFFFFF" letter-spacing="1">bonilo</text>
 </svg>

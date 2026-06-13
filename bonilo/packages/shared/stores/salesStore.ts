@@ -2,6 +2,36 @@ import { create } from 'zustand';
 import { Sale } from '@bonilo/shared/types/sales';
 import { salesRepo } from '../db';
 
+// Check if running in Tauri (SQLite available)
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+const BROWSER_STORAGE_KEY = 'bonilo-sales';
+
+/** Save sales to localStorage (browser fallback) */
+function saveToBrowser(sales: Sale[]) {
+    if (!isTauri()) {
+        try {
+            // Only keep last 500 sales in localStorage to avoid quota issues
+            localStorage.setItem(BROWSER_STORAGE_KEY, JSON.stringify(sales.slice(0, 500)));
+        } catch (e) {
+            console.warn('[SalesStore] localStorage save failed:', e);
+        }
+    }
+}
+
+/** Load sales from localStorage (browser fallback) */
+function loadFromBrowser(): Sale[] {
+    if (!isTauri()) {
+        try {
+            const data = localStorage.getItem(BROWSER_STORAGE_KEY);
+            if (data) return JSON.parse(data);
+        } catch (e) {
+            console.warn('[SalesStore] localStorage load failed:', e);
+        }
+    }
+    return [];
+}
+
 interface SalesState {
     sales: Sale[];
     isLoading: boolean;
@@ -40,19 +70,24 @@ export const useSalesStore = create<SalesState>()(
         isLoading: false,
         isHydrated: false,
 
-        // Load recent sales from SQLite into memory
+        // Load recent sales into memory
         hydrate: async () => {
             if (get().isHydrated) return;
             set({ isLoading: true });
             try {
-                // Load last 90 days of sales with items
-                const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-                const sales = await salesRepo.loadAll({ withItems: true, since });
+                let sales: Sale[];
+                if (isTauri()) {
+                    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+                    sales = await salesRepo.loadAll({ withItems: true, since });
+                } else {
+                    sales = loadFromBrowser();
+                }
                 set({ sales, isHydrated: true, isLoading: false });
-                console.log(`[SalesStore] ✅ Hydrated ${sales.length} sales from DB`);
+                console.log(`[SalesStore] ✅ Hydrated ${sales.length} sales from ${isTauri() ? 'DB' : 'localStorage'}`);
             } catch (error) {
                 console.error('[SalesStore] ❌ Failed to hydrate:', error);
-                set({ isLoading: false });
+                const sales = loadFromBrowser();
+                set({ sales, isHydrated: true, isLoading: false });
             }
         },
 
@@ -65,13 +100,16 @@ export const useSalesStore = create<SalesState>()(
                 timestamp: new Date().toISOString(),
             };
 
-            // Write to DB atomically (sale + items + stock decrement + movements + optional customer credit + optional treasury movement)
-            await salesRepo.recordSale(newSale, costMap, customerCredit, treasuryMovement);
+            if (isTauri()) {
+                await salesRepo.recordSale(newSale, costMap, customerCredit, treasuryMovement);
+            }
 
             // Update in-memory state
-            set(state => ({
-                sales: [newSale, ...state.sales]
-            }));
+            set(state => {
+                const updated = [newSale, ...state.sales];
+                saveToBrowser(updated);
+                return { sales: updated };
+            });
 
             return newSale;
         },

@@ -586,7 +586,7 @@ export const Help: React.FC = () => {
                             <div className={styles.appLogo}>
                                 <span>🚀</span>
                             </div>
-                            <h2>IGO</h2>
+                            <h2>Bonilo</h2>
                             <p className={styles.version}>Version 1.0.0</p>
                         </div>
 
@@ -594,7 +594,7 @@ export const Help: React.FC = () => {
                             <div className={styles.aboutCard}>
                                 <h3>À propos</h3>
                                 <p>
-                                    IGO est votre partenaire intelligent de gestion commerciale,
+                                    Bonilo est votre partenaire intelligent de gestion commerciale,
                                     conçu spécifiquement pour les supermarchés et épiceries en Algérie.
                                     Notre solution intègre la gestion des ventes, des stocks,
                                     de la trésorerie et des clients dans une interface moderne et intuitive.
@@ -663,7 +663,7 @@ export const Help: React.FC = () => {
                         </div>
 
                         <div className={styles.copyright}>
-                            <p>© 2026 IGO. Tous droits réservés.</p>
+                            <p>© 2026 Bonilo. Tous droits réservés.</p>
                             <p>Développé avec ❤️ en Algérie</p>
                         </div>
                     </div>

@@ -6,7 +6,7 @@ import { formatCurrency, formatDate, formatTime, formatDateTime } from './format
 
 // Store info
 const STORE_INFO = {
-    name: 'IGO',
+    name: 'Bonilo',
     address: 'Alger, Algérie',
     phone: '0555 123 456',
     nif: '000123456789012',

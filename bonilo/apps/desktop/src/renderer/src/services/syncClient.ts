@@ -1,5 +1,5 @@
 /**
- * IGO Sync Client
+ * Bonilo Sync Client
  * Runs on cashier PCs and connects to the main server
  */
 

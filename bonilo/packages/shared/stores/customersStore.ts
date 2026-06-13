@@ -1,6 +1,58 @@
 import { create } from 'zustand';
 import { customersRepo } from '../db';
 
+// Check if running in Tauri (SQLite available)
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+const BROWSER_CUSTOMERS_KEY = 'bonilo-customers';
+const BROWSER_CREDIT_TX_KEY = 'bonilo-credit-transactions';
+
+/** Save customers to localStorage (browser fallback) */
+function saveCustomersToBrowser(customers: Customer[]) {
+    if (!isTauri()) {
+        try {
+            localStorage.setItem(BROWSER_CUSTOMERS_KEY, JSON.stringify(customers));
+        } catch (e) {
+            console.warn('[CustomersStore] localStorage save failed:', e);
+        }
+    }
+}
+
+function saveTransactionsToBrowser(transactions: CreditTransaction[]) {
+    if (!isTauri()) {
+        try {
+            localStorage.setItem(BROWSER_CREDIT_TX_KEY, JSON.stringify(transactions.slice(0, 500)));
+        } catch (e) {
+            console.warn('[CustomersStore] localStorage save failed:', e);
+        }
+    }
+}
+
+/** Load from localStorage (browser fallback) */
+function loadCustomersFromBrowser(): Customer[] {
+    if (!isTauri()) {
+        try {
+            const data = localStorage.getItem(BROWSER_CUSTOMERS_KEY);
+            if (data) return JSON.parse(data);
+        } catch (e) {
+            console.warn('[CustomersStore] localStorage load failed:', e);
+        }
+    }
+    return [];
+}
+
+function loadTransactionsFromBrowser(): CreditTransaction[] {
+    if (!isTauri()) {
+        try {
+            const data = localStorage.getItem(BROWSER_CREDIT_TX_KEY);
+            if (data) return JSON.parse(data);
+        } catch (e) {
+            console.warn('[CustomersStore] localStorage load failed:', e);
+        }
+    }
+    return [];
+}
+
 export interface Customer {
     id: string;
     name: string;
@@ -65,15 +117,24 @@ export const useCustomersStore = create<CustomersState>()(
             if (get().isHydrated) return;
             set({ isLoading: true });
             try {
-                const [customers, transactions] = await Promise.all([
-                    customersRepo.loadAll(),
-                    customersRepo.loadTransactions(),
-                ]);
+                let customers: Customer[];
+                let transactions: CreditTransaction[];
+                if (isTauri()) {
+                    [customers, transactions] = await Promise.all([
+                        customersRepo.loadAll(),
+                        customersRepo.loadTransactions(),
+                    ]);
+                } else {
+                    customers = loadCustomersFromBrowser();
+                    transactions = loadTransactionsFromBrowser();
+                }
                 set({ customers, transactions, isHydrated: true, isLoading: false });
-                console.log(`[CustomersStore] Hydrated ${customers.length} customers from DB`);
+                console.log(`[CustomersStore] ✅ Hydrated ${customers.length} customers from ${isTauri() ? 'DB' : 'localStorage'}`);
             } catch (error) {
-                console.error('[CustomersStore] Failed to hydrate:', error);
-                set({ isLoading: false });
+                console.error('[CustomersStore] ❌ Failed to hydrate:', error);
+                const customers = loadCustomersFromBrowser();
+                const transactions = loadTransactionsFromBrowser();
+                set({ customers, transactions, isHydrated: true, isLoading: false });
             }
         },
 
@@ -88,34 +149,52 @@ export const useCustomersStore = create<CustomersState>()(
                 createdAt: new Date().toISOString(),
                 barcode: data.barcode || `CUST-${data.phone || Date.now()}`,
             };
-            await customersRepo.create(newCustomer);
-            set(state => ({ customers: [...state.customers, newCustomer] }));
+            if (isTauri()) {
+                await customersRepo.create(newCustomer);
+            }
+            set(state => {
+                const updated = [...state.customers, newCustomer];
+                saveCustomersToBrowser(updated);
+                return { customers: updated };
+            });
         },
 
         updateCustomer: async (id, updates) => {
-            await customersRepo.update(id, updates);
-            set(state => ({
-                customers: state.customers.map(c => c.id === id ? { ...c, ...updates } : c)
-            }));
+            if (isTauri()) {
+                await customersRepo.update(id, updates);
+            }
+            set(state => {
+                const updated = state.customers.map(c => c.id === id ? { ...c, ...updates } : c);
+                saveCustomersToBrowser(updated);
+                return { customers: updated };
+            });
         },
 
         deleteCustomer: async (id) => {
-            await customersRepo.remove(id);
-            set(state => ({
-                customers: state.customers.filter(c => c.id !== id)
-            }));
+            if (isTauri()) {
+                await customersRepo.remove(id);
+            }
+            set(state => {
+                const updated = state.customers.filter(c => c.id !== id);
+                saveCustomersToBrowser(updated);
+                return { customers: updated };
+            });
         },
 
         addLoyaltyPoints: async (id, points) => {
             const customer = get().customers.find(c => c.id === id);
             if (!customer) return;
             const newPoints = customer.loyaltyPoints + points;
-            await customersRepo.updateLoyaltyPoints(id, newPoints);
-            set(state => ({
-                customers: state.customers.map(c =>
+            if (isTauri()) {
+                await customersRepo.updateLoyaltyPoints(id, newPoints);
+            }
+            set(state => {
+                const updated = state.customers.map(c =>
                     c.id === id ? { ...c, loyaltyPoints: newPoints } : c
-                )
-            }));
+                );
+                saveCustomersToBrowser(updated);
+                return { customers: updated };
+            });
         },
 
         updateCredit: async (id, amount, type, saleId, notes) => {
@@ -136,10 +215,12 @@ export const useCustomersStore = create<CustomersState>()(
             const newBalance = customer.currentCredit + amount;
             const lastPaymentDate = isPayment ? new Date().toISOString() : null;
 
-            await customersRepo.addCreditTransaction(transaction, newBalance, lastPaymentDate);
+            if (isTauri()) {
+                await customersRepo.addCreditTransaction(transaction, newBalance, lastPaymentDate);
+            }
 
-            set(state => ({
-                customers: state.customers.map(c =>
+            set(state => {
+                const updatedCustomers = state.customers.map(c =>
                     c.id === id
                         ? {
                             ...c,
@@ -147,9 +228,12 @@ export const useCustomersStore = create<CustomersState>()(
                             lastPaymentDate: isPayment ? new Date().toISOString() : c.lastPaymentDate,
                         }
                         : c
-                ),
-                transactions: [transaction, ...state.transactions]
-            }));
+                );
+                const updatedTx = [transaction, ...state.transactions];
+                saveCustomersToBrowser(updatedCustomers);
+                saveTransactionsToBrowser(updatedTx);
+                return { customers: updatedCustomers, transactions: updatedTx };
+            });
         },
 
         getCustomerById: (id) => get().customers.find(c => c.id === id),
