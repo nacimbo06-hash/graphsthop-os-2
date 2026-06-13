@@ -1,1 +1,0 @@
-export { POS } from './POS';
