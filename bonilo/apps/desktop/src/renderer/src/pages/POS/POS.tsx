@@ -426,9 +426,6 @@ export const POS: React.FC = () => {
 
     // Complete sale
     const completeSale = useCallback(async () => {
-        const saleId = `sale_${Date.now()}`;
-        const receiptNumber = `REC-${Date.now().toString().slice(-6)}`;
-
         const saleItems = cart.map(item => ({
             id: crypto.randomUUID(),
             productId: item.productId.replace('-pack', ''),
@@ -442,34 +439,43 @@ export const POS: React.FC = () => {
         }));
 
         const customerObj = customers.find(c => c.id === selectedCustomer);
-        const isCreditSale = selectedPayment === 'credit' && !!customerObj;
 
-        // Prepare customer credit data for atomic transaction
-        const customerCredit = isCreditSale ? {
-            newBalance: customerObj!.currentCredit + total,
-            lastPaymentDate: null
-        } : undefined;
+        // Persist atomically via the Rust `checkout_sale` command: it mints the
+        // receipt number, decrements stock + drains FEFO lots, applies customer
+        // credit as a delta and posts the treasury movement — all in one
+        // transaction. If it fails (e.g. insufficient stock) nothing is written.
+        let sale: Awaited<ReturnType<typeof addSale>>;
+        try {
+            sale = await addSale(
+                {
+                    items: saleItems,
+                    subtotal,
+                    taxAmount: vatAmount,
+                    discountAmount,
+                    totalAmount: total,
+                    paymentMethod: selectedPayment as any,
+                    customerId: selectedCustomer || undefined,
+                    customerName: customerObj?.name || undefined,
+                    cashierId: user?.id || 'unknown',
+                    cashierName: user ? `${user.firstName} ${user.lastName}` : 'Caissier',
+                    status: 'completed',
+                },
+                {
+                    sessionId: currentSession?.id ?? null,
+                    createdBy: user ? `${user.firstName} ${user.lastName}` : 'Caissier',
+                    allowNegativeStock: posSettings.isNegativeStockAllowed(),
+                }
+            );
+        } catch (err: any) {
+            const msg = err?.message || (typeof err === 'string' ? err : 'Échec de la vente');
+            console.error('[POS] checkout failed:', err);
+            toast.error(`Vente échouée: ${msg}`);
+            return;
+        }
 
-        // Prepare treasury movement for atomic transaction
-        const treasuryMovement = (currentSession && selectedPayment === 'cash') ? {
-            sessionId: currentSession.id,
-            movementId: crypto.randomUUID(),
-            createdBy: user ? `${user.firstName} ${user.lastName}` : 'Caissier',
-        } : undefined;
-
-        await addSale({
-            items: saleItems,
-            subtotal,
-            taxAmount: vatAmount,
-            discountAmount,
-            totalAmount: total,
-            paymentMethod: selectedPayment as any,
-            customerId: selectedCustomer || undefined,
-            customerName: customerObj?.name || undefined,
-            cashierId: user?.id || 'unknown',
-            cashierName: user ? `${user.firstName} ${user.lastName}` : 'Caissier',
-            status: 'completed',
-        }, {}, customerCredit, treasuryMovement);
+        // Print the receipt number the backend actually stored, so the printed
+        // ticket matches the DB record.
+        const receiptNumber = sale.receiptNumber;
 
         // 5. Thermal Printing via PrinterManager
         if (autoPrint) {
@@ -531,7 +537,7 @@ export const POS: React.FC = () => {
         setShowPayment(false);
         setAmountReceived('');
         searchInputRef.current?.focus();
-    }, [total, amountReceived, change, autoPrint, currentSession, addMovement, cart, itemCount, updateStock, addSale, customers, selectedCustomer, selectedPayment, subtotal, vatAmount, discountAmount, updateCredit, addStockMovement, products, toast]);
+    }, [cart, customers, selectedCustomer, selectedPayment, subtotal, vatAmount, discountAmount, total, currentSession, user, posSettings, addSale, autoPrint, settingsTvaRate, discountPercent, amountReceived, change, toast]);
 
     // Keyboard shortcuts
     useEffect(() => {

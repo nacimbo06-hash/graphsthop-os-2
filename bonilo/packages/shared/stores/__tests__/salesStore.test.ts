@@ -1,9 +1,27 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+// Hoisted so the vi.mock factory can reference it. Mimics the Rust
+// `checkout_sale` command: returns an incrementing receipt number per call.
+const { invokeMock } = vi.hoisted(() => {
+    let seq = 0;
+    return {
+        invokeMock: vi.fn(async () => {
+            seq += 1;
+            return {
+                saleId: `sale_${seq}`,
+                receiptNumber: `REC-${String(seq).padStart(6, '0')}`,
+                createdAt: new Date().toISOString(),
+                lotsDrained: [],
+            };
+        }),
+    };
+});
+
+vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
+
 vi.mock('../../db', () => ({
     salesRepo: {
         loadAll: vi.fn().mockResolvedValue([]),
-        recordSale: vi.fn().mockResolvedValue(undefined),
     },
 }));
 
@@ -69,31 +87,34 @@ describe('SalesStore', () => {
         expect(salesRepo.loadAll).toHaveBeenCalledOnce();
     });
 
-    it('should add a sale and persist to DB', async () => {
+    it('should add a sale via the checkout_sale command', async () => {
         const sale = await useSalesStore.getState().addSale(mockSaleInput);
 
-        expect(sale.id).toBeDefined();
-        expect(sale.receiptNumber).toBeDefined();
+        expect(sale.id).toBe('sale_1');
+        expect(sale.receiptNumber).toMatch(/^REC-\d{6}$/);
         expect(sale.timestamp).toBeDefined();
         expect(sale.totalAmount).toBe(285.6);
-        expect(salesRepo.recordSale).toHaveBeenCalledWith(
-            expect.objectContaining({ totalAmount: 285.6 }),
-            {},
-            undefined,
-            undefined
+        expect(invokeMock).toHaveBeenCalledWith(
+            'checkout_sale',
+            expect.objectContaining({
+                input: expect.objectContaining({ totalAmount: 285.6, paymentMethod: 'cash' }),
+            })
         );
         expect(useSalesStore.getState().sales).toHaveLength(1);
     });
 
-    it('should add sale with cost map', async () => {
-        const costMap = { prod_1: 90 };
-        await useSalesStore.getState().addSale(mockSaleInput, costMap);
+    it('should pass the cost map into the checkout input', async () => {
+        await useSalesStore.getState().addSale(mockSaleInput, { costMap: { prod_1: 90 } });
 
-        expect(salesRepo.recordSale).toHaveBeenCalledWith(
-            expect.anything(),
-            costMap,
-            undefined,
-            undefined
+        expect(invokeMock).toHaveBeenCalledWith(
+            'checkout_sale',
+            expect.objectContaining({
+                input: expect.objectContaining({
+                    items: expect.arrayContaining([
+                        expect.objectContaining({ productId: 'prod_1', costAtSale: 90 }),
+                    ]),
+                }),
+            })
         );
     });
 

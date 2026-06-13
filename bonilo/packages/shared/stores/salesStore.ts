@@ -43,15 +43,15 @@ interface SalesState {
     // Actions
     addSale: (
         saleData: Omit<Sale, 'id' | 'receiptNumber' | 'timestamp'>,
-        costMap?: Record<string, number>,
-        customerCredit?: {
-            newBalance: number;
-            lastPaymentDate: string | null;
-        },
-        treasuryMovement?: {
-            sessionId: string;
-            movementId: string;
-            createdBy: string;
+        options?: {
+            /** product_id -> unit cost, recorded as cost_at_sale per line. */
+            costMap?: Record<string, number>;
+            /** Open cash session id; drives the treasury movement on cash sales. */
+            sessionId?: string | null;
+            /** Display name of who rang the sale (audit on movements). */
+            createdBy?: string;
+            /** When true, a line may drive stock negative instead of being rejected. */
+            allowNegativeStock?: boolean;
         }
     ) => Promise<Sale>;
     getSaleById: (id: string) => Sale | undefined;
@@ -91,26 +91,73 @@ export const useSalesStore = create<SalesState>()(
             }
         },
 
-        // Record a sale — DB first in a transaction, then update memory
-        addSale: async (saleData, costMap = {}, customerCredit, treasuryMovement) => {
+        // Record a sale. Under Tauri this goes through the atomic Rust
+        // `checkout_sale` command (one SQLite transaction: sale + items + stock
+        // + FEFO lots + credit delta + treasury), which mints the receipt
+        // number and returns it. In the browser we mint locally and persist to
+        // localStorage.
+        addSale: async (saleData, options = {}) => {
+            const timestamp = new Date().toISOString();
+
+            if (isTauri()) {
+                const { invoke } = await import('@tauri-apps/api/core');
+                const input = {
+                    items: saleData.items.map((it: any) => ({
+                        productId: it.productId,
+                        productName: it.productName,
+                        quantity: it.quantity,
+                        unitPrice: it.unitPrice,
+                        total: it.total,
+                        taxAmount: it.taxAmount || 0,
+                        discountPercent: it.discountPercent || 0,
+                        costAtSale: options.costMap?.[it.productId] ?? 0,
+                        stockQuantity: it.stockQuantity ?? it.quantity,
+                    })),
+                    subtotal: saleData.subtotal,
+                    taxAmount: saleData.taxAmount,
+                    discountAmount: saleData.discountAmount,
+                    totalAmount: saleData.totalAmount,
+                    paymentMethod: saleData.paymentMethod,
+                    customerId: saleData.customerId || null,
+                    customerName: saleData.customerName || '',
+                    cashierId: saleData.cashierId,
+                    cashierName: saleData.cashierName,
+                    status: saleData.status || 'completed',
+                    createdAt: timestamp,
+                    sessionId: options.sessionId || null,
+                    createdBy: options.createdBy || saleData.cashierId || '',
+                    allowNegativeStock: options.allowNegativeStock ?? false,
+                };
+
+                // Rejects with { code, message } on EMPTY_CART, INSUFFICIENT_STOCK,
+                // CREDIT_REQUIRES_CUSTOMER, etc. — the caller surfaces it.
+                const result = await invoke<{ saleId: string; receiptNumber: string; createdAt: string }>(
+                    'checkout_sale',
+                    { input }
+                );
+
+                const newSale: Sale = {
+                    ...saleData,
+                    id: result.saleId,
+                    receiptNumber: result.receiptNumber,
+                    timestamp: result.createdAt,
+                };
+                set(state => ({ sales: [newSale, ...state.sales] }));
+                return newSale;
+            }
+
+            // Browser fallback: no SQLite — mint locally and persist to localStorage.
             const newSale: Sale = {
                 ...saleData,
                 id: crypto.randomUUID(),
                 receiptNumber: `REC-${Date.now().toString().slice(-6)}`,
-                timestamp: new Date().toISOString(),
+                timestamp,
             };
-
-            if (isTauri()) {
-                await salesRepo.recordSale(newSale, costMap, customerCredit, treasuryMovement);
-            }
-
-            // Update in-memory state
             set(state => {
                 const updated = [newSale, ...state.sales];
                 saveToBrowser(updated);
                 return { sales: updated };
             });
-
             return newSale;
         },
 
