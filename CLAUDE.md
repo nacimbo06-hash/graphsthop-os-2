@@ -4,138 +4,106 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GRAPHSHOP OS is an AI-native retail management ecosystem for Algerian supermarkets, print shops, and specialized retailers. It contains multiple sub-projects under one workspace.
+GRAPHSHOP OS is an offline-first retail management app for Algerian supermarkets — cashier checkout, inventory/FEFO, cash/treasury, suppliers, customer credit, and thermal receipt/label printing. French primary UI with Arabic support.
 
 ## Repository Structure
 
-| Directory | Description |
-|-----------|-------------|
-| `ASGARD UNIFIED/` | Main monorepo — the core product (Tauri + React desktop app) |
-| `BONILO APP V1/` | Standalone Vite + React POS/management app (web-based, IndexedDB) |
-| `BONILO BRAND/` | Brand identity assets (logos, guidelines, AI files) |
-| `BONILO BRAND HTML/` | Brand guidelines as a static HTML site |
-| `skills/` | Development skill guides (Markdown reference docs) |
-| `LIVRABLE_PRODUCTION/` | Production deliverables (Mac/Windows builds) |
+The workspace root is `GRAPHSHOP OS/`. The actual product is the **`bonilo/`** monorepo; everything else is supporting material.
 
-## ASGARD UNIFIED — Primary Codebase
+| Path | Description |
+|------|-------------|
+| `bonilo/` | The product — Tauri v2 + React 19 monorepo (npm workspaces). **All app work happens here.** |
+| `BONILO BRAND/` | Brand identity assets (logos, guidelines) |
+| `_docs/` | Strategy, research, and overview documents |
+| `skills/` | Markdown reference/skill guides |
+| `_ARCHIVE_LEGACY/` | Abandoned earlier attempts — **git-ignored**, do not use |
+
+## `bonilo/` — The Monorepo
 
 ### Architecture
 
-Monorepo using npm workspaces (`apps/*`, `packages/*`):
+npm workspaces (`apps/*`, `packages/*`):
 
-- **`apps/desktop-os`** — Main Tauri v2 + React 19 desktop application (IGO Desktop)
-- **`apps/print-studio`** — Label design and thermal printer tool
-- **`packages/shared`** — Central source of truth: TypeScript types, Zustand stores, constants
-- **`packages/ui-kit`** — Reusable UI components (placeholder)
+- **`apps/desktop`** — Main Tauri v2 + React 19 desktop app (`@bonilo/desktop`). React renderer in `src/renderer/src/`, Rust shell in `src-tauri/`.
+- **`apps/print-studio`** — Label design / thermal printer tool.
+- **`packages/shared`** — Central source of truth: TypeScript types, Zustand stores, and the SQLite data layer (`db/`).
 
-### Build & Dev Commands (run from `ASGARD UNIFIED/`)
-
-```bash
-npm install                    # Install all workspace dependencies
-npm run dev:desktop            # Run desktop-os dev server (Vite on port 5173)
-npm run dev:print              # Run print-studio dev server
-npm run build:desktop:win      # Build Windows x64 via Tauri
-npm run build:desktop:linux    # Build Linux AppImage via Tauri
-npm run build:desktop:mac      # Build macOS via Tauri
-npm run lint                   # ESLint across all workspaces
-npm run typecheck              # TypeScript check across all workspaces
-```
-
-### Desktop-OS Commands (run from `ASGARD UNIFIED/apps/desktop-os/`)
+### Build & Dev Commands (run from `bonilo/`)
 
 ```bash
-npm run dev                    # Vite dev server only (no Tauri shell)
-npm run dev:tauri              # Full Tauri dev (Rust + Vite)
-npm run build:tauri            # Production Tauri build
-npm run build:tauri:debug      # Debug Tauri build
-npm run test                   # Vitest run (single pass)
-npm run test:watch             # Vitest watch mode
-npm run test:coverage          # Vitest with coverage
-npm run format                 # Prettier
-npm run lint                   # ESLint
-npm run typecheck              # tsc --noEmit
+npm install                 # Install all workspace dependencies
+npm run dev:desktop         # Desktop renderer dev server (Vite, no Tauri shell)
+npm run dev:print           # print-studio dev server
+npm run build:desktop:win   # Build Windows x64 via Tauri
+npm run typecheck           # tsc --noEmit across all workspaces
+npm run lint                # ESLint across all workspaces
 ```
+
+### Desktop Commands (run from `bonilo/apps/desktop/`)
+
+```bash
+npm run dev          # Vite dev server only (browser, no Tauri)
+npm run dev:tauri    # Full Tauri dev (Rust + Vite)
+npm run build:tauri  # Production Tauri build
+npm run test         # Vitest run (single pass)
+npm run test:watch   # Vitest watch mode
+npm run typecheck    # tsc --noEmit
+```
+
+### Data Layer
+
+- **SQLite via `@tauri-apps/plugin-sql`**, database `sqlite:bonilo.db` (preloaded in `tauri.conf.json`, stored under the app config dir). WAL mode, `foreign_keys = ON`.
+- **Repository pattern** in `packages/shared/db/` (`database.ts` + `*Repo.ts`). Stores hydrate from these repos when running under Tauri, and fall back to `localStorage` in plain-browser dev mode (`isTauri()` guard).
+- **Migrations** run via `PRAGMA user_version` in `database.ts`.
+- **Architectural direction:** multi-write money flows (checkout, goods receipt, treasury, session close, credit payment) are being moved into Rust `#[tauri::command]`s for true atomic transactions — `db.transaction()` over the plugin's connection pool is not atomic. Reads stay on plugin-sql `select()`. See the active plan in `~/.claude/plans/`.
 
 ### Key Architectural Patterns
 
 - **Provider stack**: `QueryClientProvider → SettingsProvider → DBProvider → SyncProvider → ToastProvider → Router`
-- **Hash-based routing** with React Router v7 — all pages lazy-loaded via `React.lazy()` + Suspense
-- **Zustand stores** in `packages/shared/stores/` with localStorage persistence middleware — these are the single source of truth for all state
-- **Treasury stores** are in a subdirectory: `packages/shared/stores/treasury/` with a facade pattern (`useTreasuryFacade.ts`)
-- **Role-based access control**: 5 roles (owner, manager, cashier, stock_manager, accountant) controlling access to 11 modules
-- **Offline-first**: SQLite via Tauri SQL plugin (`igo-desktop.db`), with network sync for multi-PC setups
-- **Vite chunk splitting**: vendor, charts (recharts), pdf (jspdf), router, state (zustand), ui (lucide) are separate chunks
+- **Hash-based routing** (React Router v7) — pages lazy-loaded via `React.lazy()` + Suspense
+- **Zustand stores** in `packages/shared/stores/` — single source of truth for UI state; treasury stores live in `stores/treasury/` behind a facade (`useTreasuryFacade.ts`)
+- **Role-based access control**: roles (owner, manager, cashier, stock_manager, accountant) gating modules
+- **Thermal printing**: ESC/POS bytes generated in JS, sent to a serial printer via Rust commands (`src-tauri/src/printer.rs`); WebUSB / `window.print()` fallbacks in-browser
 
-### Path Aliases (tsconfig)
+### Path Aliases (tsconfig / vitest)
 
 ```
-@/*           → ./src/renderer/src/*
-@shared/*     → ../../packages/shared/*
-@asgard/shared/* → ../../packages/shared/*
+@/*              → apps/desktop/src/renderer/src/*
+@shared/*        → packages/shared/*
+@bonilo/shared   → packages/shared        (also @bonilo/shared/*)
+@asgard/shared   → packages/shared        (legacy alias, same target)
 ```
 
-### Source Layout (`apps/desktop-os/src/renderer/src/`)
+### Source Layout (`apps/desktop/src/renderer/src/`)
 
 - `pages/` — Feature modules: Dashboard, POS, Treasury, Inventory, Customers, Suppliers, Reports, PrintCenter, Settings, Users, Help, Login, Onboarding
-- `components/` — Reusable UI organized by: `ui/`, `layout/`, `feedback/`, `data-display/`, `domain/`, `animations/`, `form/`, `NetworkSync/`
-- `services/` — Business logic: `ai/forecastingService.ts`, `printing/` (ESC-POS commands, receipt/label generators)
-- `hooks/` — Custom hooks: useApi, useDebounce, useInterval, useLocalStorage, useMediaQuery, usePerformance
-- `contexts/SettingsContext.tsx` — Global settings (formatCurrency, useTVA, usePOSSettings)
-- `providers/` — DBProvider (SQLite init), SyncProvider (network sync)
-- `i18n/` — French as primary language, Arabic support for product/customer names
-- `styles/` — CSS variables theming, RTL support (`rtl.css`), animations
+- `components/` — `ui/`, `layout/`, `feedback/`, `data-display/`, `domain/`, `animations/`, `form/`, `NetworkSync/`
+- `services/` — printing (`printing/` ESC-POS commands + receipt/label generators), `tauriPrinterService.ts`
+- `contexts/SettingsContext.tsx` — global settings (formatCurrency, useTVA, usePOSSettings)
+- `providers/` — DBProvider (SQLite init), SyncProvider (network sync — currently a mock)
+- `i18n/` — French primary, Arabic support
+- `styles/` — CSS variable theming, RTL support (`rtl.css`)
 
 ### Hub + Tabs Pattern
 
-Feature pages follow a consistent pattern: `*Hub.tsx` renders tab navigation, with each tab as a separate component in a `tabs/` subdirectory. Example: `InventoryHub.tsx` → `tabs/ProductsList.tsx`, `tabs/StockAlerts.tsx`, etc.
+Feature pages use `*Hub.tsx` for tab navigation, with each tab a component in a `tabs/` subdirectory. Example: `InventoryHub.tsx` → `tabs/ProductsList.tsx`, `tabs/StockAlerts.tsx`.
 
-## BONILO APP V1 — Standalone Web POS
+## Testing
 
-A parallel implementation of the POS system using Vite + React 18 + Tailwind CSS + IndexedDB (via `idb`). Same feature set as ASGARD desktop-os but runs in-browser without Tauri.
-
-```bash
-cd "BONILO APP V1"
-npm install
-npm run dev       # Vite dev server
-npm run build     # tsc && vite build
-npm run preview   # Preview production build
-```
-
-- State management: Zustand stores in `src/core/stores/` (mirrors `packages/shared/stores/`)
-- Types: `src/core/types/` (mirrors `packages/shared/types/`)
-- Styling: Tailwind CSS with HSL-based CSS variable theme, class-based dark mode
-- Database: IndexedDB via `idb` library (`src/lib/db.ts`, `src/services/dbService.ts`)
-
-## Tech Stack Summary
-
-| Layer | ASGARD Desktop | BONILO Web |
-|-------|---------------|------------|
-| Runtime | Tauri v2 (Rust) | Browser |
-| React | 19.2 | 18.2 |
-| Router | React Router v7 (hash) | React Router v6 |
-| State | Zustand v5 | Zustand v4 |
-| DB | SQLite (Tauri plugin) | IndexedDB (idb) |
-| Styling | CSS Modules + variables | Tailwind CSS |
-| Charts | Recharts | — |
-| PDF | jsPDF + autotable | — |
-| i18n | i18next | — |
-| Testing | Vitest + Testing Library | — |
-| Build | Vite 7 | Vite 5 |
+- **Vitest** (jsdom) from `apps/desktop`. Config (`vitest.config.ts`) includes both `src/**` and `../../packages/shared/**` test files. Setup in `src/test/setup.ts` mocks `localStorage`, `crypto`, and defaults the env to Tauri-like (`window.__TAURI_INTERNALS__`).
+- Integration tests under `src/test/integration/` mock the SQL plugin with `better-sqlite3` (single-connection) — note this does **not** reproduce the plugin's pooled-connection transaction behavior.
 
 ## Design System Conventions
 
-- **Dark mode first**: Deep `#0D0D12` backgrounds with glassmorphism (`backdrop-filter: blur(16px)`)
+- **Dark mode first**: deep `#0D0D12` backgrounds with glassmorphism (`backdrop-filter: blur(16px)`)
 - **Color grammar**: Green = Operational, Purple = AI-Powered, Cyan = Analytical
-- **Accents**: Electric Blue, Neon Purple, Emerald Green for action states
-- **Icons**: Lucide React throughout
-- **Animations**: Framer Motion (motion library) for page transitions and micro-interactions
+- **Icons**: Lucide React; **Animations**: Framer Motion (`motion`)
 
 ## Domain-Specific Context
 
-- Target market is **Algerian retail** — product categories, brands, and naming conventions are Algeria-specific
-- Product naming follows: `[MARQUE] + [NATURE] + [VARIÉTÉ] + [QUANTITÉ]` (e.g., `CANDIA Lait UHT Demi-Ecrémé 1L`)
-- Brand names in UPPERCASE for readability
-- Receipt printing must handle 20-40 character width limits (thermal printers) — standard abbreviation table exists in `PRODUCT_NAMING_BEST_PRACTICES.md`
+- Target market is **Algerian retail** — categories, brands, and naming are Algeria-specific
+- Product naming: `[MARQUE] + [NATURE] + [VARIÉTÉ] + [QUANTITÉ]` (e.g. `CANDIA Lait UHT Demi-Ecrémé 1L`), brand names UPPERCASE
+- Receipt printing handles 20–40 char width limits (thermal); abbreviation table in `_docs/PRODUCT_NAMING_BEST_PRACTICES.md`
 - Payment methods: Cash, CIB, Dahabia, Credit
 - Currency and TVA (tax) are configurable per store
-- Multi-language: French primary UI, Arabic support for customer/product names, RTL stylesheet available
+- Multi-language: French primary UI, Arabic for customer/product names, RTL stylesheet available
