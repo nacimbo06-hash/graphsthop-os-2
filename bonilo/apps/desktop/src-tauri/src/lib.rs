@@ -1,3 +1,5 @@
+mod db;
+mod error;
 mod printer;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -7,7 +9,8 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
         printer::list_printers,
         printer::print_receipt,
-        printer::print_raw
+        printer::print_raw,
+        db::db_ping
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {
