@@ -6,10 +6,7 @@
 
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
-// A deliberately complete error taxonomy for the money core. The checkout
-// variants below are constructed by `checkout_sale` (M1.2); allow them ahead
-// of that so this plumbing checkpoint stays warning-free.
-#[allow(dead_code)]
+/// The error taxonomy for the money-core commands.
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error("database error: {0}")]

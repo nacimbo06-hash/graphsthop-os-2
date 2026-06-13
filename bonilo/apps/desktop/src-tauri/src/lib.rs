@@ -1,3 +1,4 @@
+mod checkout;
 mod db;
 mod error;
 mod printer;
@@ -10,7 +11,8 @@ pub fn run() {
         printer::list_printers,
         printer::print_receipt,
         printer::print_raw,
-        db::db_ping
+        db::db_ping,
+        checkout::checkout_sale
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {
