@@ -2,19 +2,35 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { secureStorage } from '../secureStorage';
 
+/**
+ * setup.ts replaces window.localStorage with vi.fn() stubs (it is NOT a real
+ * Storage instance), so spying on Storage.prototype does not intercept these
+ * calls. We instead drive the existing localStorage mocks directly and back
+ * them with an in-memory Map so encrypt/decrypt round-trips work.
+ */
+type Mock = ReturnType<typeof vi.fn>;
+
+const ENCRYPTION_KEY_NAME = 'asgard_encryption_key';
+
 describe('Shared SecureStorage', () => {
-    let getItemSpy: ReturnType<typeof vi.spyOn>;
-    let setItemSpy: ReturnType<typeof vi.spyOn>;
-    let removeItemSpy: ReturnType<typeof vi.spyOn>;
+    let store: Map<string, string>;
+    let setItem: Mock;
+    let getItem: Mock;
+    let removeItem: Mock;
 
     beforeEach(() => {
-        localStorage.clear();
-        // Reset singleton internal state so init() runs fresh each test
+        store = new Map<string, string>();
+        // Re-implement the vi.fn() localStorage stubs as a working in-memory store.
+        setItem = localStorage.setItem as unknown as Mock;
+        getItem = localStorage.getItem as unknown as Mock;
+        removeItem = localStorage.removeItem as unknown as Mock;
+        setItem.mockImplementation((k: string, v: string) => { store.set(k, String(v)); });
+        getItem.mockImplementation((k: string) => (store.has(k) ? store.get(k)! : null));
+        removeItem.mockImplementation((k: string) => { store.delete(k); });
+
+        // Reset singleton internal state so init() runs fresh each test.
         (secureStorage as any).initialized = false;
         (secureStorage as any).encryptionKey = null;
-        getItemSpy = vi.spyOn(Storage.prototype, 'getItem');
-        setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
-        removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
     });
 
     afterEach(() => {
@@ -23,16 +39,11 @@ describe('Shared SecureStorage', () => {
 
     describe('Encryption/Decryption', () => {
         it('should encrypt and decrypt data correctly', async () => {
-            const mockKey = {} as CryptoKey;
-
-            vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue(mockKey);
+            vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue({} as CryptoKey);
             vi.spyOn(crypto.subtle, 'exportKey').mockResolvedValue(new ArrayBuffer(32));
-            vi.spyOn(crypto.subtle, 'encrypt').mockImplementation(async () => {
-                return new ArrayBuffer(16);
-            });
+            vi.spyOn(crypto.subtle, 'encrypt').mockResolvedValue(new ArrayBuffer(16));
             vi.spyOn(crypto.subtle, 'decrypt').mockImplementation(async () => {
-                const encoder = new TextEncoder();
-                return encoder.encode('test-value').buffer;
+                return new TextEncoder().encode('test-value').buffer;
             });
 
             await secureStorage.init();
@@ -43,13 +54,12 @@ describe('Shared SecureStorage', () => {
         });
 
         it('should handle corrupted data gracefully', async () => {
-            const mockKey = {} as CryptoKey;
-
-            vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue(mockKey);
+            vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue({} as CryptoKey);
             vi.spyOn(crypto.subtle, 'exportKey').mockResolvedValue(new ArrayBuffer(32));
             vi.spyOn(crypto.subtle, 'decrypt').mockRejectedValue(new Error('Decryption failed'));
 
-            getItemSpy.mockReturnValue('corrupted-data');
+            // Seed a value that will fail to decrypt.
+            store.set('secure_corrupted-key', 'corrupted-data');
 
             await secureStorage.init();
             const result = await secureStorage.getItem('corrupted-key');
@@ -60,8 +70,9 @@ describe('Shared SecureStorage', () => {
 
     describe('Key Management', () => {
         it('should generate new key if none exists', async () => {
-            getItemSpy.mockReturnValue(null);
-            const generateKeySpy = vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue({} as CryptoKey);
+            const generateKeySpy = vi
+                .spyOn(crypto.subtle, 'generateKey')
+                .mockResolvedValue({} as CryptoKey);
             vi.spyOn(crypto.subtle, 'exportKey').mockResolvedValue(new ArrayBuffer(32));
 
             await secureStorage.init();
@@ -78,8 +89,10 @@ describe('Shared SecureStorage', () => {
                 key: btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(32)))),
                 createdAt: Date.now(),
             };
-            getItemSpy.mockReturnValue(JSON.stringify(existingKey));
-            const importKeySpy = vi.spyOn(crypto.subtle, 'importKey').mockResolvedValue({} as CryptoKey);
+            store.set(ENCRYPTION_KEY_NAME, JSON.stringify(existingKey));
+            const importKeySpy = vi
+                .spyOn(crypto.subtle, 'importKey')
+                .mockResolvedValue({} as CryptoKey);
 
             await secureStorage.init();
 
@@ -89,23 +102,19 @@ describe('Shared SecureStorage', () => {
 
     describe('Storage Operations', () => {
         it('should prefix stored keys with secure_', async () => {
-            const mockKey = {} as CryptoKey;
-            vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue(mockKey);
+            vi.spyOn(crypto.subtle, 'generateKey').mockResolvedValue({} as CryptoKey);
             vi.spyOn(crypto.subtle, 'exportKey').mockResolvedValue(new ArrayBuffer(32));
             vi.spyOn(crypto.subtle, 'encrypt').mockResolvedValue(new ArrayBuffer(16));
 
             await secureStorage.init();
             await secureStorage.setItem('my-key', 'my-value');
 
-            expect(setItemSpy).toHaveBeenCalledWith(
-                'secure_my-key',
-                expect.any(String)
-            );
+            expect(setItem).toHaveBeenCalledWith('secure_my-key', expect.any(String));
         });
 
         it('should remove items with correct prefix', () => {
             secureStorage.removeItem('test-key');
-            expect(removeItemSpy).toHaveBeenCalledWith('secure_test-key');
+            expect(removeItem).toHaveBeenCalledWith('secure_test-key');
         });
     });
 });
