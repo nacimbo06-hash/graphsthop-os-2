@@ -36,7 +36,7 @@ export interface ReceiptData {
  */
 export async function listPrinters(): Promise<PrinterInfo[]> {
     const invoke = await getInvoke();
-    return invoke<PrinterInfo[]>('list_printers');
+    return invoke('list_printers') as Promise<PrinterInfo[]>;
 }
 
 /**

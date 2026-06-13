@@ -10,7 +10,7 @@ export interface PrinterConfig {
     id: string;
     name: string;
     type: 'thermal' | 'label' | 'standard';
-    connectionType: 'usb' | 'network' | 'bluetooth' | 'browser';
+    connectionType: 'usb' | 'network' | 'bluetooth' | 'browser' | 'serial';
     paperWidth: 58 | 80 | 100; // mm
     vendorId?: number;
     productId?: number;
