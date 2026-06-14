@@ -2,6 +2,7 @@ mod checkout;
 mod db;
 mod error;
 mod printer;
+mod receive_goods;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -12,7 +13,8 @@ pub fn run() {
         printer::print_receipt,
         printer::print_raw,
         db::db_ping,
-        checkout::checkout_sale
+        checkout::checkout_sale,
+        receive_goods::receive_goods
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

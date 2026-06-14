@@ -24,6 +24,9 @@ pub enum AppError {
     #[error("unknown product: {0}")]
     UnknownProduct(String),
 
+    #[error("unknown supplier: {0}")]
+    UnknownSupplier(String),
+
     #[error("insufficient stock for {product_id}: requested {requested}, available {available}")]
     InsufficientStock {
         product_id: String,
@@ -47,6 +50,7 @@ impl AppError {
             AppError::NotSqlite => "NOT_SQLITE",
             AppError::EmptyCart => "EMPTY_CART",
             AppError::UnknownProduct(_) => "UNKNOWN_PRODUCT",
+            AppError::UnknownSupplier(_) => "UNKNOWN_SUPPLIER",
             AppError::InsufficientStock { .. } => "INSUFFICIENT_STOCK",
             AppError::CreditRequiresCustomer => "CREDIT_REQUIRES_CUSTOMER",
             AppError::Invalid(_) => "INVALID_INPUT",
