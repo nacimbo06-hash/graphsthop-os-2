@@ -25,8 +25,6 @@ import {
     useProductsStore,
     usePurchasesStore,
     useTreasuryStore,
-    useStockMovementsStore,
-    useLotsStore,
     type Product,
     type PurchaseItem
 } from '@bonilo/shared/stores';
@@ -50,11 +48,9 @@ interface ReceiptLine {
 
 export const GoodsReceipt: React.FC = () => {
     const { formatCurrency } = useSettings();
-    const { products, updateStock } = useProductsStore();
+    const { products } = useProductsStore();
     const { suppliers, goodsReceipts, addGoodsReceipt } = usePurchasesStore();
-    const { currentSession, addExpense, addMovement, safeBalance, getCurrentBalance, withdrawFromSafe } = useTreasuryStore();
-    const { addMovement: addStockMovement } = useStockMovementsStore();
-    const { addLot } = useLotsStore();
+    const { currentSession, addExpense, safeBalance, getCurrentBalance } = useTreasuryStore();
     const toast = useToast();
 
     // Auto-generate invoice number
@@ -286,7 +282,6 @@ export const GoodsReceipt: React.FC = () => {
     const handleConfirmReceipt = async () => {
         if (!selectedSupplier) return;
 
-        // 1. Create Goods Receipt
         const purchaseItems: PurchaseItem[] = receiptLines.map(line => ({
             id: crypto.randomUUID(),
             productId: line.product.id,
@@ -298,98 +293,82 @@ export const GoodsReceipt: React.FC = () => {
             purchasePrice: line.purchasePrice,
             total: line.total,
             expiryDate: line.expiryDate?.toISOString(),
+            lotNumber: line.lotNumber,
             unit: line.product.unit,
+            isPerishable: line.product.isPerishable,
+            shelfLifeDays: line.product.shelfLifeDays,
         }));
 
-        // 2. Prepare atomic treasury movement if applicable
-        const treasuryMovement = (isPaid && paymentSource === 'cash' && currentSession) ? {
-            sessionId: currentSession.id,
-            movementId: crypto.randomUUID(),
-            createdBy: 'Staff'
-        } : undefined;
-
-        await addGoodsReceipt({
-            supplierId: selectedSupplier.id,
-            supplierName: selectedSupplier.name,
-            date: receiptDate,
-            invoiceNumber,
-            items: purchaseItems,
-            total: totalAmount,
-            status: 'completed',
-            isPaid,
-            paidFrom: isPaid ? paymentSource : undefined,
-        }, treasuryMovement);
-
-        // 2. Lot creation for perishable items
-        for (const line of receiptLines) {
-            if (line.expiryDate || line.product.isPerishable) {
-                addLot({
-                    productId: line.product.id,
-                    productName: line.product.name,
-                    productBarcode: line.product.barcode,
-                    lotNumber: line.lotNumber || `LOT-${receiptNumber.slice(-4)}-${line.product.sku || line.product.id.slice(-4)}`,
-                    quantity: line.totalUnits,
-                    originalQuantity: line.totalUnits,
-                    expiryDate: line.expiryDate
-                        ? line.expiryDate.toISOString()
-                        : new Date(Date.now() + (line.product.shelfLifeDays || 30) * 24 * 60 * 60 * 1000).toISOString(),
-                    receivedDate: new Date().toISOString(),
-                    supplierId: selectedSupplier.id,
-                    supplierName: selectedSupplier.name,
-                    goodsReceiptId: receiptNumber,
-                    purchasePrice: line.purchasePrice,
-                });
-            }
+        // Persist atomically via the Rust `receive_goods` command: one
+        // transaction for the receipt + items + stock + inventory movements +
+        // lots, plus exactly one settlement (a single cash movement, a safe
+        // withdrawal, or a supplier-debt delta). Replaces the old non-atomic
+        // path (addGoodsReceipt + a separate addLot loop + a separate
+        // addMovement/withdrawFromSafe — which deducted the drawer twice). If it
+        // fails (e.g. UNKNOWN_PRODUCT) nothing is written.
+        let receipt: Awaited<ReturnType<typeof addGoodsReceipt>>;
+        try {
+            receipt = await addGoodsReceipt({
+                supplierId: selectedSupplier.id,
+                supplierName: selectedSupplier.name,
+                date: receiptDate,
+                invoiceNumber,
+                items: purchaseItems,
+                total: totalAmount,
+                status: 'completed',
+                isPaid,
+                paidFrom: isPaid ? paymentSource : undefined,
+            }, {
+                // A cash payment needs the open session; without it the command
+                // falls back to supplier debt (handled below as a warning).
+                sessionId: isPaid && paymentSource === 'cash' ? (currentSession?.id ?? null) : null,
+                createdBy: 'Staff',
+            });
+        } catch (err: any) {
+            const msg = err?.message || (typeof err === 'string' ? err : 'Échec du bon d\'entrée');
+            console.error('[GoodsReceipt] receive_goods failed:', err);
+            toast.error(`Bon d'entrée échoué: ${msg}`);
+            return;
         }
 
-    // 3. Handle treasury if paid
-    if (isPaid) {
-        const expenseDesc = `Achat stock: ${selectedSupplier.name} (${receiptNumber})`;
+        // Expense reporting ledger only. The actual drawer/safe deduction now
+        // happens inside the Rust command (a single cash_movements/safe row), so
+        // we no longer post a movement here — that double-posting was the bug.
+        if (isPaid) {
+            const expenseDesc = `Achat stock: ${selectedSupplier.name} (${receipt.grNumber})`;
 
-        if (paymentSource === 'cash') {
-            if (!currentSession) {
-                toast.warning('Session de caisse fermée. Paiement enregistré comme dette fournisseur.');
+            if (paymentSource === 'cash') {
+                if (!currentSession) {
+                    toast.warning('Session de caisse fermée. Paiement enregistré comme dette fournisseur.');
+                } else {
+                    addExpense({
+                        description: expenseDesc,
+                        amount: totalAmount,
+                        category: 'Achats',
+                        paymentMethod: 'cash',
+                        date: new Date().toISOString(),
+                    }, true, 'cash');
+                }
             } else {
-                // Add movement to deduct from cash balance
-                addMovement({
-                    type: 'expense',
-                    amount: totalAmount,
-                    reason: expenseDesc,
-                    reference: receiptNumber,
-                    createdBy: 'Admin',
-                });
-
-                // Also record in expenses for reporting
                 addExpense({
                     description: expenseDesc,
                     amount: totalAmount,
                     category: 'Achats',
-                    paymentMethod: 'cash',
+                    paymentMethod: 'safe',
                     date: new Date().toISOString(),
-                }, true, 'cash');
+                }, true, 'safe');
             }
-        } else {
-            // Payment from Safe
-            withdrawFromSafe(totalAmount, expenseDesc, 'Admin');
-            addExpense({
-                description: expenseDesc,
-                amount: totalAmount,
-                category: 'Achats',
-                paymentMethod: 'safe',
-                date: new Date().toISOString(),
-            }, true, 'safe');
         }
-    }
 
-    // Reset form
-    setReceiptLines([]);
-    setSelectedSupplierId('');
-    setInvoiceNumber('');
-    setReceiptNumber(`BE-${Date.now().toString().slice(-6)}`);
-    setShowConfirmModal(false);
+        // Reset form
+        setReceiptLines([]);
+        setSelectedSupplierId('');
+        setInvoiceNumber('');
+        setReceiptNumber(`BE-${Date.now().toString().slice(-6)}`);
+        setShowConfirmModal(false);
 
-    toast.success('Bon d\'entrée enregistré et stock mis à jour!');
-};
+        toast.success('Bon d\'entrée enregistré et stock mis à jour!');
+    };
 
 const getStatusBadge = (ordered: number, received: number) => {
     if (received === 0) return <span className={`${styles.statusBadge} ${styles.pending}`}>En attente</span>;

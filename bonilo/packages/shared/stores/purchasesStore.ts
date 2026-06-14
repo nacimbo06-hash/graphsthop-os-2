@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { purchasesRepo } from '../db';
 
+// Check if running in Tauri (SQLite + Rust commands available).
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
 export interface Supplier {
     id: string;
     name: string;
@@ -25,6 +28,10 @@ export interface PurchaseItem {
     expiryDate?: string;
     lotNumber?: string;
     unit: string;
+    /** When true (or when an expiry is set), receive_goods creates a lot for this line. */
+    isPerishable?: boolean;
+    /** Fallback shelf life (days) for the lot when perishable but no explicit expiry. */
+    shelfLifeDays?: number;
 }
 
 export interface PurchaseOrder {
@@ -79,12 +86,13 @@ interface PurchasesState {
 
     addGoodsReceipt: (
         receipt: Omit<GoodsReceipt, 'id' | 'grNumber' | 'createdAt'>,
-        treasuryMovement?: {
-            sessionId: string;
-            movementId: string;
-            createdBy: string;
+        options?: {
+            /** Open cash session id; required to settle a cash-paid receipt from the drawer. */
+            sessionId?: string | null;
+            /** Display name of who received the goods (audit on movements). */
+            createdBy?: string;
         }
-    ) => Promise<void>;
+    ) => Promise<GoodsReceipt>;
     confirmGoodsReceipt: (id: string) => Promise<void>;
     payGoodsReceipt: (id: string, paidFrom: 'cash' | 'safe' | 'provision') => Promise<void>;
 
@@ -161,15 +169,74 @@ export const usePurchasesStore = create<PurchasesState>()(
             }));
         },
 
-        addGoodsReceipt: async (receiptData, treasuryMovement) => {
+        // Record a goods receipt. Under Tauri this goes through the atomic Rust
+        // `receive_goods` command (one SQLite transaction: receipt + items +
+        // stock + inventory movements + lots + a single settlement — cash
+        // movement, safe withdrawal, or supplier-debt delta), which mints the
+        // GR number and returns it. In the browser we mint locally and keep the
+        // receipt in memory only. Replaces the old non-atomic path that wrote a
+        // cash 'withdrawal' here and let the renderer post a second 'expense'.
+        addGoodsReceipt: async (receiptData, options = {}) => {
+            const timestamp = new Date().toISOString();
+
+            if (isTauri()) {
+                const { invoke } = await import('@tauri-apps/api/core');
+                const input = {
+                    items: receiptData.items.map((it) => ({
+                        productId: it.productId,
+                        productName: it.productName,
+                        productBarcode: it.productBarcode,
+                        productEmoji: it.productEmoji,
+                        orderedQty: it.orderedQty,
+                        receivedQty: it.receivedQty,
+                        purchasePrice: it.purchasePrice,
+                        total: it.total,
+                        unit: it.unit,
+                        expiryDate: it.expiryDate || null,
+                        lotNumber: it.lotNumber || null,
+                        isPerishable: it.isPerishable ?? false,
+                        shelfLifeDays: it.shelfLifeDays ?? null,
+                    })),
+                    supplierId: receiptData.supplierId,
+                    supplierName: receiptData.supplierName,
+                    date: receiptData.date,
+                    invoiceNumber: receiptData.invoiceNumber || '',
+                    total: receiptData.total,
+                    poId: receiptData.poId || null,
+                    status: receiptData.status || 'completed',
+                    isPaid: receiptData.isPaid,
+                    paidFrom: receiptData.paidFrom || null,
+                    sessionId: options.sessionId || null,
+                    createdAt: timestamp,
+                    createdBy: options.createdBy || '',
+                };
+
+                // Rejects with { code, message } on UNKNOWN_SUPPLIER /
+                // UNKNOWN_PRODUCT / INVALID_INPUT — the caller surfaces it.
+                const result = await invoke<{ receiptId: string; grNumber: string; createdAt: string }>(
+                    'receive_goods',
+                    { input }
+                );
+
+                const newReceipt: GoodsReceipt = {
+                    ...receiptData,
+                    id: result.receiptId,
+                    grNumber: result.grNumber,
+                    createdAt: result.createdAt,
+                };
+                set(state => ({ goodsReceipts: [newReceipt, ...state.goodsReceipts] }));
+                return newReceipt;
+            }
+
+            // Browser fallback: no SQLite — mint locally and keep in memory only.
             const newReceipt: GoodsReceipt = {
                 ...receiptData,
                 id: crypto.randomUUID(),
                 grNumber: `BE-${new Date().getFullYear()}-${String(get().goodsReceipts.length + 1).padStart(3, '0')}`,
-                createdAt: new Date().toISOString(),
+                createdAt: timestamp,
             };
-            await purchasesRepo.createGoodsReceipt(newReceipt, treasuryMovement);
             set(state => ({ goodsReceipts: [newReceipt, ...state.goodsReceipts] }));
+            return newReceipt;
         },
 
         confirmGoodsReceipt: async (id) => {
