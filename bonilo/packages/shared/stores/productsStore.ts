@@ -160,38 +160,37 @@ export const useProductsStore = create<ProductsState>()(
             });
         },
 
-        // Update stock with DB transaction + inventory movement
+        // Adjust stock. Under Tauri this goes through the atomic Rust
+        // `adjust_stock` command (one SQLite transaction: stock change + an
+        // inventory_movements row), which reads the current stock inside the
+        // transaction and derives the new value there — so the renderer can't
+        // clobber a concurrent change with a stale absolute write. The local
+        // newStock below is the optimistic in-memory value (reconciled on
+        // re-hydrate); its per-type math mirrors the command exactly.
         updateStock: async (id, quantity, type) => {
             const product = get().products.find(p => p.id === id);
             if (!product) return;
 
             let newStock: number;
-            let qtyChange: number;
-            let movementType: 'restock' | 'correction' | 'sale' = 'correction';
-
             switch (type) {
                 case 'add':
                     newStock = product.stock + quantity;
-                    qtyChange = quantity;
-                    movementType = 'restock';
                     break;
                 case 'remove':
                     newStock = Math.max(0, product.stock - quantity);
-                    qtyChange = -(product.stock - newStock);
-                    movementType = 'sale';
                     break;
                 case 'set':
                     newStock = quantity;
-                    qtyChange = quantity - product.stock;
-                    movementType = 'correction';
                     break;
                 default:
                     newStock = product.stock;
-                    qtyChange = 0;
             }
 
             if (isTauri()) {
-                await productsRepo.updateStock(id, newStock, qtyChange, movementType);
+                const { invoke } = await import('@tauri-apps/api/core');
+                await invoke('adjust_stock', {
+                    input: { productId: id, quantity, type, createdAt: new Date().toISOString() },
+                });
             }
 
             set((state) => {

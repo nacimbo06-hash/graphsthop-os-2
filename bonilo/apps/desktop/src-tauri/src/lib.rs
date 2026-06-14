@@ -1,3 +1,4 @@
+mod adjust_stock;
 mod checkout;
 mod create_purchase_order;
 mod db;
@@ -18,7 +19,8 @@ pub fn run() {
         checkout::checkout_sale,
         receive_goods::receive_goods,
         create_purchase_order::create_purchase_order,
-        record_credit_transaction::record_credit_transaction
+        record_credit_transaction::record_credit_transaction,
+        adjust_stock::adjust_stock
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

@@ -1,5 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+// Hoisted so the vi.mock factory can reference it. Mimics the Rust
+// `adjust_stock` command (return value is unused by the store, which keeps an
+// optimistic in-memory stock).
+const { invokeMock } = vi.hoisted(() => ({
+    invokeMock: vi.fn(async () => ({ newStock: 0, qtyChange: 0, movementId: 'mv_1' })),
+}));
+
+vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
+
 // Mock the db module before importing the store
 vi.mock('../../db', () => ({
     productsRepo: {
@@ -136,7 +145,12 @@ describe('ProductsStore', () => {
 
         const updated = useProductsStore.getState().getProductById(product.id);
         expect(updated?.stock).toBe(70); // 50 + 20
-        expect(productsRepo.updateStock).toHaveBeenCalledWith(product.id, 70, 20, 'restock');
+        expect(invokeMock).toHaveBeenCalledWith(
+            'adjust_stock',
+            expect.objectContaining({
+                input: expect.objectContaining({ productId: product.id, quantity: 20, type: 'add' }),
+            })
+        );
     });
 
     it('should update stock with remove operation', async () => {
