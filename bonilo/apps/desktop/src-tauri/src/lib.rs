@@ -7,6 +7,7 @@ mod lot_ops;
 mod printer;
 mod receive_goods;
 mod record_credit_transaction;
+mod treasury_ops;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,7 +24,10 @@ pub fn run() {
         record_credit_transaction::record_credit_transaction,
         adjust_stock::adjust_stock,
         lot_ops::update_lot_with_movement,
-        lot_ops::bulk_update_lot_statuses
+        lot_ops::bulk_update_lot_statuses,
+        treasury_ops::transfer_to_safe,
+        treasury_ops::contribute_to_fund,
+        treasury_ops::record_expense_payment
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

@@ -11,6 +11,9 @@ import { useSinkingFundsStore } from './sinkingFundsStore';
 import { useExpensesStore } from './expensesStore';
 import { treasuryRepo } from '../../db/treasuryRepo';
 import { db } from '../../db/database';
+
+// Check if running in Tauri (SQLite + Rust commands available).
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 import type {
     CashSession,
     CashMovement,
@@ -76,8 +79,23 @@ export const useTreasuryFacade = () => {
             performedBy,
         };
 
-        // Atomic DB update
-        await treasuryRepo.recordTransferToSafe(sessionId, movement, safeTx);
+        // Atomic DB update via the Rust command (one transaction: cash movement
+        // + safe deposit).
+        if (isTauri()) {
+            const { invoke } = await import('@tauri-apps/api/core');
+            await invoke('transfer_to_safe', {
+                input: {
+                    movementId: movement.id,
+                    sessionId,
+                    amount,
+                    movementReason: movement.reason,
+                    safeTxId: safeTx.id,
+                    safeReason: safeTx.reason,
+                    performedBy,
+                    createdAt: movement.createdAt,
+                },
+            });
+        }
 
         // Update memory state
         useCashSessionStore.setState(state => ({
@@ -122,8 +140,25 @@ export const useTreasuryFacade = () => {
 
         const newBalance = fund.currentBalance + amount;
 
-        // Atomic DB update
-        await treasuryRepo.recordContributionToFund(sessionId, movement, fundTx, newBalance);
+        // Atomic DB update via the Rust command (cash movement + fund tx +
+        // fund balance applied as a delta).
+        if (isTauri()) {
+            const { invoke } = await import('@tauri-apps/api/core');
+            await invoke('contribute_to_fund', {
+                input: {
+                    movementId: movement.id,
+                    sessionId,
+                    amount,
+                    movementReason: movement.reason,
+                    provisionType: fund.category,
+                    fundTxId: fundTx.id,
+                    fundId,
+                    fundReason: fundTx.reason,
+                    performedBy,
+                    createdAt: movement.createdAt,
+                },
+            });
+        }
 
         // Update memory state
         useCashSessionStore.setState(state => ({
@@ -188,16 +223,26 @@ export const useTreasuryFacade = () => {
             }
         }
 
-        // 1. Atomic DB Update
-        await treasuryRepo.recordExpensePayment(
-            expenseId,
-            amount,
-            paidFrom,
-            movementData,
-            safeTx,
-            fundTx,
-            newFundBalance
-        );
+        // 1. Atomic DB update via the Rust command (expense status + the
+        // matching cash/safe/provision write, fund balance as a delta).
+        if (isTauri()) {
+            const { invoke } = await import('@tauri-apps/api/core');
+            await invoke('record_expense_payment', {
+                input: {
+                    expenseId,
+                    amount,
+                    paidFrom,
+                    reason,
+                    performedBy,
+                    createdAt: new Date().toISOString(),
+                    sessionId: movementData.sessionId ?? null,
+                    movementId: movementData.movementId ?? null,
+                    safeTxId: safeTx?.id ?? null,
+                    fundTxId: fundTx?.id ?? null,
+                    fundId: fundId ?? null,
+                },
+            });
+        }
 
         // 2. Update memory state
         useExpensesStore.setState(state => ({
