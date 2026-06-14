@@ -1,5 +1,6 @@
 mod adjust_stock;
 mod checkout;
+mod close_session;
 mod create_purchase_order;
 mod db;
 mod error;
@@ -27,7 +28,8 @@ pub fn run() {
         lot_ops::bulk_update_lot_statuses,
         treasury_ops::transfer_to_safe,
         treasury_ops::contribute_to_fund,
-        treasury_ops::record_expense_payment
+        treasury_ops::record_expense_payment,
+        close_session::close_session
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

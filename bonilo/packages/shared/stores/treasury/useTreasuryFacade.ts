@@ -9,11 +9,28 @@ import { useCashSessionStore } from './cashSessionStore';
 import { useSafeStore } from './safeStore';
 import { useSinkingFundsStore } from './sinkingFundsStore';
 import { useExpensesStore } from './expensesStore';
-import { treasuryRepo } from '../../db/treasuryRepo';
-import { db } from '../../db/database';
 
 // Check if running in Tauri (SQLite + Rust commands available).
 const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+// Map a facade transfer ({ movement, safeTx?, fundTx? }) into the shape the
+// Rust `close_session` command expects.
+function toCommandTransfer(t: { movement: CashMovement; safeTx?: SafeTransaction; fundTx?: SinkingFundTransaction }) {
+    return {
+        movementId: t.movement.id,
+        movementType: t.movement.type,
+        amount: t.movement.amount,
+        movementReason: t.movement.reason,
+        provisionType: t.movement.provisionType || '',
+        createdBy: t.movement.createdBy,
+        createdAt: t.movement.createdAt,
+        safeTxId: t.safeTx?.id ?? null,
+        safeReason: t.safeTx?.reason ?? null,
+        fundTxId: t.fundTx?.id ?? null,
+        fundId: t.fundTx?.fundId ?? null,
+        fundReason: t.fundTx?.reason ?? null,
+    };
+}
 import type {
     CashSession,
     CashMovement,
@@ -388,19 +405,24 @@ export const useTreasuryFacade = () => {
             }
         }
 
-        // 3. Atomic DB Update
-        await treasuryRepo.recordSessionClosure(
-            sessionId,
-            {
-                closing_amount: closingBalance,
-                expected_amount: expectedBalance,
-                difference,
-                status: 'closed',
-                closed_at: now,
-                notes
-            },
-            repoTransfers
-        );
+        // 3. Atomic DB update via the Rust command (session close + all
+        // transfers in one transaction; fund balances applied as deltas).
+        if (isTauri()) {
+            const { invoke } = await import('@tauri-apps/api/core');
+            await invoke('close_session', {
+                input: {
+                    sessionId,
+                    closure: {
+                        closingAmount: closingBalance,
+                        expectedAmount: expectedBalance,
+                        difference,
+                        closedAt: now,
+                        notes,
+                    },
+                    transfers: repoTransfers.map(toCommandTransfer),
+                },
+            });
+        }
 
         // 4. Update memory state
         const closedSession: CashSession = {
@@ -517,38 +539,17 @@ export const useTreasuryFacade = () => {
 
         if (repoTransfers.length === 0) return;
 
-        // DB update (reuse repo method but without session closure updates)
-        const ops: any[] = [];
-        for (const t of repoTransfers) {
-            // Cash movement
-            ops.push({
-                query: `INSERT INTO cash_movements (id, session_id, type, amount, reason, provision_type, created_by, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                params: [t.movement.id, sessionId, t.movement.type, t.movement.amount, t.movement.reason, t.movement.provisionType || '', t.movement.createdBy, t.movement.createdAt]
+        // Atomic DB update via the Rust command (transfers only — no session
+        // closure; fund balances applied as deltas).
+        if (isTauri()) {
+            const { invoke } = await import('@tauri-apps/api/core');
+            await invoke('close_session', {
+                input: {
+                    sessionId,
+                    transfers: repoTransfers.map(toCommandTransfer),
+                },
             });
-
-            if (t.safeTx) {
-                ops.push({
-                    query: `INSERT INTO safe_transactions (id, type, amount, reason, performed_by, created_at)
-                    VALUES ($1, $2, $3, $4, $5, $6)`,
-                    params: [t.safeTx.id, t.safeTx.type, t.safeTx.amount, t.safeTx.reason, t.safeTx.performedBy, t.safeTx.date]
-                });
-            }
-
-            if (t.fundTx && t.newFundBalance !== undefined) {
-                ops.push({
-                    query: `INSERT INTO sinking_fund_transactions (id, fund_id, type, amount, reason, performed_by, created_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                    params: [t.fundTx.id, t.fundTx.fundId, t.fundTx.type, t.fundTx.amount, t.fundTx.reason, t.fundTx.performedBy, t.fundTx.date]
-                });
-                ops.push({
-                    query: `UPDATE sinking_funds SET current_balance = $1, last_contribution = $2 WHERE id = $3`,
-                    params: [t.newFundBalance, t.fundTx.date, t.fundTx.fundId]
-                });
-            }
         }
-
-        await db.transaction(ops);
 
         // Memory state update
         useCashSessionStore.setState(state => ({
