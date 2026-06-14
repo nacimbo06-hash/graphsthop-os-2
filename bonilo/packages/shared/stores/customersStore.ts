@@ -197,36 +197,71 @@ export const useCustomersStore = create<CustomersState>()(
             });
         },
 
+        // Record a credit transaction (payment / purchase / adjustment). Under
+        // Tauri this goes through the atomic Rust `record_credit_transaction`
+        // command (one SQLite transaction: ledger row + balance delta), which
+        // applies the balance as a DELTA and returns the authoritative result —
+        // so we never write a stale renderer-computed absolute. In the browser
+        // we compute locally and persist to localStorage.
         updateCredit: async (id, amount, type, saleId, notes) => {
             const customer = get().customers.find(c => c.id === id);
             if (!customer) return;
 
+            const date = new Date().toISOString();
+            const isPayment = type === 'payment' || amount < 0;
+
+            if (isTauri()) {
+                const { invoke } = await import('@tauri-apps/api/core');
+                const result = await invoke<{ transactionId: string; newBalance: number; lastPaymentDate: string | null }>(
+                    'record_credit_transaction',
+                    {
+                        input: {
+                            customerId: id,
+                            amount,
+                            type,
+                            date,
+                            saleId: saleId || null,
+                            notes: notes || null,
+                            createdAt: date,
+                        },
+                    }
+                );
+
+                const transaction: CreditTransaction = {
+                    id: result.transactionId,
+                    customerId: id,
+                    amount,
+                    type,
+                    date,
+                    saleId,
+                    notes,
+                };
+                set(state => ({
+                    customers: state.customers.map(c =>
+                        c.id === id
+                            ? { ...c, currentCredit: result.newBalance, lastPaymentDate: result.lastPaymentDate ?? c.lastPaymentDate }
+                            : c
+                    ),
+                    transactions: [transaction, ...state.transactions],
+                }));
+                return;
+            }
+
+            // Browser fallback: compute locally and persist to localStorage.
             const transaction: CreditTransaction = {
                 id: crypto.randomUUID(),
                 customerId: id,
                 amount,
                 type,
-                date: new Date().toISOString(),
+                date,
                 saleId,
                 notes,
             };
-
-            const isPayment = type === 'payment' || amount < 0;
             const newBalance = customer.currentCredit + amount;
-            const lastPaymentDate = isPayment ? new Date().toISOString() : null;
-
-            if (isTauri()) {
-                await customersRepo.addCreditTransaction(transaction, newBalance, lastPaymentDate);
-            }
-
             set(state => {
                 const updatedCustomers = state.customers.map(c =>
                     c.id === id
-                        ? {
-                            ...c,
-                            currentCredit: newBalance,
-                            lastPaymentDate: isPayment ? new Date().toISOString() : c.lastPaymentDate,
-                        }
+                        ? { ...c, currentCredit: newBalance, lastPaymentDate: isPayment ? date : c.lastPaymentDate }
                         : c
                 );
                 const updatedTx = [transaction, ...state.transactions];

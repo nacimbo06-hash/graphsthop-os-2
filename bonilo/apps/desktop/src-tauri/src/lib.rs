@@ -4,6 +4,7 @@ mod db;
 mod error;
 mod printer;
 mod receive_goods;
+mod record_credit_transaction;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -16,7 +17,8 @@ pub fn run() {
         db::db_ping,
         checkout::checkout_sale,
         receive_goods::receive_goods,
-        create_purchase_order::create_purchase_order
+        create_purchase_order::create_purchase_order,
+        record_credit_transaction::record_credit_transaction
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

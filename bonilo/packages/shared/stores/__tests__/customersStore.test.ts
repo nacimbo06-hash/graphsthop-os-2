@@ -1,5 +1,29 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+// Hoisted so the vi.mock factory can reference it. Mimics the Rust
+// `record_credit_transaction` command: applies the signed amount as a delta to
+// a per-customer running balance and returns the authoritative result.
+const { invokeMock } = vi.hoisted(() => {
+    const balances = new Map<string, number>();
+    let seq = 0;
+    return {
+        invokeMock: vi.fn(async (_cmd: string, args: any) => {
+            seq += 1;
+            const { customerId, amount, type } = args.input;
+            const next = (balances.get(customerId) ?? 0) + amount;
+            balances.set(customerId, next);
+            const isPayment = type === 'payment' || amount < 0;
+            return {
+                transactionId: `ctx_${seq}`,
+                newBalance: next,
+                lastPaymentDate: isPayment ? new Date().toISOString() : null,
+            };
+        }),
+    };
+});
+
+vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
+
 vi.mock('../../db', () => ({
     customersRepo: {
         loadAll: vi.fn().mockResolvedValue([]),
@@ -122,7 +146,12 @@ describe('CustomersStore', () => {
 
         const updated = useCustomersStore.getState().getCustomerById(customer.id);
         expect(updated?.currentCredit).toBe(5000);
-        expect(customersRepo.addCreditTransaction).toHaveBeenCalledOnce();
+        expect(invokeMock).toHaveBeenCalledWith(
+            'record_credit_transaction',
+            expect.objectContaining({
+                input: expect.objectContaining({ amount: 5000, type: 'purchase' }),
+            })
+        );
     });
 
     it('should update credit (payment reduces balance)', async () => {
