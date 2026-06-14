@@ -3,6 +3,7 @@ mod checkout;
 mod create_purchase_order;
 mod db;
 mod error;
+mod lot_ops;
 mod printer;
 mod receive_goods;
 mod record_credit_transaction;
@@ -20,7 +21,9 @@ pub fn run() {
         receive_goods::receive_goods,
         create_purchase_order::create_purchase_order,
         record_credit_transaction::record_credit_transaction,
-        adjust_stock::adjust_stock
+        adjust_stock::adjust_stock,
+        lot_ops::update_lot_with_movement,
+        lot_ops::bulk_update_lot_statuses
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

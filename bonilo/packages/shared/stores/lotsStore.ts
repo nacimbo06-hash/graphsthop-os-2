@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import type { ExpiryStatus } from '@shared/types/expiry';
 import { lotsRepo } from '../db';
 
+// Check if running in Tauri (SQLite + Rust commands available).
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
 /**
  * Lot Store - Tracks product batches/lots with expiry dates
  * Integrates with Goods Receipt for full batch tracking
@@ -150,27 +153,42 @@ export const useLotsStore = create<LotsState>()(
             }));
         },
 
+        // Reduce a lot's quantity and record the movement. Under Tauri this goes
+        // through the atomic Rust `update_lot_with_movement` command (lot update
+        // + movement row in one transaction); the browser updates memory only.
         reduceLotQuantity: async (lotId, quantity, reason, reference, createdBy = 'System') => {
             const lot = get().lots.find(l => l.id === lotId);
             if (!lot || quantity <= 0) return;
 
             const actualQty = Math.min(quantity, lot.quantity);
             const newQuantity = lot.quantity - actualQty;
+            const createdAt = new Date().toISOString();
 
-            // Add movement record
+            let movementId: string = crypto.randomUUID();
+            if (isTauri()) {
+                const { invoke } = await import('@tauri-apps/api/core');
+                const result = await invoke<{ movementId: string }>('update_lot_with_movement', {
+                    input: {
+                        lotId,
+                        newQuantity,
+                        status: lot.status,
+                        movement: { type: 'sale', quantity: -actualQty, reason, reference, createdBy, createdAt },
+                    },
+                });
+                movementId = result.movementId;
+            }
+
             const movement: LotMovement = {
-                id: crypto.randomUUID(),
+                id: movementId,
                 lotId,
                 productId: lot.productId,
                 type: 'sale',
                 quantity: -actualQty,
                 reason,
                 reference,
-                createdAt: new Date().toISOString(),
+                createdAt,
                 createdBy,
             };
-
-            await lotsRepo.updateLotWithMovement(lotId, newQuantity, lot.status, movement);
 
             set(state => ({
                 lots: state.lots.map(l =>
@@ -180,23 +198,39 @@ export const useLotsStore = create<LotsState>()(
             }));
         },
 
+        // Dispose of a lot (zero it out, mark expired) and record the movement,
+        // atomically under Tauri via `update_lot_with_movement`.
         disposeLot: async (lotId, reason, createdBy) => {
             const lot = get().lots.find(l => l.id === lotId);
             if (!lot) return;
 
-            // Add disposal movement
+            const createdAt = new Date().toISOString();
+            const disposedQty = lot.quantity;
+
+            let movementId: string = crypto.randomUUID();
+            if (isTauri()) {
+                const { invoke } = await import('@tauri-apps/api/core');
+                const result = await invoke<{ movementId: string }>('update_lot_with_movement', {
+                    input: {
+                        lotId,
+                        newQuantity: 0,
+                        status: 'expired',
+                        movement: { type: 'disposal', quantity: -disposedQty, reason, createdBy, createdAt },
+                    },
+                });
+                movementId = result.movementId;
+            }
+
             const movement: LotMovement = {
-                id: crypto.randomUUID(),
+                id: movementId,
                 lotId,
                 productId: lot.productId,
                 type: 'disposal',
-                quantity: -lot.quantity,
+                quantity: -disposedQty,
                 reason,
-                createdAt: new Date().toISOString(),
+                createdAt,
                 createdBy,
             };
-
-            await lotsRepo.updateLotWithMovement(lotId, 0, 'expired', movement);
 
             set(state => ({
                 lots: state.lots.map(l =>
@@ -261,8 +295,9 @@ export const useLotsStore = create<LotsState>()(
                 return { ...lot, daysRemaining, status };
             });
 
-            if (updates.length > 0) {
-                await lotsRepo.bulkUpdateStatuses(updates);
+            if (updates.length > 0 && isTauri()) {
+                const { invoke } = await import('@tauri-apps/api/core');
+                await invoke('bulk_update_lot_statuses', { input: { updates } });
             }
 
             set({ lots: newLots });
