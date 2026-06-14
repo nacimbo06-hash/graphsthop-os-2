@@ -140,11 +140,5 @@ export const productsRepo = {
     async softDelete(id: string): Promise<void> {
         await db.execute('UPDATE products SET is_active = 0, updated_at = $1 WHERE id = $2', [new Date().toISOString(), id]);
     },
-    async updateStock(productId: string, newStock: number, qtyChange: number, type: string, referenceId?: string): Promise<void> {
-        const movementId = crypto.randomUUID();
-        await db.transaction([
-            { query: 'UPDATE products SET stock = $1, updated_at = $2 WHERE id = $3', params: [newStock, new Date().toISOString(), productId] },
-            { query: 'INSERT INTO inventory_movements (id, product_id, type, qty_change, stock_after, reference_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)', params: [movementId, productId, type, qtyChange, newStock, referenceId || '', new Date().toISOString()] }
-        ]);
-    }
+    // Stock adjustment moved to the atomic Rust `adjust_stock` command (M1.3).
 };

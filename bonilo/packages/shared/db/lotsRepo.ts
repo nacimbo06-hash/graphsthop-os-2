@@ -129,26 +129,6 @@ export const lotsRepo = {
         });
     },
 
-    async updateLotWithMovement(lotId: string, newQuantity: number, status: string, movement: LotMovement): Promise<void> {
-        await db.transaction([
-            {
-                query: 'UPDATE lots SET quantity = $1, status = $2 WHERE id = $3',
-                params: [newQuantity, status, lotId],
-            },
-            {
-                query: `INSERT INTO lot_movements (id, lot_id, product_id, type, quantity, reason, reference, created_by, created_at)
-                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                params: [movement.id, movement.lotId, movement.productId, movement.type, movement.quantity, movement.reason || '', movement.reference || '', movement.createdBy || '', movement.createdAt],
-            },
-        ]);
-    },
-
-    async bulkUpdateStatuses(updates: Array<{ id: string; status: string; daysRemaining: number }>): Promise<void> {
-        if (updates.length === 0) return;
-        const ops = updates.map(u => ({
-            query: 'UPDATE lots SET status = $1, days_remaining = $2 WHERE id = $3',
-            params: [u.status, u.daysRemaining, u.id],
-        }));
-        await db.transaction(ops);
-    },
+    // Lot mutation + movement and bulk status refresh moved to the atomic Rust
+    // lot_ops commands (update_lot_with_movement / bulk_update_lot_statuses) (M1.3).
 };

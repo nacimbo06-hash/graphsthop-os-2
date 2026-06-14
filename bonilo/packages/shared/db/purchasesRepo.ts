@@ -193,22 +193,7 @@ export const purchasesRepo = {
         return orders;
     },
 
-    async createPurchaseOrder(order: PurchaseOrder): Promise<void> {
-        const ops: Array<{ query: string; params?: any[] }> = [];
-        ops.push({
-            query: `INSERT INTO purchase_orders (id, po_number, supplier_id, supplier_name, date, expected_date, status, subtotal, tax_amount, total, notes, created_at)
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-            params: [order.id, order.poNumber, order.supplierId, order.supplierName, order.date, order.expectedDate, order.status, order.subtotal, order.taxAmount, order.total, order.notes || '', order.createdAt],
-        });
-        for (const item of order.items) {
-            ops.push({
-                query: `INSERT INTO purchase_order_items (id, po_id, product_id, product_name, product_barcode, product_emoji, ordered_qty, received_qty, purchase_price, total, expiry_date, lot_number, unit)
-                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-                params: [item.id, order.id, item.productId, item.productName, item.productBarcode, item.productEmoji, item.orderedQty, item.receivedQty, item.purchasePrice, item.total, item.expiryDate || '', item.lotNumber || '', item.unit],
-            });
-        }
-        await db.transaction(ops);
-    },
+    // Purchase-order creation moved to the atomic Rust `create_purchase_order` command (M1.3).
 
     async updatePurchaseOrder(id: string, updates: Partial<PurchaseOrder>): Promise<void> {
         const row: Record<string, any> = {};
@@ -233,64 +218,7 @@ export const purchasesRepo = {
         return receipts;
     },
 
-    async createGoodsReceipt(
-        receipt: GoodsReceipt,
-        treasuryMovement?: {
-            sessionId: string;
-            movementId: string;
-            createdBy: string;
-        }
-    ): Promise<void> {
-        const now = new Date().toISOString();
-        const ops: Array<{ query: string; params?: any[] }> = [];
-
-        ops.push({
-            query: `INSERT INTO goods_receipts (id, gr_number, po_id, supplier_id, supplier_name, date, invoice_number, total, status, paid_from, is_paid, created_at)
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-            params: [receipt.id, receipt.grNumber, receipt.poId || '', receipt.supplierId, receipt.supplierName, receipt.date, receipt.invoiceNumber || '', receipt.total, receipt.status, receipt.paidFrom || '', receipt.isPaid ? 1 : 0, receipt.createdAt],
-        });
-
-        for (const item of receipt.items) {
-            const movementId = crypto.randomUUID();
-
-            ops.push({
-                query: `INSERT INTO goods_receipt_items (id, gr_id, product_id, product_name, product_barcode, product_emoji, ordered_qty, received_qty, purchase_price, total, expiry_date, lot_number, unit)
-                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-                params: [item.id, receipt.id, item.productId, item.productName, item.productBarcode, item.productEmoji, item.orderedQty, item.receivedQty, item.purchasePrice, item.total, item.expiryDate || '', item.lotNumber || '', item.unit],
-            });
-
-            // Atomic stock update
-            ops.push({
-                query: `UPDATE products SET stock = stock + $1, updated_at = $2 WHERE id = $3`,
-                params: [item.receivedQty, now, item.productId],
-            });
-
-            // Record inventory movement
-            ops.push({
-                query: `INSERT INTO inventory_movements (id, product_id, type, qty_change, stock_after, reference_id, created_at)
-                  VALUES ($1, $2, 'entry', $3, (SELECT stock FROM products WHERE id = $4), $5, $6)`,
-                params: [movementId, item.productId, item.receivedQty, item.productId, receipt.grNumber, now],
-            });
-        }
-
-        // Handle treasury movement if applicable
-        if (receipt.paidFrom === 'cash' && treasuryMovement) {
-            ops.push({
-                query: `INSERT INTO cash_movements (id, session_id, type, amount, reason, created_by, created_at)
-                        VALUES ($1, $2, 'withdrawal', $3, $4, $5, $6)`,
-                params: [
-                    treasuryMovement.movementId,
-                    treasuryMovement.sessionId,
-                    receipt.total,
-                    `Achat marchandise: ${receipt.grNumber} (${receipt.supplierName})`,
-                    treasuryMovement.createdBy,
-                    now
-                ],
-            });
-        }
-
-        await db.transaction(ops);
-    },
+    // Goods-receipt creation moved to the atomic Rust `receive_goods` command (M1.3).
 
     async updateGoodsReceipt(id: string, updates: { status?: string; isPaid?: boolean; paidFrom?: string }): Promise<void> {
         const row: Record<string, any> = {};

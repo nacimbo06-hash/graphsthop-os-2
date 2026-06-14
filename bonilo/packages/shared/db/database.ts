@@ -482,19 +482,12 @@ class BoniloDatabase {
     return this.db.execute(query, params);
   }
 
-  async transaction(operations: Array<{ query: string; params?: any[] }>): Promise<void> {
-    if (!this.db) return;
-    await this.db.execute('BEGIN TRANSACTION;');
-    try {
-      for (const op of operations) {
-        await this.db.execute(op.query, op.params || []);
-      }
-      await this.db.execute('COMMIT;');
-    } catch (error) {
-      await this.db.execute('ROLLBACK;');
-      throw error;
-    }
-  }
+  // NOTE: there is intentionally no `transaction()` helper. Issuing
+  // BEGIN/ops/COMMIT as separate execute() calls over tauri-plugin-sql's
+  // connection pool is NOT atomic (upstream issue #886) — the ops can land on
+  // different pooled connections. Every multi-write money flow now runs inside
+  // a single-connection Rust `#[tauri::command]` transaction instead (M1.x).
+  // Reads stay on `select()`; single-row writes use `insert`/`update`/`execute`.
 
   async insert(table: string, data: Record<string, any>): Promise<string> {
     const keys = Object.keys(data);

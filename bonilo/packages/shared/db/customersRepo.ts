@@ -111,18 +111,7 @@ export const customersRepo = {
         await db.execute('UPDATE customers SET is_active = 0, updated_at = $1 WHERE id = $2', [new Date().toISOString(), id]);
     },
 
-    async addCreditTransaction(tx: CreditTransaction, newBalance: number, lastPaymentDate: string | null): Promise<void> {
-        await db.transaction([
-            {
-                query: `INSERT INTO credit_transactions (id, customer_id, amount, type, date, sale_id, notes) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                params: [tx.id, tx.customerId, tx.amount, tx.type, tx.date, tx.saleId || '', tx.notes || ''],
-            },
-            {
-                query: `UPDATE customers SET current_balance = $1, last_payment_date = COALESCE($2, last_payment_date), updated_at = $3 WHERE id = $4`,
-                params: [newBalance, lastPaymentDate, new Date().toISOString(), tx.customerId],
-            },
-        ]);
-    },
+    // Credit transactions moved to the atomic Rust `record_credit_transaction` command (M1.3).
 
     async updateLoyaltyPoints(id: string, newPoints: number): Promise<void> {
         await db.execute('UPDATE customers SET loyalty_points = $1, updated_at = $2 WHERE id = $3', [newPoints, new Date().toISOString(), id]);
