@@ -1,4 +1,5 @@
 mod checkout;
+mod create_purchase_order;
 mod db;
 mod error;
 mod printer;
@@ -14,7 +15,8 @@ pub fn run() {
         printer::print_raw,
         db::db_ping,
         checkout::checkout_sale,
-        receive_goods::receive_goods
+        receive_goods::receive_goods,
+        create_purchase_order::create_purchase_order
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

@@ -81,7 +81,7 @@ interface PurchasesState {
     updateSupplier: (id: string, updates: Partial<Supplier>) => Promise<void>;
     deleteSupplier: (id: string) => Promise<void>;
 
-    addPurchaseOrder: (order: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt'>) => Promise<void>;
+    addPurchaseOrder: (order: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt'>) => Promise<PurchaseOrder>;
     updatePurchaseOrder: (id: string, updates: Partial<PurchaseOrder>) => Promise<void>;
 
     addGoodsReceipt: (
@@ -151,15 +151,65 @@ export const usePurchasesStore = create<PurchasesState>()(
             }));
         },
 
+        // Create a purchase order. Under Tauri this goes through the atomic Rust
+        // `create_purchase_order` command (one SQLite transaction: header +
+        // items), which mints the PO number from the DB and returns it. In the
+        // browser we mint locally and keep the order in memory only.
         addPurchaseOrder: async (orderData) => {
+            const timestamp = new Date().toISOString();
+
+            if (isTauri()) {
+                const { invoke } = await import('@tauri-apps/api/core');
+                const input = {
+                    items: orderData.items.map((it) => ({
+                        productId: it.productId,
+                        productName: it.productName,
+                        productBarcode: it.productBarcode,
+                        productEmoji: it.productEmoji,
+                        orderedQty: it.orderedQty,
+                        receivedQty: it.receivedQty,
+                        purchasePrice: it.purchasePrice,
+                        total: it.total,
+                        expiryDate: it.expiryDate || null,
+                        lotNumber: it.lotNumber || null,
+                        unit: it.unit,
+                    })),
+                    supplierId: orderData.supplierId,
+                    supplierName: orderData.supplierName,
+                    date: orderData.date,
+                    expectedDate: orderData.expectedDate || '',
+                    status: orderData.status || 'draft',
+                    subtotal: orderData.subtotal,
+                    taxAmount: orderData.taxAmount,
+                    total: orderData.total,
+                    notes: orderData.notes || '',
+                    createdAt: timestamp,
+                };
+
+                const result = await invoke<{ orderId: string; poNumber: string; createdAt: string }>(
+                    'create_purchase_order',
+                    { input }
+                );
+
+                const newOrder: PurchaseOrder = {
+                    ...orderData,
+                    id: result.orderId,
+                    poNumber: result.poNumber,
+                    createdAt: result.createdAt,
+                };
+                set(state => ({ purchaseOrders: [newOrder, ...state.purchaseOrders] }));
+                return newOrder;
+            }
+
+            // Browser fallback: no SQLite — mint locally and keep in memory only.
             const newOrder: PurchaseOrder = {
                 ...orderData,
                 id: crypto.randomUUID(),
                 poNumber: `BC-${new Date().getFullYear()}-${String(get().purchaseOrders.length + 1).padStart(3, '0')}`,
-                createdAt: new Date().toISOString(),
+                createdAt: timestamp,
             };
-            await purchasesRepo.createPurchaseOrder(newOrder);
             set(state => ({ purchaseOrders: [newOrder, ...state.purchaseOrders] }));
+            return newOrder;
         },
 
         updatePurchaseOrder: async (id, updates) => {

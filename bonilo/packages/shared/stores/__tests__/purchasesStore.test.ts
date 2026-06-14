@@ -1,15 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Hoisted so the vi.mock factory can reference it. Mimics the Rust
-// `receive_goods` command: returns an incrementing GR number per call.
+// Hoisted so the vi.mock factory can reference it. Mimics the Rust commands:
+// returns the right result shape per command, with an incrementing number.
 const { invokeMock } = vi.hoisted(() => {
     let seq = 0;
     return {
-        invokeMock: vi.fn(async () => {
+        invokeMock: vi.fn(async (cmd: string) => {
             seq += 1;
+            const n = String(seq).padStart(3, '0');
+            if (cmd === 'create_purchase_order') {
+                return { orderId: `po_${seq}`, poNumber: `BC-2026-${n}`, createdAt: new Date().toISOString() };
+            }
             return {
                 receiptId: `gr_${seq}`,
-                grNumber: `BE-2026-${String(seq).padStart(3, '0')}`,
+                grNumber: `BE-2026-${n}`,
                 createdAt: new Date().toISOString(),
                 lotsCreated: [],
                 supplierDebtDelta: 0,
@@ -129,6 +133,36 @@ describe('PurchasesStore', () => {
     it('should reflect an unpaid receipt in the derived supplier debt', async () => {
         await usePurchasesStore.getState().addGoodsReceipt(mockReceiptInput);
         expect(usePurchasesStore.getState().getSupplierDebt('sup_1')).toBe(960);
+    });
+
+    it('should create a purchase order via the create_purchase_order command', async () => {
+        const order = await usePurchasesStore.getState().addPurchaseOrder({
+            supplierId: 'sup_1',
+            supplierName: 'Sarl Lait',
+            date: '2026-06-14',
+            expectedDate: '2026-06-21',
+            status: 'draft',
+            items: mockReceiptInput.items,
+            subtotal: 960,
+            taxAmount: 0,
+            total: 960,
+        });
+
+        expect(order.id).toMatch(/^po_\d+$/);
+        expect(order.poNumber).toMatch(/^BC-2026-\d{3}$/);
+        expect(usePurchasesStore.getState().purchaseOrders).toHaveLength(1);
+        expect(invokeMock).toHaveBeenCalledWith(
+            'create_purchase_order',
+            expect.objectContaining({
+                input: expect.objectContaining({
+                    supplierId: 'sup_1',
+                    total: 960,
+                    items: expect.arrayContaining([
+                        expect.objectContaining({ productId: 'prod_1', orderedQty: 10 }),
+                    ]),
+                }),
+            })
+        );
     });
 
     it('should surface a rejected command to the caller', async () => {
