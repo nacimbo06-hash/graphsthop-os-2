@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Gift,
     Star,
@@ -109,9 +109,29 @@ export const LoyaltyProgram: React.FC = () => {
             tier: getCustomerTier(c.loyaltyPoints),
         }));
 
+    const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+    useEffect(() => {
+        if (!isTauri()) return;
+        import('@bonilo/shared/db').then(({ settingsRepo }) => {
+            Promise.all([
+                settingsRepo.loadKey<LoyaltySettings>(LOYALTY_STORAGE_KEY),
+                settingsRepo.loadKey<LoyaltyTier[]>(TIERS_STORAGE_KEY),
+            ]).then(([savedSettings, savedTiers]) => {
+                if (savedSettings) setSettings(savedSettings);
+                if (savedTiers) setTiers(savedTiers);
+            }).catch(() => {});
+        }).catch(() => {});
+    }, []);
+
     const saveSettings = (newSettings: LoyaltySettings) => {
         setSettings(newSettings);
         localStorage.setItem(LOYALTY_STORAGE_KEY, JSON.stringify(newSettings));
+        if (isTauri()) {
+            import('@bonilo/shared/db')
+                .then(({ settingsRepo }) => settingsRepo.saveKey(LOYALTY_STORAGE_KEY, newSettings))
+                .catch(() => {});
+        }
         toast.success('Paramètres de fidélité enregistrés');
         setShowSettingsModal(false);
     };
@@ -119,6 +139,11 @@ export const LoyaltyProgram: React.FC = () => {
     const saveTiers = (newTiers: LoyaltyTier[]) => {
         setTiers(newTiers);
         localStorage.setItem(TIERS_STORAGE_KEY, JSON.stringify(newTiers));
+        if (isTauri()) {
+            import('@bonilo/shared/db')
+                .then(({ settingsRepo }) => settingsRepo.saveKey(TIERS_STORAGE_KEY, newTiers))
+                .catch(() => {});
+        }
     };
 
     const handleEditTier = (tier: LoyaltyTier) => {
