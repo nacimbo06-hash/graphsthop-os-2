@@ -42,6 +42,48 @@ jobs:
           path: apps/desktop/coverage/
           if-no-files-found: ignore
 
+  rust-test:
+    name: Rust money-core tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            apps/desktop/src-tauri/target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('apps/desktop/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-test-
+            ${{ runner.os }}-cargo-
+
+      # The money-core commands link against Tauri, so the crate needs the
+      # webkit2gtk/gtk dev libraries to compile even for `cargo test`.
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Run Rust tests (money-core commands)
+        run: cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
+
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
