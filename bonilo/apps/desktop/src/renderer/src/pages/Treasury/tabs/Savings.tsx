@@ -18,11 +18,14 @@ import {
 } from 'lucide-react';
 import { useTreasuryStore, useAuthStore, type SinkingFund } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
+import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import styles from './Savings.module.css';
 
 export const Savings: React.FC = () => {
     const { formatCurrency } = useSettings();
     const { user } = useAuthStore();
+    const toast = useToast();
     const userName = user ? `${user.firstName} ${user.lastName}` : 'Caissier';
 
     // Treasury store - real data
@@ -97,47 +100,63 @@ export const Savings: React.FC = () => {
     };
 
     // Handle safe deposit
-    const handleSafeDeposit = () => {
+    const handleSafeDeposit = async () => {
         const amountValue = parseFloat(amount);
         if (isNaN(amountValue) || amountValue <= 0) return;
-        depositToSafe(amountValue, reason || 'Dépôt au coffre', userName);
-        setShowSafeDepositModal(false);
-        setAmount('');
-        setReason('');
+        try {
+            await depositToSafe(amountValue, reason || 'Dépôt au coffre', userName);
+            setShowSafeDepositModal(false);
+            setAmount('');
+            setReason('');
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec du dépôt au coffre'));
+        }
     };
 
     // Handle safe withdrawal
-    const handleSafeWithdraw = () => {
+    const handleSafeWithdraw = async () => {
         const amountValue = parseFloat(amount);
         if (isNaN(amountValue) || amountValue <= 0 || amountValue > safeBalance) return;
-        withdrawFromSafe(amountValue, reason || 'Retrait du coffre', userName);
-        setShowSafeWithdrawModal(false);
-        setAmount('');
-        setReason('');
+        try {
+            await withdrawFromSafe(amountValue, reason || 'Retrait du coffre', userName);
+            setShowSafeWithdrawModal(false);
+            setAmount('');
+            setReason('');
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec du retrait du coffre'));
+        }
     };
 
     // Handle fund contribution
-    const handleFundContribution = () => {
+    const handleFundContribution = async () => {
         if (!selectedFund) return;
         const amountValue = parseFloat(amount);
         if (isNaN(amountValue) || amountValue <= 0) return;
-        contributeToFund(selectedFund.id, amountValue, reason || 'Provision', userName);
-        setShowFundModal(false);
-        setSelectedFund(null);
-        setAmount('');
-        setReason('');
+        try {
+            await contributeToFund(selectedFund.id, amountValue, reason || 'Provision', userName);
+            setShowFundModal(false);
+            setSelectedFund(null);
+            setAmount('');
+            setReason('');
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec de la provision'));
+        }
     };
 
     // Handle fund withdrawal
-    const handleFundWithdrawal = () => {
+    const handleFundWithdrawal = async () => {
         if (!selectedFund) return;
         const amountValue = parseFloat(amount);
         if (isNaN(amountValue) || amountValue <= 0 || amountValue > selectedFund.currentBalance) return;
-        withdrawFromFund(selectedFund.id, amountValue, reason || 'Paiement', userName);
-        setShowFundModal(false);
-        setSelectedFund(null);
-        setAmount('');
-        setReason('');
+        try {
+            await withdrawFromFund(selectedFund.id, amountValue, reason || 'Paiement', userName);
+            setShowFundModal(false);
+            setSelectedFund(null);
+            setAmount('');
+            setReason('');
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec du retrait'));
+        }
     };
 
     // Handle target update

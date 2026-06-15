@@ -26,6 +26,7 @@ import {
 } from 'recharts';
 import { useProductsStore } from '@bonilo/shared/stores';
 import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
 import styles from './PhysicalInventory.module.css';
 
@@ -155,16 +156,18 @@ export const PhysicalInventory: React.FC = () => {
     };
 
     // Confirm and apply stock adjustments
-    const handleConfirmAdjustments = () => {
-        // Apply all counted stocks to the real inventory
-        lines.forEach(line => {
-            if (line.countedStock !== null && line.countedStock !== line.systemStock) {
-                // Use 'set' to directly set the new stock value
-                updateStock(line.productId, line.countedStock, 'set');
-            }
-        });
+    const handleConfirmAdjustments = async () => {
+        try {
+            await Promise.all(
+                lines
+                    .filter(line => line.countedStock !== null && line.countedStock !== line.systemStock)
+                    .map(line => updateStock(line.productId, line.countedStock!, 'set'))
+            );
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec de la mise à jour du stock'));
+            return;
+        }
 
-        // Mark session as completed
         setSession(prev => ({
             ...prev,
             status: 'completed',
@@ -172,7 +175,6 @@ export const PhysicalInventory: React.FC = () => {
             discrepancies,
         }));
 
-        // Update lines to reflect new system stock and clear differences
         setLines(prev => prev.map(line => {
             const finalCount = line.countedStock !== null ? line.countedStock : line.systemStock;
             return {

@@ -24,6 +24,7 @@ import {
 } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import styles from './PurchaseOrders.module.css';
 
 export const PurchaseOrders: React.FC = () => {
@@ -136,7 +137,7 @@ export const PurchaseOrders: React.FC = () => {
     const orderTax = Math.round(orderSubtotal * 0.19); // 19% TVA
     const orderTotal = orderSubtotal + orderTax;
 
-    const handleCreateOrder = () => {
+    const handleCreateOrder = async () => {
         const supplier = suppliers.find(s => s.id === newOrderSupplierId);
         if (!supplier) {
             toast.warning('Veuillez sélectionner un fournisseur');
@@ -148,19 +149,23 @@ export const PurchaseOrders: React.FC = () => {
             return;
         }
 
-        addPurchaseOrder({
-            supplierId: supplier.id,
-            supplierName: supplier.name,
-            date: newOrderDate,
-            expectedDate: newOrderExpectedDate || newOrderDate,
-            status: 'draft',
-            items: orderItems,
-            subtotal: orderSubtotal,
-            taxAmount: orderTax,
-            total: orderTotal,
-        });
+        try {
+            await addPurchaseOrder({
+                supplierId: supplier.id,
+                supplierName: supplier.name,
+                date: newOrderDate,
+                expectedDate: newOrderExpectedDate || newOrderDate,
+                status: 'draft',
+                items: orderItems,
+                subtotal: orderSubtotal,
+                taxAmount: orderTax,
+                total: orderTotal,
+            });
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec de la création du bon de commande'));
+            return;
+        }
 
-        // Reset form
         setShowNewModal(false);
         setNewOrderSupplierId('');
         setNewOrderExpectedDate('');

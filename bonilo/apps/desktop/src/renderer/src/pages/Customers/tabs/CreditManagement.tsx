@@ -13,6 +13,7 @@ import {
 import { useCustomersStore, useTreasuryStore, type Customer } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import styles from './CreditManagement.module.css';
 
 export const CreditManagement: React.FC = () => {
@@ -63,26 +64,27 @@ export const CreditManagement: React.FC = () => {
         setShowPaymentModal(true);
     };
 
-    const confirmPayment = () => {
+    const confirmPayment = async () => {
         if (!selectedCustomer || !paymentAmount) return;
         const amount = parseFloat(paymentAmount);
         if (isNaN(amount) || amount <= 0) return;
 
-        // Negative amount for payment (reduces debt). Cash settlement, so the
-        // money lands in the drawer too — recorded atomically when a session is
-        // open (otherwise the balance is still reduced).
-        updateCredit(selectedCustomer.id, -amount, 'payment', undefined, 'Règlement espèces', {
-            sessionId: currentSession?.id ?? null,
-            recordCashMovement: true,
-            createdBy: 'Staff',
-        });
-        toast.success(`Paiement de ${formatCurrency(amount)} enregistré pour ${selectedCustomer.name}`);
-        if (!currentSession) {
-            toast.warning('Session de caisse fermée — paiement enregistré, caisse non mise à jour.');
+        try {
+            await updateCredit(selectedCustomer.id, -amount, 'payment', undefined, 'Règlement espèces', {
+                sessionId: currentSession?.id ?? null,
+                recordCashMovement: true,
+                createdBy: 'Staff',
+            });
+            toast.success(`Paiement de ${formatCurrency(amount)} enregistré pour ${selectedCustomer.name}`);
+            if (!currentSession) {
+                toast.warning('Session de caisse fermée — paiement enregistré, caisse non mise à jour.');
+            }
+            setShowPaymentModal(false);
+            setSelectedCustomer(null);
+            setPaymentAmount('');
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec de l\'enregistrement du paiement'));
         }
-        setShowPaymentModal(false);
-        setSelectedCustomer(null);
-        setPaymentAmount('');
     };
 
     return (

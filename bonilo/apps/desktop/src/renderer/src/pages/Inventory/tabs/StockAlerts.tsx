@@ -14,6 +14,7 @@ import {
 import { useProductsStore, usePurchasesStore, type Product, type GoodsReceipt } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import styles from './StockAlerts.module.css';
 
 interface StockAlert {
@@ -129,40 +130,46 @@ export const StockAlerts: React.FC = () => {
     };
 
     // Create purchase order
-    const handleCreateOrder = () => {
+    const handleCreateOrder = async () => {
         if (!selectedProduct || !selectedSupplierId || !orderQty) return;
 
         const supplier = suppliers.find(s => s.id === selectedSupplierId);
         if (!supplier) return;
 
-        addPurchaseOrder({
-            supplierId: selectedSupplierId,
-            supplierName: supplier.name,
-            items: [{
-                id: crypto.randomUUID(),
-                productId: selectedProduct.id,
-                productName: selectedProduct.name,
-                productBarcode: selectedProduct.barcode,
-                productEmoji: selectedProduct.emoji,
-                orderedQty: parseInt(orderQty),
-                receivedQty: 0,
-                purchasePrice: selectedProduct.purchasePrice,
+        const productName = selectedProduct.name;
+        try {
+            await addPurchaseOrder({
+                supplierId: selectedSupplierId,
+                supplierName: supplier.name,
+                items: [{
+                    id: crypto.randomUUID(),
+                    productId: selectedProduct.id,
+                    productName: selectedProduct.name,
+                    productBarcode: selectedProduct.barcode,
+                    productEmoji: selectedProduct.emoji,
+                    orderedQty: parseInt(orderQty),
+                    receivedQty: 0,
+                    purchasePrice: selectedProduct.purchasePrice,
+                    total: parseInt(orderQty) * selectedProduct.purchasePrice,
+                    unit: selectedProduct.unit,
+                }],
                 total: parseInt(orderQty) * selectedProduct.purchasePrice,
-                unit: selectedProduct.unit,
-            }],
-            total: parseInt(orderQty) * selectedProduct.purchasePrice,
-            subtotal: parseInt(orderQty) * selectedProduct.purchasePrice,
-            taxAmount: 0,
-            date: new Date().toISOString(),
-            expectedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            status: 'draft',
-        });
+                subtotal: parseInt(orderQty) * selectedProduct.purchasePrice,
+                taxAmount: 0,
+                date: new Date().toISOString(),
+                expectedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                status: 'draft',
+            });
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec de la création du bon de commande'));
+            return;
+        }
 
         setShowOrderModal(false);
         setSelectedProduct(null);
         setOrderQty('');
         setSelectedSupplierId('');
-        toast.success(`Bon de commande créé pour ${selectedProduct.name}`);
+        toast.success(`Bon de commande créé pour ${productName}`);
     };
 
     // Get pending orders for a product

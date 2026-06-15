@@ -91,7 +91,7 @@ export const POS: React.FC = () => {
     const navigate = useNavigate();
 
     // Store hooks - Real data from stores
-    const { products, updateStock, toggleFavorite } = useProductsStore();
+    const { products, toggleFavorite } = useProductsStore();
     const { addMovement, currentSession } = useTreasuryStore();
     const { sales, addSale } = useSalesStore();
     const { customers, updateCredit, getCustomerByBarcode } = useCustomersStore();
