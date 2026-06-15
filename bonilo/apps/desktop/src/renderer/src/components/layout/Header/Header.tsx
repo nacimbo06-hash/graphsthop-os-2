@@ -18,6 +18,7 @@ import { GlobalSearch } from './GlobalSearch';
 import { NotificationsPanel } from './NotificationsPanel';
 import { UserSwitcher } from './UserSwitcher';
 import { SyncIndicator } from '../../domain/sync/SyncIndicator';
+import { SYNC_UI_ENABLED } from '../../../config/features';
 import { useAuthStore, ROLE_LABELS, useNotificationsStore } from '@bonilo/shared/stores';
 import styles from './Header.module.css';
 
@@ -173,8 +174,8 @@ export const Header: React.FC<HeaderProps> = ({
                     {/* Theme Toggle */}
                     <ThemeToggle />
 
-                    {/* Sync Status */}
-                    <SyncIndicator />
+                    {/* Sync Status (hidden until multi-PC sync ships — see config/features.ts) */}
+                    {SYNC_UI_ENABLED && <SyncIndicator />}
 
                     {/* User Switcher */}
                     <UserSwitcher />

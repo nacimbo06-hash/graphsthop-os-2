@@ -25,6 +25,7 @@ import { ROUTES } from '@bonilo/shared/constants';
 import styles from './Sidebar.module.css';
 import igoLogo from '../../../assets/igo-logo.svg';
 import { NetworkSyncIndicator } from '../../NetworkSync';
+import { SYNC_UI_ENABLED } from '../../../config/features';
 
 interface NavItem {
     path: string;
@@ -110,8 +111,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
 
 
-            {/* Network Sync Indicator */}
-            {!isCollapsed && (
+            {/* Network Sync Indicator (hidden until multi-PC sync ships — see config/features.ts) */}
+            {SYNC_UI_ENABLED && !isCollapsed && (
                 <div style={{ padding: '0 1rem', marginBottom: '1rem' }}>
                     <NetworkSyncIndicator />
                 </div>
