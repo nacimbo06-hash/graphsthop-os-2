@@ -408,11 +408,21 @@ ALTER TABLE expenses ADD COLUMN paid_from TEXT DEFAULT NULL;
 PRAGMA user_version = 3;
 `;
 
+// 004 — integrity constraints. A receipt number must be unique (the atomic
+// checkout_sale command mints it inside its transaction; this index makes the
+// guarantee structural). Money-column CHECK guards land in a later migration
+// via table rebuilds. The runner sets user_version atomically (see
+// runMigrations), so migrations no longer carry an inline PRAGMA.
+const MIGRATION_004 = `
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_receipt_number ON sales(receipt_number);
+`;
+
 // Ordered list of migrations
 const MIGRATIONS = [
   { version: 1, sql: MIGRATION_001 },
   { version: 2, sql: MIGRATION_002 },
   { version: 3, sql: MIGRATION_003 },
+  { version: 4, sql: MIGRATION_004 },
 ];
 
 class BoniloDatabase {
@@ -455,16 +465,41 @@ class BoniloDatabase {
     const currentVersion = result[0]?.user_version ?? 0;
 
     for (const migration of MIGRATIONS) {
-      if (migration.version > currentVersion) {
-        const statements = migration.sql
-          .split(';')
-          .map(s => s.trim())
-          .filter(s => s.length > 0 && !s.startsWith('--'));
+      if (migration.version <= currentVersion) continue;
 
+      const statements = migration.sql
+        .split(';')
+        .map(s => s.trim())
+        // Drop blanks/comments, the inline user_version PRAGMA (the runner sets
+        // it atomically, below), and the connection-level PRAGMAs (journal_mode/
+        // synchronous/foreign_keys) — init() already applies those, and they
+        // can't run inside the transaction we wrap each migration in.
+        .filter(s =>
+          s.length > 0 &&
+          !s.startsWith('--') &&
+          !/^PRAGMA\s+(user_version|journal_mode|synchronous|foreign_keys)\b/i.test(s)
+        );
+
+      // Run each migration as one unit: FK enforcement is disabled around it
+      // (it can't be toggled inside a transaction, and table-rebuild migrations
+      // need it off), the statements + the user_version bump commit together,
+      // and any failure rolls the whole migration back instead of leaving the
+      // schema half-applied.
+      await this.db.execute('PRAGMA foreign_keys = OFF;');
+      await this.db.execute('BEGIN;');
+      try {
         for (const stmt of statements) {
           await this.db.execute(stmt + ';');
         }
+        await this.db.execute(`PRAGMA user_version = ${migration.version};`);
+        await this.db.execute('COMMIT;');
+      } catch (error) {
+        await this.db.execute('ROLLBACK;');
+        await this.db.execute('PRAGMA foreign_keys = ON;');
+        console.error(`[BoniloDB] ❌ Migration ${migration.version} failed and was rolled back:`, error);
+        throw error;
       }
+      await this.db.execute('PRAGMA foreign_keys = ON;');
     }
   }
 
