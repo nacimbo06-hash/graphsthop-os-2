@@ -145,6 +145,9 @@ const defaultSettings: AllSettings = {
 const STORAGE_KEY = 'bonilo_settings';
 const LEGACY_STORAGE_KEY = 'supermarket_settings';
 
+// Under Tauri the DB is available; in browser dev localStorage is the only store.
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
 class SettingsServiceClass {
     private settings: AllSettings;
     private listeners: Set<(settings: AllSettings) => void> = new Set();
@@ -152,6 +155,42 @@ class SettingsServiceClass {
     constructor() {
         this.settings = this.loadSettings();
         this.applyTheme();
+    }
+
+    /**
+     * Called by DBProvider after the DB is ready. Loads settings from SQLite
+     * (Tauri) and, if found, overwrites the localStorage-initialised state.
+     * On first run the table is empty, so this is a no-op — the localStorage
+     * value is kept and written back to the DB by the first saveSettings call.
+     */
+    async loadFromDB(): Promise<void> {
+        if (!isTauri()) return;
+        try {
+            // Lazy import avoids pulling in the DB layer in browser dev builds.
+            const { settingsRepo } = await import('@bonilo/shared/db');
+            const saved = await settingsRepo.load<AllSettings>();
+            if (!saved) {
+                // DB is empty — seed it from the current (localStorage) state.
+                await settingsRepo.save(this.settings);
+                console.log('[Settings] ✅ Seeded DB from localStorage settings');
+                return;
+            }
+            // Merge with defaults so new sections added in future app versions
+            // don't come back undefined on existing installs.
+            this.settings = {
+                store: { ...defaultSettings.store, ...saved.store },
+                print: { ...defaultSettings.print, ...saved.print },
+                pos: { ...defaultSettings.pos, ...saved.pos },
+                notifications: { ...defaultSettings.notifications, ...saved.notifications },
+                security: { ...defaultSettings.security, ...saved.security },
+                appearance: { ...defaultSettings.appearance, ...saved.appearance },
+            };
+            this.applyTheme();
+            this.notifyListeners();
+            console.log('[Settings] ✅ Loaded settings from DB');
+        } catch (e) {
+            console.error('[Settings] ❌ Failed to load from DB:', e);
+        }
     }
 
     /**
@@ -188,7 +227,9 @@ class SettingsServiceClass {
     }
 
     /**
-     * Save settings to localStorage
+     * Save settings. Always writes to localStorage (synchronous, keeps the
+     * existing cache warm for browser dev). Under Tauri also persists to SQLite
+     * in the background so it survives across installs/profile resets.
      */
     saveSettings(settings: AllSettings): boolean {
         try {
@@ -196,6 +237,15 @@ class SettingsServiceClass {
             this.settings = settings;
             this.applyTheme();
             this.notifyListeners();
+
+            if (isTauri()) {
+                import('@bonilo/shared/db').then(({ settingsRepo }) => {
+                    settingsRepo.save(settings).catch(e =>
+                        console.error('[Settings] DB write failed:', e)
+                    );
+                });
+            }
+
             return true;
         } catch (error) {
             console.error('Failed to save settings:', error);

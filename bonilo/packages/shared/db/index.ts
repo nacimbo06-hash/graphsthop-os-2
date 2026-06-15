@@ -10,3 +10,4 @@ export * from './sinkingFundsRepo';
 export * from './lotsRepo';
 export * from './stockMovementsRepo';
 export * from './usersRepo';
+export * from './settingsRepo';

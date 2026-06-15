@@ -48,6 +48,11 @@ export const DBProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                 const { db } = await import('@bonilo/shared/db');
                 await db.init();
 
+                // Load settings from DB (SettingsService bootstraps from localStorage;
+                // this overwrites with the DB copy if one exists).
+                const { SettingsService } = await import('../services/settingsService');
+                await SettingsService.loadFromDB();
+
                 // Hydrate all Zustand stores from SQLite
                 console.log('[DBProvider] Hydrating stores from SQLite...');
                 await Promise.all([
