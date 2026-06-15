@@ -178,10 +178,14 @@ export const PurchaseOrders: React.FC = () => {
         setShowDetailModal(true);
     };
 
-    const handleSendOrder = (orderId: string) => {
-        updatePurchaseOrder(orderId, { status: 'sent' });
-        toast.success('Commande envoyée au fournisseur');
-        setShowDetailModal(false);
+    const handleSendOrder = async (orderId: string) => {
+        try {
+            await updatePurchaseOrder(orderId, { status: 'sent' });
+            toast.success('Commande envoyée au fournisseur');
+            setShowDetailModal(false);
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Impossible de mettre à jour la commande.'));
+        }
     };
 
     const handlePrintOrder = (order: PurchaseOrder) => {

@@ -660,7 +660,7 @@ export const POS: React.FC = () => {
                                     className={`${styles.favoriteBtn} ${product.isFavorite ? styles.isFavorite : ''}`}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        toggleFavorite(product.id);
+                                        toggleFavorite(product.id).catch(() => {});
                                         toast.success(product.isFavorite ? `${product.name} retiré des favoris` : `${product.name} ajouté aux favoris ⭐`);
                                     }}
                                     title={product.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}

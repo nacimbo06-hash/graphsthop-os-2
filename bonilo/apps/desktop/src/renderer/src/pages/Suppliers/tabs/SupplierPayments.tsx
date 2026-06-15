@@ -16,6 +16,7 @@ import {
 import { usePurchasesStore, type GoodsReceipt } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import styles from './SupplierPayments.module.css';
 
 export const SupplierPayments: React.FC = () => {
@@ -66,13 +67,16 @@ export const SupplierPayments: React.FC = () => {
         setShowDetailModal(true);
     };
 
-    const confirmPayment = (paymentSource: 'cash' | 'safe' | 'provision') => {
+    const confirmPayment = async (paymentSource: 'cash' | 'safe' | 'provision') => {
         if (!selectedReceipt) return;
-
-        payGoodsReceipt(selectedReceipt.id, paymentSource);
-        toast.success(`Paiement de ${formatCurrency(selectedReceipt.total)} enregistré depuis ${paymentSource === 'cash' ? 'la caisse' : paymentSource === 'safe' ? 'le coffre' : 'la provision'}`);
-        setShowPaymentModal(false);
-        setSelectedReceipt(null);
+        try {
+            await payGoodsReceipt(selectedReceipt.id, paymentSource);
+            toast.success(`Paiement de ${formatCurrency(selectedReceipt.total)} enregistré depuis ${paymentSource === 'cash' ? 'la caisse' : paymentSource === 'safe' ? 'le coffre' : 'la provision'}`);
+            setShowPaymentModal(false);
+            setSelectedReceipt(null);
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Impossible d\'enregistrer le paiement.'));
+        }
     };
 
     return (

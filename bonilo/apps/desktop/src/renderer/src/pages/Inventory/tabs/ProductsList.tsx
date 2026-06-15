@@ -106,7 +106,7 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
     };
 
     const handleToggleFavorite = (id: string) => {
-        toggleFavorite(id);
+        toggleFavorite(id).catch(() => {});
     };
 
     const handleView = (product: Product) => {
