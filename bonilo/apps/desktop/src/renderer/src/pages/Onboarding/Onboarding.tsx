@@ -54,30 +54,9 @@ export const Onboarding: React.FC = () => {
 
     const handleComplete = async () => {
         setIsSaving(true);
-        // Simulate a tiny bit of processing for the wow effect
-        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Create the first owner user
-        const ownerCreated = await createUser({
-            email: formData.ownerEmail || `admin@${formData.name.toLowerCase().replace(/\s+/g, '')}.dz`,
-            password: formData.ownerPassword || 'admin123',
-            firstName: formData.ownerFirstName || 'Admin',
-            lastName: formData.ownerLastName || formData.name,
-            phone: formData.phone,
-            role: 'owner',
-            isActive: true,
-            twoFactorEnabled: false,
-        });
-
-        if (ownerCreated) {
-            // Auto-login with the created user
-            await login(
-                formData.ownerEmail || `admin@${formData.name.toLowerCase().replace(/\s+/g, '')}.dz`,
-                formData.ownerPassword || 'admin123'
-            );
-        }
-
-        // Save store settings
+        // Persist the store identity — this writes to localStorage immediately
+        // and fires a background settingsRepo.save() to SQLite under Tauri.
         updateStoreSettings({
             name: formData.name,
             address: formData.address,
@@ -89,10 +68,29 @@ export const Onboarding: React.FC = () => {
             currency: formData.currency,
             timezone: 'Africa/Algiers',
             tvaEnabled: true,
-            tvaRate: 19
+            tvaRate: 19,
         });
 
-        // Navigation handled by useEffect redirect
+        // Create the owner account — writes to SQLite under Tauri.
+        const ownerCreated = await createUser({
+            email: formData.ownerEmail,
+            password: formData.ownerPassword,
+            firstName: formData.ownerFirstName || 'Admin',
+            lastName: formData.ownerLastName || formData.name,
+            phone: formData.phone,
+            role: 'owner',
+            isActive: true,
+            twoFactorEnabled: false,
+        });
+
+        if (!ownerCreated) {
+            setIsSaving(false);
+            return;
+        }
+
+        // Auto-login so the app lands on the dashboard.
+        await login(formData.ownerEmail, formData.ownerPassword);
+        // Navigation handled by the useEffect redirect (storeSettings.name + allUsers.length).
     };
 
     const steps = [
@@ -326,7 +324,7 @@ export const Onboarding: React.FC = () => {
                             <button
                                 className={styles.btnNext}
                                 onClick={handleComplete}
-                                disabled={!formData.rc || !formData.nif}
+                                disabled={!formData.ownerEmail || !formData.ownerPassword || formData.ownerPassword.length < 6}
                             >
                                 Terminer <CheckCircle size={20} />
                             </button>
