@@ -514,6 +514,40 @@ ALTER TABLE expenses_new RENAME TO expenses;
 CREATE INDEX IF NOT EXISTS idx_expenses_created ON expenses(created_at);
 `;
 
+// 006 — bring the users table in line with the app's real auth model. The
+// original 001 table was a speculative username/pin_hash shape that nothing
+// ever read (auth lived entirely in localStorage). The app authenticates by
+// email + bcrypt password and carries names, an Arabic name, a phone, a
+// two-factor flag and an optional per-user module-access list, so the table is
+// rebuilt to match. password_hash holds the bcrypt hash (was kept in
+// localStorage under sm_user_passwords); module_access is a JSON array string
+// or NULL (NULL = fall back to role defaults). The old rows (if any) map
+// username->email and pin_hash->password_hash; in practice the table is empty.
+const MIGRATION_006 = `
+CREATE TABLE users_new (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  first_name TEXT NOT NULL DEFAULT '',
+  last_name TEXT NOT NULL DEFAULT '',
+  first_name_ar TEXT NOT NULL DEFAULT '',
+  last_name_ar TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  role TEXT NOT NULL DEFAULT 'cashier',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  two_factor_enabled INTEGER NOT NULL DEFAULT 0,
+  module_access TEXT DEFAULT NULL,
+  password_hash TEXT NOT NULL DEFAULT '',
+  last_login TEXT DEFAULT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+INSERT INTO users_new (id, email, first_name, role, is_active, password_hash, last_login, created_at, updated_at)
+  SELECT id, username, display_name, role, is_active, pin_hash, last_login, created_at, updated_at FROM users;
+DROP TABLE users;
+ALTER TABLE users_new RENAME TO users;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(lower(email));
+`;
+
 // Ordered list of migrations
 const MIGRATIONS = [
   { version: 1, sql: MIGRATION_001 },
@@ -521,6 +555,7 @@ const MIGRATIONS = [
   { version: 3, sql: MIGRATION_003 },
   { version: 4, sql: MIGRATION_004 },
   { version: 5, sql: MIGRATION_005 },
+  { version: 6, sql: MIGRATION_006 },
 ];
 
 class BoniloDatabase {

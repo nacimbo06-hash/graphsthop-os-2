@@ -2,10 +2,15 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import bcrypt from 'bcryptjs';
 import { secureStorage } from '../utils/secureStorage';
+import { usersRepo } from '../db';
 import type { User, UserRole, ModuleId } from '@shared/types';
 
 // Constants for secure storage
 const SECURE_TOKEN_KEY = 'auth_token_secure';
+
+// Running under Tauri? SQLite is the source of truth; in plain-browser dev we
+// fall back to localStorage.
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 // Permission definitions per role
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
@@ -75,8 +80,42 @@ export const DEFAULT_MODULE_ACCESS: Record<UserRole, ModuleId[]> = {
 // Password is stored per-user in localStorage alongside the store
 export const PREDEFINED_USERS: Array<User & { password: string }> = [];
 
-// Storage key for user passwords (separate from user data for security)
+// Storage key for user passwords (separate from user data for security).
+// Under Tauri the hash lives in the users table; this localStorage map is the
+// browser-dev fallback (and the migration source on first DB hydrate).
 const USER_PASSWORDS_KEY = 'sm_user_passwords';
+
+/** Read a user's bcrypt hash from the DB (Tauri) or localStorage (browser). */
+async function getStoredHash(userId: string): Promise<string | null> {
+    if (isTauri()) {
+        try {
+            return await usersRepo.getPasswordHash(userId);
+        } catch (e) {
+            console.warn('[AuthStore] getPasswordHash failed:', e);
+            return null;
+        }
+    }
+    const stored: Record<string, string> = JSON.parse(localStorage.getItem(USER_PASSWORDS_KEY) || '{}');
+    return stored[userId] ?? null;
+}
+
+/** Persist a user's bcrypt hash to the DB (Tauri) or localStorage (browser). */
+async function setStoredHash(userId: string, hash: string): Promise<void> {
+    if (isTauri()) {
+        await usersRepo.setPasswordHash(userId, hash);
+        return;
+    }
+    const stored: Record<string, string> = JSON.parse(localStorage.getItem(USER_PASSWORDS_KEY) || '{}');
+    stored[userId] = hash;
+    localStorage.setItem(USER_PASSWORDS_KEY, JSON.stringify(stored));
+}
+
+/** Drop a user's hash from the localStorage fallback map. */
+function removeBrowserHash(userId: string): void {
+    const stored: Record<string, string> = JSON.parse(localStorage.getItem(USER_PASSWORDS_KEY) || '{}');
+    delete stored[userId];
+    localStorage.setItem(USER_PASSWORDS_KEY, JSON.stringify(stored));
+}
 
 // Active session tracking for multi-user support
 export interface UserSession {
@@ -108,8 +147,8 @@ interface AuthState {
 
     // User management (for owner/manager)
     createUser: (user: Omit<User, 'id' | 'createdAt'> & { password: string }) => Promise<boolean>;
-    updateUser: (id: string, updates: Partial<User>) => void;
-    deleteUser: (id: string) => void;
+    updateUser: (id: string, updates: Partial<User>) => Promise<void>;
+    deleteUser: (id: string) => Promise<void>;
     getUsers: () => User[];
     changePassword: (userId: string, currentPassword: string, newPassword: string) => Promise<boolean>;
 
@@ -121,6 +160,9 @@ interface AuthState {
 
     // Initialization
     initializeFromSecureStorage: () => Promise<void>;
+    // Load users from SQLite (Tauri). Migrates any localStorage users into the
+    // DB once, then makes the DB the source of truth for allUsers.
+    hydrate: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -140,21 +182,16 @@ export const useAuthStore = create<AuthState>()(
                 // Simulate network delay
                 await new Promise(resolve => setTimeout(resolve, 500));
 
-                // Get stored passwords
-                const storedPasswords: Record<string, string> = JSON.parse(
-                    localStorage.getItem(USER_PASSWORDS_KEY) || '{}'
-                );
-
                 // Find user in allUsers
                 const { allUsers } = get();
                 const foundUser = allUsers.find(
                     u => u.email.toLowerCase() === email.toLowerCase()
                 );
 
-                // Verify password using bcrypt
+                // Verify password using bcrypt (hash lives in SQLite under Tauri)
                 let isValidPassword = false;
-                if (foundUser && storedPasswords[foundUser.id]) {
-                    const storedHash = storedPasswords[foundUser.id];
+                const storedHash = foundUser ? await getStoredHash(foundUser.id) : null;
+                if (foundUser && storedHash) {
                     // Check if password is already hashed (starts with $2)
                     if (storedHash.startsWith('$2')) {
                         isValidPassword = await bcrypt.compare(password, storedHash);
@@ -163,18 +200,23 @@ export const useAuthStore = create<AuthState>()(
                         if (storedHash === password) {
                             isValidPassword = true;
                             // Migrate to hashed password
-                            const newHash = await bcrypt.hash(password, 10);
-                            storedPasswords[foundUser.id] = newHash;
-                            localStorage.setItem(USER_PASSWORDS_KEY, JSON.stringify(storedPasswords));
+                            await setStoredHash(foundUser.id, await bcrypt.hash(password, 10));
                         }
                     }
                 }
 
                 if (foundUser && isValidPassword) {
+                    const loginAt = new Date();
                     const userWithLogin = {
                         ...foundUser,
-                        lastLogin: new Date(),
+                        lastLogin: loginAt,
                     };
+
+                    // Record the login on the DB row (best-effort; never blocks login)
+                    if (isTauri()) {
+                        usersRepo.updateLastLogin(foundUser.id, loginAt.toISOString())
+                            .catch(e => console.warn('[AuthStore] updateLastLogin failed:', e));
+                    }
 
                     // Add to active sessions
                     const newSession: UserSession = {
@@ -285,21 +327,27 @@ export const useAuthStore = create<AuthState>()(
                     return false;
                 }
 
+                const { password, ...userFields } = userData;
                 const newUser: User = {
-                    ...userData,
+                    ...userFields,
                     id: `user_${Date.now()}`,
                     createdAt: new Date(),
                 };
 
                 // Hash password before storing
-                const hashedPassword = await bcrypt.hash(userData.password, 10);
+                const hashedPassword = await bcrypt.hash(password, 10);
 
-                // Store hashed password in localStorage
-                const storedPasswords: Record<string, string> = JSON.parse(
-                    localStorage.getItem(USER_PASSWORDS_KEY) || '{}'
-                );
-                storedPasswords[newUser.id] = hashedPassword;
-                localStorage.setItem(USER_PASSWORDS_KEY, JSON.stringify(storedPasswords));
+                // Persist to SQLite (Tauri) or localStorage (browser)
+                if (isTauri()) {
+                    try {
+                        await usersRepo.create(newUser, hashedPassword);
+                    } catch (e) {
+                        console.error('[AuthStore] createUser DB write failed:', e);
+                        return false;
+                    }
+                } else {
+                    await setStoredHash(newUser.id, hashedPassword);
+                }
 
                 set({
                     allUsers: [...allUsers, newUser],
@@ -308,16 +356,24 @@ export const useAuthStore = create<AuthState>()(
                 return true;
             },
 
-            updateUser: (id, updates) => {
+            updateUser: async (id, updates) => {
                 set((state) => ({
                     allUsers: state.allUsers.map(u =>
                         u.id === id ? { ...u, ...updates } : u
                     ),
                     user: state.user?.id === id ? { ...state.user, ...updates } : state.user,
                 }));
+
+                if (isTauri()) {
+                    try {
+                        await usersRepo.update(id, updates);
+                    } catch (e) {
+                        console.error('[AuthStore] updateUser DB write failed:', e);
+                    }
+                }
             },
 
-            deleteUser: (id) => {
+            deleteUser: async (id) => {
                 const { user: currentUser } = get();
 
                 // Can't delete yourself or if not owner
@@ -325,12 +381,17 @@ export const useAuthStore = create<AuthState>()(
                     return;
                 }
 
-                // Remove password from storage
-                const storedPasswords: Record<string, string> = JSON.parse(
-                    localStorage.getItem(USER_PASSWORDS_KEY) || '{}'
-                );
-                delete storedPasswords[id];
-                localStorage.setItem(USER_PASSWORDS_KEY, JSON.stringify(storedPasswords));
+                // Remove from the source of truth
+                if (isTauri()) {
+                    try {
+                        await usersRepo.remove(id);
+                    } catch (e) {
+                        console.error('[AuthStore] deleteUser DB write failed:', e);
+                        return;
+                    }
+                } else {
+                    removeBrowserHash(id);
+                }
 
                 set((state) => ({
                     allUsers: state.allUsers.filter(u => u.id !== id),
@@ -349,11 +410,7 @@ export const useAuthStore = create<AuthState>()(
                     return false;
                 }
 
-                const storedPasswords: Record<string, string> = JSON.parse(
-                    localStorage.getItem(USER_PASSWORDS_KEY) || '{}'
-                );
-
-                const storedHash = storedPasswords[userId];
+                const storedHash = await getStoredHash(userId);
                 if (!storedHash) return false;
 
                 // Verify current password
@@ -371,8 +428,7 @@ export const useAuthStore = create<AuthState>()(
 
                 // Hash and store new password
                 const newHash = await bcrypt.hash(newPassword, 10);
-                storedPasswords[userId] = newHash;
-                localStorage.setItem(USER_PASSWORDS_KEY, JSON.stringify(storedPasswords));
+                await setStoredHash(userId, newHash);
 
                 return true;
             },
@@ -381,17 +437,12 @@ export const useAuthStore = create<AuthState>()(
             switchUser: async (userId, password) => {
                 const { allUsers } = get();
 
-                // Get stored passwords
-                const storedPasswords: Record<string, string> = JSON.parse(
-                    localStorage.getItem(USER_PASSWORDS_KEY) || '{}'
-                );
-
                 const foundUser = allUsers.find(u => u.id === userId);
 
-                // Verify password using bcrypt
+                // Verify password using bcrypt (hash lives in SQLite under Tauri)
                 let isValidPassword = false;
-                if (foundUser && storedPasswords[userId]) {
-                    const storedHash = storedPasswords[userId];
+                const storedHash = foundUser ? await getStoredHash(userId) : null;
+                if (foundUser && storedHash) {
                     // Check if password is already hashed (starts with $2)
                     if (storedHash.startsWith('$2')) {
                         isValidPassword = await bcrypt.compare(password, storedHash);
@@ -400,9 +451,7 @@ export const useAuthStore = create<AuthState>()(
                         if (storedHash === password) {
                             isValidPassword = true;
                             // Migrate to hashed password
-                            const newHash = await bcrypt.hash(password, 10);
-                            storedPasswords[userId] = newHash;
-                            localStorage.setItem(USER_PASSWORDS_KEY, JSON.stringify(storedPasswords));
+                            await setStoredHash(userId, await bcrypt.hash(password, 10));
                         }
                     }
                 }
@@ -467,6 +516,36 @@ export const useAuthStore = create<AuthState>()(
 
                 if (token && state.isAuthenticated && state.user) {
                     set({ token });
+                }
+            },
+
+            hydrate: async () => {
+                // Browser dev keeps using the localStorage-persisted allUsers.
+                if (!isTauri()) return;
+
+                try {
+                    // One-time migration: if the DB has no users yet but the
+                    // localStorage cache does, port them (with their hashes) in.
+                    const dbCount = await usersRepo.count();
+                    if (dbCount === 0) {
+                        const legacyUsers = get().allUsers;
+                        if (legacyUsers.length > 0) {
+                            const storedPasswords: Record<string, string> = JSON.parse(
+                                localStorage.getItem(USER_PASSWORDS_KEY) || '{}'
+                            );
+                            for (const u of legacyUsers) {
+                                await usersRepo.create(u, storedPasswords[u.id] || '');
+                            }
+                            console.log(`[AuthStore] Migrated ${legacyUsers.length} user(s) from localStorage into SQLite`);
+                        }
+                    }
+
+                    // SQLite is now the source of truth for the user list.
+                    const users = await usersRepo.loadAll();
+                    set({ allUsers: users });
+                    console.log(`[AuthStore] ✅ Hydrated ${users.length} user(s) from DB`);
+                } catch (e) {
+                    console.error('[AuthStore] ❌ Failed to hydrate users from DB:', e);
                 }
             },
         }),

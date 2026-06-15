@@ -39,8 +39,24 @@ describe('Migrations (runner + 004 constraints)', () => {
 
     it('runs all migrations and lands at the latest user_version', async () => {
         const rows = await db.select<{ user_version: number }>('PRAGMA user_version;');
-        // 005 is the highest migration; the runner sets the version atomically.
-        expect(rows[0].user_version).toBe(5);
+        // 006 is the highest migration; the runner sets the version atomically.
+        expect(rows[0].user_version).toBe(6);
+    });
+
+    it('rebuilds the users table to the auth model (006)', async () => {
+        const cols = await db.select<{ name: string }>(`PRAGMA table_info(users);`);
+        const names = cols.map(c => c.name);
+        // The 001 username/pin_hash shape is gone; the real auth columns are present.
+        expect(names).toContain('email');
+        expect(names).toContain('password_hash');
+        expect(names).toContain('module_access');
+        expect(names).not.toContain('pin_hash');
+
+        // Email is uniquely indexed (case-insensitive).
+        await db.execute(`INSERT INTO users (id, email, password_hash) VALUES ('u1', 'Owner@Shop.dz', '$2hash')`);
+        await expect(
+            db.execute(`INSERT INTO users (id, email, password_hash) VALUES ('u2', 'owner@shop.dz', '$2other')`)
+        ).rejects.toThrow();
     });
 
     it('enforces the UNIQUE index on sales.receipt_number (survives the 005 rebuild)', async () => {

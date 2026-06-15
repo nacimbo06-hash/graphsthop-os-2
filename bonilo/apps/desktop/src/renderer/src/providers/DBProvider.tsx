@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
+    useAuthStore,
     useProductsStore,
     useSalesStore,
     useCustomersStore,
@@ -50,6 +51,7 @@ export const DBProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                 // Hydrate all Zustand stores from SQLite
                 console.log('[DBProvider] Hydrating stores from SQLite...');
                 await Promise.all([
+                    useAuthStore.getState().hydrate(),
                     useProductsStore.getState().hydrate(),
                     useSalesStore.getState().hydrate(),
                     useCustomersStore.getState().hydrate(),
