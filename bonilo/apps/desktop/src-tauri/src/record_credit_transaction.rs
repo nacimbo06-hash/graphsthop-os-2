@@ -40,6 +40,16 @@ pub struct RecordCreditTransactionInput {
     /// ISO timestamp for the customer row's `updated_at` (and the
     /// `last_payment_date` when this is a payment).
     pub created_at: String,
+    /// When true and this is a cash payment with an open session, also post a
+    /// `cash_movements` 'deposit' so the cash settling the debt hits the drawer.
+    #[serde(default)]
+    pub record_cash_movement: bool,
+    /// Open cash session for the drawer deposit; without one the deposit is
+    /// skipped (the balance is still reduced).
+    #[serde(default)]
+    pub session_id: Option<String>,
+    #[serde(default)]
+    pub created_by: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -51,6 +61,8 @@ pub struct RecordCreditTransactionResult {
     /// Set to `created_at` when this was a payment; otherwise null (the existing
     /// value is preserved in the DB via COALESCE).
     pub last_payment_date: Option<String>,
+    /// Id of the drawer deposit, when one was posted (cash payment + session).
+    pub cash_movement_id: Option<String>,
 }
 
 /// Tauri entry point. Resolves the plugin pool, then runs the transaction.
@@ -126,12 +138,38 @@ pub async fn run_record_credit_transaction(
     .execute(&mut *tx)
     .await?;
 
+    // A cash payment physically puts money in the drawer — record it as a
+    // 'deposit' (which getCurrentBalance counts as cash in), in the same
+    // transaction as the balance reduction. Needs an open session; without one
+    // the balance is still reduced but nothing hits the drawer.
+    let mut cash_movement_id = None;
+    if is_payment && input.record_cash_movement {
+        if let Some(session_id) = input.session_id.as_ref() {
+            let mid = Uuid::new_v4().to_string();
+            sqlx::query(
+                "INSERT INTO cash_movements
+                    (id, session_id, type, amount, reason, created_by, payment_method, created_at)
+                 VALUES (?, ?, 'deposit', ?, ?, ?, 'cash', ?)",
+            )
+            .bind(&mid)
+            .bind(session_id)
+            .bind(input.amount.abs())
+            .bind(input.notes.clone().unwrap_or_else(|| "Règlement crédit".to_string()))
+            .bind(input.created_by.clone().unwrap_or_default())
+            .bind(&input.created_at)
+            .execute(&mut *tx)
+            .await?;
+            cash_movement_id = Some(mid);
+        }
+    }
+
     tx.commit().await?;
 
     Ok(RecordCreditTransactionResult {
         transaction_id,
         new_balance,
         last_payment_date,
+        cash_movement_id,
     })
 }
 
@@ -149,6 +187,9 @@ mod tests {
             sale_id: None,
             notes: Some("test".to_string()),
             created_at: "2026-06-14T10:00:00.000Z".to_string(),
+            record_cash_movement: false,
+            session_id: None,
+            created_by: None,
         }
     }
 
@@ -163,6 +204,8 @@ mod tests {
                 last_payment_date TEXT, updated_at TEXT);
             CREATE TABLE credit_transactions (id TEXT PRIMARY KEY, customer_id TEXT, amount REAL, type TEXT,
                 date TEXT, sale_id TEXT, notes TEXT);
+            CREATE TABLE cash_movements (id TEXT PRIMARY KEY, session_id TEXT, type TEXT, amount REAL, reason TEXT,
+                created_by TEXT, payment_method TEXT, created_at TEXT);
         "#;
         for stmt in ddl.split(';').map(str::trim).filter(|s| !s.is_empty()) {
             sqlx::query(stmt).execute(&pool).await.unwrap();
@@ -236,6 +279,43 @@ mod tests {
         let res = run_record_credit_transaction(&pool, input("c1", -500.0, "payment")).await.unwrap();
         assert_eq!(res.new_balance, 2500.0);
         assert_eq!(balance_of(&pool, "c1").await, 2500.0);
+    }
+
+    #[tokio::test]
+    async fn cash_payment_with_session_posts_a_drawer_deposit() {
+        let pool = schema_pool().await;
+
+        let mut inp = input("c1", -2000.0, "payment");
+        inp.record_cash_movement = true;
+        inp.session_id = Some("sess1".to_string());
+        inp.notes = Some("Règlement espèces".to_string());
+        let res = run_record_credit_transaction(&pool, inp).await.unwrap();
+
+        assert!(res.cash_movement_id.is_some());
+        assert_eq!(balance_of(&pool, "c1").await, 3000.0);
+        // One 'deposit' for the positive cash amount, in the open session.
+        let (cnt, amt): (i64, f64) =
+            sqlx::query("SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM cash_movements WHERE type = 'deposit'")
+                .fetch_one(&pool)
+                .await
+                .map(|r| (r.get(0), r.get(1)))
+                .unwrap();
+        assert_eq!(cnt, 1);
+        assert_eq!(amt, 2000.0);
+    }
+
+    #[tokio::test]
+    async fn cash_payment_without_session_skips_the_deposit() {
+        let pool = schema_pool().await;
+
+        let mut inp = input("c1", -2000.0, "payment");
+        inp.record_cash_movement = true;
+        inp.session_id = None; // no open session
+        let res = run_record_credit_transaction(&pool, inp).await.unwrap();
+
+        assert!(res.cash_movement_id.is_none());
+        assert_eq!(balance_of(&pool, "c1").await, 3000.0, "balance still reduced");
+        assert_eq!(scalar_i64(&pool, "SELECT COUNT(*) FROM cash_movements").await, 0);
     }
 
     #[tokio::test]
