@@ -29,13 +29,12 @@ import {
     Layers,
     Box,
 } from 'lucide-react';
-import { useTVA, usePOSSettings } from '../../contexts/SettingsContext';
+import { useTVA, usePOSSettings, useSettings } from '../../contexts/SettingsContext';
 import {
     useProductsStore,
     useTreasuryStore,
     useSalesStore,
     useCustomersStore,
-    useStockMovementsStore,
     useAuthStore
 } from '@bonilo/shared/stores';
 import { CATEGORIES } from '@bonilo/shared';
@@ -95,13 +94,13 @@ export const POS: React.FC = () => {
     const { addMovement, currentSession } = useTreasuryStore();
     const { sales, addSale } = useSalesStore();
     const { customers, updateCredit, getCustomerByBarcode } = useCustomersStore();
-    const { addMovement: addStockMovement } = useStockMovementsStore();
     const { user } = useAuthStore();
     const toast = useToast();
 
     // Settings hooks - TVA and other settings from context
     const { tvaEnabled, tvaRate: settingsTvaRate } = useTVA();
     const posSettings = usePOSSettings();
+    const { storeSettings } = useSettings();
 
 
 
@@ -480,12 +479,11 @@ export const POS: React.FC = () => {
         // 5. Thermal Printing via PrinterManager
         if (autoPrint) {
             try {
-                const storeSettings = JSON.parse(localStorage.getItem('bonilo-settings') || '{}');
                 const printed = await printerManager.printReceipt({
                     storeInfo: {
-                        name: storeSettings.storeName || 'Bonilo POS',
-                        address: storeSettings.storeAddress || '',
-                        phone: storeSettings.storePhone || '',
+                        name: storeSettings.name || 'Bonilo POS',
+                        address: storeSettings.address || '',
+                        phone: storeSettings.phone || '',
                     },
                     transactionId: receiptNumber,
                     date: new Date(),

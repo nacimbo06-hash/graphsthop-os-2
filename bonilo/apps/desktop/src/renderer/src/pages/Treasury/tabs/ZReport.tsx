@@ -24,8 +24,7 @@ import { useToast } from '../../../components/feedback/Toast';
 import styles from './ZReport.module.css';
 
 export const ZReport: React.FC = () => {
-    const { formatCurrency, settings: rawSettings } = useSettings();
-    const settings = rawSettings as any;
+    const { formatCurrency, storeSettings } = useSettings();
     const toast = useToast();
     const { user } = useAuthStore();
     const userName = user ? `${user.firstName} ${user.lastName}` : 'Caissier';
@@ -183,7 +182,7 @@ export const ZReport: React.FC = () => {
         setIsExporting(true);
 
         try {
-            const storeName = settings?.general?.storeName || 'Asgard Pro';
+            const storeName = storeSettings.name || 'Bonilo';
             const dateStr = formatDateShort(new Date());
             const filename = `RapportZ_${dateStr}_${storeName.replace(/\s+/g, '-')}`;
 
@@ -493,7 +492,7 @@ export const ZReport: React.FC = () => {
                 Ce document est un rapport officiel de clôture de journée généré par Asgard Pro. 
                 Il doit être conservé pour la comptabilité et les audits de caisse.
                 <br><br>
-                <strong>Shop ID:</strong> ${settings?.general?.storeId || 'ST-001'} | <strong>Opérateur:</strong> ${todayReport?.cashierName || 'Admin'}
+                <strong>Boutique:</strong> ${storeSettings.name || 'Bonilo'} | <strong>Opérateur:</strong> ${todayReport?.cashierName || 'Admin'}
             </div>
             <div class="signature-box">
                 <div class="signature-line">Signature du Caissier</div>
