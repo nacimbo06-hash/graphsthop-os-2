@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { Product } from '@bonilo/shared/types/product';
 import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
 import { useProductsStore } from '@bonilo/shared/stores';
 import { formatCurrency } from '../../../utils/formatters';
@@ -83,9 +84,13 @@ export const BundleManagement: React.FC = () => {
         setShowDeleteConfirm(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (bundleToDelete) {
-            deleteProduct(bundleToDelete);
+            try {
+                await deleteProduct(bundleToDelete);
+            } catch (err) {
+                toast.error(commandErrorMessage(err, 'Échec de la suppression'));
+            }
         }
         setShowDeleteConfirm(false);
         setBundleToDelete(null);
@@ -208,22 +213,27 @@ export const BundleManagement: React.FC = () => {
                         setShowCreateModal(false);
                         setEditBundle(null);
                     }}
-                    onSave={(data) => {
-                        if (editBundle) {
-                            updateProduct(editBundle.id, data);
-                        } else {
-                            addProduct({
-                                ...data,
-                                productType: 'bundle',
-                                isActive: true,
-                                isFavorite: false,
-                                priceHistory: [],
-                                stock: 0,
-                                minStock: 5,
-                                unit: 'pack',
-                                purchasePrice: 0,
-                                category: 'Packs'
-                            });
+                    onSave={async (data) => {
+                        try {
+                            if (editBundle) {
+                                await updateProduct(editBundle.id, data);
+                            } else {
+                                await addProduct({
+                                    ...data,
+                                    productType: 'bundle',
+                                    isActive: true,
+                                    isFavorite: false,
+                                    priceHistory: [],
+                                    stock: 0,
+                                    minStock: 5,
+                                    unit: 'pack',
+                                    purchasePrice: 0,
+                                    category: 'Packs'
+                                });
+                            }
+                        } catch (err) {
+                            toast.error(commandErrorMessage(err, 'Échec de la sauvegarde du pack'));
+                            return;
                         }
                         setShowCreateModal(false);
                         setEditBundle(null);
