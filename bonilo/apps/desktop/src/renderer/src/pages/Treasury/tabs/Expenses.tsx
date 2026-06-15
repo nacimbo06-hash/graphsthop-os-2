@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { useTreasuryStore, type Expense } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
+import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
 import styles from './Expenses.module.css';
 
@@ -38,8 +40,8 @@ const EXPENSE_CATEGORIES = [
 
 export const Expenses: React.FC = () => {
     const { formatCurrency } = useSettings();
+    const toast = useToast();
 
-    // Treasury store - real data
     const {
         expenses,
         addExpense,
@@ -117,27 +119,35 @@ export const Expenses: React.FC = () => {
         return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    // Handle add expense
-    const handleAddExpense = () => {
+    const handleAddExpense = async () => {
         if (!newExpense.description || !newExpense.amount) return;
 
-        addExpense({
-            description: newExpense.description,
-            amount: parseFloat(newExpense.amount),
-            category: newExpense.category,
-            date: new Date().toISOString().split('T')[0],
-            paymentMethod: newExpense.paymentMethod,
-            reference: newExpense.reference || undefined,
-        });
+        try {
+            await addExpense({
+                description: newExpense.description,
+                amount: parseFloat(newExpense.amount),
+                category: newExpense.category,
+                date: new Date().toISOString().split('T')[0],
+                paymentMethod: newExpense.paymentMethod,
+                reference: newExpense.reference || undefined,
+            });
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec de l\'enregistrement de la dépense'));
+            return;
+        }
 
         setNewExpense({ description: '', amount: '', category: 'supplies', paymentMethod: 'cash', reference: '' });
         setShowNewModal(false);
     };
 
-    // Handle mark as paid
-    const handleMarkAsPaid = (paidFrom: 'cash' | 'safe' | 'provision') => {
+    const handleMarkAsPaid = async (paidFrom: 'cash' | 'safe' | 'provision') => {
         if (!selectedExpense) return;
-        markExpenseAsPaid(selectedExpense.id, paidFrom);
+        try {
+            await markExpenseAsPaid(selectedExpense.id, paidFrom);
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec du marquage comme payé'));
+            return;
+        }
         setShowPayModal(false);
         setSelectedExpense(null);
     };
@@ -148,9 +158,13 @@ export const Expenses: React.FC = () => {
         setShowDeleteConfirm(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (expenseToDelete) {
-            deleteExpense(expenseToDelete);
+            try {
+                await deleteExpense(expenseToDelete);
+            } catch (err) {
+                toast.error(commandErrorMessage(err, 'Échec de la suppression'));
+            }
         }
         setShowDeleteConfirm(false);
         setExpenseToDelete(null);
