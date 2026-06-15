@@ -19,6 +19,7 @@ import {
 import { usePurchasesStore, type Supplier } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
 import styles from './SuppliersList.module.css';
 
@@ -95,36 +96,33 @@ export const SuppliersList: React.FC = () => {
         setShowEditModal(true);
     };
 
-    const handleSaveSupplier = () => {
+    const handleSaveSupplier = async () => {
         if (!formData.name.trim() || !formData.phone.trim()) {
             toast.warning('Le nom et le téléphone sont obligatoires');
             return;
         }
 
-        if (selectedSupplier) {
-            // Update existing
-            updateSupplier(selectedSupplier.id, {
-                name: formData.name,
-                phone: formData.phone,
-                email: formData.email || undefined,
-                address: formData.address || undefined,
-                city: formData.city || undefined,
-                ice: formData.ice || undefined,
-                nif: formData.nif || undefined,
-            });
-            toast.success(`Fournisseur "${formData.name}" modifié avec succès`);
-        } else {
-            // Add new
-            addSupplier({
-                name: formData.name,
-                phone: formData.phone,
-                email: formData.email || undefined,
-                address: formData.address || undefined,
-                city: formData.city || undefined,
-                ice: formData.ice || undefined,
-                nif: formData.nif || undefined,
-            });
-            toast.success(`Fournisseur "${formData.name}" ajouté avec succès`);
+        const fields = {
+            name: formData.name,
+            phone: formData.phone,
+            email: formData.email || undefined,
+            address: formData.address || undefined,
+            city: formData.city || undefined,
+            ice: formData.ice || undefined,
+            nif: formData.nif || undefined,
+        };
+
+        try {
+            if (selectedSupplier) {
+                await updateSupplier(selectedSupplier.id, fields);
+                toast.success(`Fournisseur "${formData.name}" modifié avec succès`);
+            } else {
+                await addSupplier(fields);
+                toast.success(`Fournisseur "${formData.name}" ajouté avec succès`);
+            }
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec de la sauvegarde du fournisseur'));
+            return;
         }
 
         setShowEditModal(false);
@@ -141,10 +139,14 @@ export const SuppliersList: React.FC = () => {
         setShowDeleteConfirm(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (supplierToDelete) {
-            deleteSupplier(supplierToDelete.id);
-            toast.success(`Fournisseur "${supplierToDelete.name}" supprimé`);
+            try {
+                await deleteSupplier(supplierToDelete.id);
+                toast.success(`Fournisseur "${supplierToDelete.name}" supprimé`);
+            } catch (err) {
+                toast.error(commandErrorMessage(err, 'Échec de la suppression'));
+            }
         }
         setShowDeleteConfirm(false);
         setSupplierToDelete(null);

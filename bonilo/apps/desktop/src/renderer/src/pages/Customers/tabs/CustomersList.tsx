@@ -18,6 +18,7 @@ import {
 import { useCustomersStore, type Customer } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
 import styles from './CustomersList.module.css';
 
@@ -88,34 +89,32 @@ export const CustomersList: React.FC = () => {
         setShowEditModal(true);
     };
 
-    const handleSaveCustomer = () => {
+    const handleSaveCustomer = async () => {
         if (!formData.name.trim() || !formData.phone.trim()) {
             toast.warning('Le nom et le téléphone sont obligatoires');
             return;
         }
 
-        if (selectedCustomer) {
-            // Update existing
-            updateCustomer(selectedCustomer.id, {
-                name: formData.name,
-                phone: formData.phone,
-                email: formData.email || undefined,
-                address: formData.address || undefined,
-                city: formData.city || undefined,
-                creditLimit: formData.creditLimit,
-            });
-            toast.success(`Client "${formData.name}" modifié avec succès`);
-        } else {
-            // Add new
-            addCustomer({
-                name: formData.name,
-                phone: formData.phone,
-                email: formData.email || undefined,
-                address: formData.address || undefined,
-                city: formData.city || undefined,
-                creditLimit: formData.creditLimit,
-            });
-            toast.success(`Client "${formData.name}" ajouté avec succès`);
+        const fields = {
+            name: formData.name,
+            phone: formData.phone,
+            email: formData.email || undefined,
+            address: formData.address || undefined,
+            city: formData.city || undefined,
+            creditLimit: formData.creditLimit,
+        };
+
+        try {
+            if (selectedCustomer) {
+                await updateCustomer(selectedCustomer.id, fields);
+                toast.success(`Client "${formData.name}" modifié avec succès`);
+            } else {
+                await addCustomer(fields);
+                toast.success(`Client "${formData.name}" ajouté avec succès`);
+            }
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec de la sauvegarde du client'));
+            return;
         }
 
         setShowEditModal(false);
@@ -127,10 +126,14 @@ export const CustomersList: React.FC = () => {
         setShowDeleteConfirm(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (customerToDelete) {
-            deleteCustomer(customerToDelete.id);
-            toast.success(`Client "${customerToDelete.name}" supprimé`);
+            try {
+                await deleteCustomer(customerToDelete.id);
+                toast.success(`Client "${customerToDelete.name}" supprimé`);
+            } catch (err) {
+                toast.error(commandErrorMessage(err, 'Échec de la suppression'));
+            }
         }
         setShowDeleteConfirm(false);
         setCustomerToDelete(null);

@@ -22,6 +22,8 @@ import { useSettings } from '../../../contexts/SettingsContext';
 import { useProductsStore, type Product } from '@bonilo/shared/stores';
 import { CATEGORIES } from '@bonilo/shared';
 import { ConfirmModal } from '../../../components/feedback/ConfirmModal';
+import { useToast } from '../../../components/feedback/Toast';
+import { commandErrorMessage } from '../../../utils/commandError';
 import styles from './ProductsList.module.css';
 
 // Build category filter list from SSOT
@@ -35,10 +37,8 @@ interface ProductsListProps {
 }
 
 export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
-    // Settings hooks - Use formatCurrency from context
     const { formatCurrency } = useSettings();
-
-    // Products from store (persistent)
+    const toast = useToast();
     const { products, deleteProduct, toggleFavorite, updateProduct } = useProductsStore();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -93,9 +93,13 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
         setShowDeleteConfirm(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (productToDelete) {
-            deleteProduct(productToDelete.id);
+            try {
+                await deleteProduct(productToDelete.id);
+            } catch (err) {
+                toast.error(commandErrorMessage(err, 'Échec de la suppression'));
+            }
         }
         setShowDeleteConfirm(false);
         setProductToDelete(null);
@@ -138,18 +142,26 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
         setShowBulkDeleteConfirm(true);
     };
 
-    const confirmBulkDelete = () => {
-        selectedIds.forEach(id => deleteProduct(id));
+    const confirmBulkDelete = async () => {
+        try {
+            await Promise.all([...selectedIds].map(id => deleteProduct(id)));
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec de la suppression en masse'));
+        }
         setSelectedIds(new Set());
         setShowBulkDeleteConfirm(false);
     };
 
-    const handleBulkCategory = () => {
+    const handleBulkCategory = async () => {
         if (!targetCategory) return;
-        selectedIds.forEach(id => {
-            const cat = CATEGORIES.find(c => c.id === targetCategory);
-            updateProduct(id, { category: cat?.name || targetCategory, categoryId: targetCategory });
-        });
+        const cat = CATEGORIES.find(c => c.id === targetCategory);
+        try {
+            await Promise.all([...selectedIds].map(id =>
+                updateProduct(id, { category: cat?.name || targetCategory, categoryId: targetCategory })
+            ));
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec du changement de catégorie'));
+        }
         setSelectedIds(new Set());
         setShowBulkCategoryModal(false);
     };

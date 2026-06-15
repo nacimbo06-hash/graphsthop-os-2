@@ -28,6 +28,7 @@ import { GoodsReceipt } from '../Treasury/GoodsReceipt';
 import { useProductsStore, type Product } from '@bonilo/shared/stores';
 import { CATEGORIES } from '@bonilo/shared';
 import { useToast } from '../../components/feedback/Toast';
+import { commandErrorMessage } from '../../utils/commandError';
 import styles from './InventoryHub.module.css';
 
 interface Tab {
@@ -308,16 +309,20 @@ export const InventoryHub: React.FC = () => {
         }
     };
 
-    const handleAddProduct = (productData: Partial<Product>) => {
-        // If it's an update
+    const handleAddProduct = async (productData: Partial<Product>) => {
         if (editProduct) {
-            updateProduct(editProduct.id, productData);
+            try {
+                await updateProduct(editProduct.id, productData);
+            } catch (err) {
+                toast.error(commandErrorMessage(err, 'Échec de la mise à jour du produit'));
+                return;
+            }
             setEditProduct(null);
             setShowAddModal(false);
             return;
         }
 
-        const newProduct = addProduct({
+        const newProduct = await addProduct({
             barcode: productData.barcode || '',
             sku: productData.sku || '',
             name: productData.name || productData.designation || productData.nature || 'Nouveau Produit',
@@ -347,9 +352,14 @@ export const InventoryHub: React.FC = () => {
             sellingPackPrice: productData.sellingPackPrice,
             productType: 'standard',
             priceHistory: [],
+        }).catch((err: unknown) => {
+            toast.error(commandErrorMessage(err, 'Échec de l\'ajout du produit'));
+            return null;
         });
 
-        // Product successfully added to store and persisted
+        if (newProduct) {
+            setShowAddModal(false);
+        }
     };
 
     // Helper function to get category name from ID — uses shared CATEGORIES as SSOT
