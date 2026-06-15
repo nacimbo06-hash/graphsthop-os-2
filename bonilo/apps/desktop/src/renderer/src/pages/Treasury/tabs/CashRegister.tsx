@@ -128,33 +128,41 @@ export const CashRegister: React.FC = () => {
     };
 
     // Handle deposit
-    const handleDeposit = () => {
+    const handleDeposit = async () => {
         const amount = parseFloat(movementAmount);
         if (isNaN(amount) || amount <= 0 || !movementReason) return;
-        addMovement({
-            type: 'deposit',
-            amount,
-            reason: movementReason,
-            createdBy: userName,
-        });
-        setShowDepositModal(false);
-        setMovementAmount('');
-        setMovementReason('');
+        try {
+            await addMovement({
+                type: 'deposit',
+                amount,
+                reason: movementReason,
+                createdBy: userName,
+            });
+            setShowDepositModal(false);
+            setMovementAmount('');
+            setMovementReason('');
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec du dépôt'));
+        }
     };
 
     // Handle withdrawal
-    const handleWithdraw = () => {
+    const handleWithdraw = async () => {
         const amount = parseFloat(movementAmount);
         if (isNaN(amount) || amount <= 0 || !movementReason) return;
-        addMovement({
-            type: 'withdrawal',
-            amount,
-            reason: movementReason,
-            createdBy: userName,
-        });
-        setShowWithdrawModal(false);
-        setMovementAmount('');
-        setMovementReason('');
+        try {
+            await addMovement({
+                type: 'withdrawal',
+                amount,
+                reason: movementReason,
+                createdBy: userName,
+            });
+            setShowWithdrawModal(false);
+            setMovementAmount('');
+            setMovementReason('');
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Échec du retrait'));
+        }
     };
 
     // Handle transfers to safe and provisions
