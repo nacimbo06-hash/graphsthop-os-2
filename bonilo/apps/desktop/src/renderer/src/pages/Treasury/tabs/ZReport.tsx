@@ -22,6 +22,7 @@ import { useTreasuryStore, useAuthStore, type CashSession, type CashMovement, ty
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import styles from './ZReport.module.css';
+import { commandErrorMessage } from '../../../utils/commandError';
 
 export const ZReport: React.FC = () => {
     const { formatCurrency, storeSettings } = useSettings();
@@ -568,9 +569,9 @@ export const ZReport: React.FC = () => {
             setTransferSalaries('');
             setTransferBankCredit('');
             setTransferCharges('');
-        } catch (error) {
-            console.error('Error closing session:', error);
-            toast.error('Erreur lors de la clôture de session');
+        } catch (err) {
+            console.error('Error closing session:', err);
+            toast.error(commandErrorMessage(err, 'Erreur lors de la clôture de session'));
         }
     };
 

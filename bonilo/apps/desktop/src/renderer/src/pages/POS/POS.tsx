@@ -44,6 +44,7 @@ import { useBarcodeScanner } from '../../hooks';
 import { printerManager } from '../../services/printing';
 import styles from './POS.module.css';
 import { formatCurrency, formatTime } from '../../utils/formatters';
+import { commandErrorMessage } from '../../utils/commandError';
 
 // Product categories — derived from shared CATEGORIES (SSOT)
 const posCategories = [
@@ -465,10 +466,9 @@ export const POS: React.FC = () => {
                     allowNegativeStock: posSettings.isNegativeStockAllowed(),
                 }
             );
-        } catch (err: any) {
-            const msg = err?.message || (typeof err === 'string' ? err : 'Échec de la vente');
+        } catch (err) {
             console.error('[POS] checkout failed:', err);
-            toast.error(`Vente échouée: ${msg}`);
+            toast.error(commandErrorMessage(err, 'Échec de la vente'));
             return;
         }
 

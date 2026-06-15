@@ -22,6 +22,7 @@ import { useTreasuryStore, useAuthStore, type CashMovement } from '@bonilo/share
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import styles from './CashRegister.module.css';
+import { commandErrorMessage } from '../../../utils/commandError';
 
 export const CashRegister: React.FC = () => {
     // Settings for currency formatting
@@ -121,8 +122,8 @@ export const CashRegister: React.FC = () => {
             setShowCloseModal(false);
             setClosingAmount('');
             setClosingNotes('');
-        } catch (error) {
-            toast.error('Erreur lors de la clôture');
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Erreur lors de la clôture'));
         }
     };
 
@@ -185,8 +186,8 @@ export const CashRegister: React.FC = () => {
             setTransferSalaries('');
             setTransferBankCredit('');
             setTransferCharges('');
-        } catch (error) {
-            toast.error('Erreur lors des transferts');
+        } catch (err) {
+            toast.error(commandErrorMessage(err, 'Erreur lors des transferts'));
         }
     };
 

@@ -31,6 +31,7 @@ import {
 import { useSettings } from '../../contexts/SettingsContext';
 import { useToast } from '../../components/feedback/Toast';
 import styles from './GoodsReceipt.module.css';
+import { commandErrorMessage } from '../../utils/commandError';
 
 interface ReceiptLine {
     id: string;
@@ -324,10 +325,9 @@ export const GoodsReceipt: React.FC = () => {
                 sessionId: isPaid && paymentSource === 'cash' ? (currentSession?.id ?? null) : null,
                 createdBy: 'Staff',
             });
-        } catch (err: any) {
-            const msg = err?.message || (typeof err === 'string' ? err : 'Échec du bon d\'entrée');
+        } catch (err) {
             console.error('[GoodsReceipt] receive_goods failed:', err);
-            toast.error(`Bon d'entrée échoué: ${msg}`);
+            toast.error(commandErrorMessage(err, "Échec du bon d'entrée"));
             return;
         }
 
