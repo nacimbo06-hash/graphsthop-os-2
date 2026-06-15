@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
     FileBarChart,
     Calendar,
@@ -18,7 +18,7 @@ import {
     PiggyBank,
     ArrowRight,
 } from 'lucide-react';
-import { useTreasuryStore, useAuthStore, type CashSession, type CashMovement } from '@bonilo/shared/stores';
+import { useTreasuryStore, useAuthStore, type CashSession, type CashMovement, type SessionTotals } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast';
 import styles from './ZReport.module.css';
@@ -44,7 +44,25 @@ export const ZReport: React.FC = () => {
         contributeToFund,
         getDailyProvisionTarget,
         closeSessionWithTransfers,
+        getSessionTotals,
     } = useTreasuryStore();
+
+    // Z-report totals aggregated straight from SQL, so the printed figures match
+    // the DB even when the in-memory movement cache is behind (money-core
+    // commands write movements without always pushing them into the store).
+    // Re-fetched whenever the session or the movement cache changes.
+    const [sqlTotals, setSqlTotals] = useState<SessionTotals | null>(null);
+    useEffect(() => {
+        if (!currentSession) {
+            setSqlTotals(null);
+            return;
+        }
+        let cancelled = false;
+        getSessionTotals(currentSession.id)
+            .then(t => { if (!cancelled) setSqlTotals(t); })
+            .catch(err => console.error('[ZReport] getSessionTotals failed:', err));
+        return () => { cancelled = true; };
+    }, [currentSession, movements, getSessionTotals]);
 
     // Modal states
     const [showCloseModal, setShowCloseModal] = useState(false);
@@ -59,50 +77,58 @@ export const ZReport: React.FC = () => {
     const [transferBankCredit, setTransferBankCredit] = useState('');
     const [transferCharges, setTransferCharges] = useState('');
 
-    // Calculate today's report data from real movements
+    // Today's report. Totals come from the SQL aggregate (sqlTotals) when it has
+    // resolved; until then (and in browser dev) we fall back to the in-memory
+    // movement cache so the panel still renders.
     const todayReport = useMemo(() => {
         if (!currentSession) return null;
 
         const sessionMovements = movements.filter(m => m.sessionId === currentSession.id);
-
+        const sumByType = (type: string) =>
+            sessionMovements.filter(m => m.type === type).reduce((s, m) => s + m.amount, 0);
         const sales = sessionMovements.filter(m => m.type === 'sale');
-        const refunds = sessionMovements.filter(m => m.type === 'refund');
-        const expenses = sessionMovements.filter(m => m.type === 'expense');
-        const deposits = sessionMovements.filter(m => m.type === 'deposit');
-        const withdrawals = sessionMovements.filter(m => m.type === 'withdrawal');
-        const toSafe = sessionMovements.filter(m => m.type === 'transfer_to_safe');
-        const toProvisions = sessionMovements.filter(m => m.type === 'transfer_to_provision');
 
-        const totalSales = sales.reduce((s, m) => s + m.amount, 0);
-        const salesCount = sales.length;
+        const fallback: SessionTotals = {
+            totalSales: sales.reduce((s, m) => s + m.amount, 0),
+            salesCount: sales.length,
+            cashSales: sales.filter(m => !m.paymentMethod || m.paymentMethod === 'cash').reduce((s, m) => s + m.amount, 0),
+            cardSales: sales.filter(m => m.paymentMethod === 'card').reduce((s, m) => s + m.amount, 0),
+            dahabiaSales: sales.filter(m => m.paymentMethod === 'dahabia').reduce((s, m) => s + m.amount, 0),
+            creditSales: sales.filter(m => m.paymentMethod === 'credit').reduce((s, m) => s + m.amount, 0),
+            refunds: sumByType('refund'),
+            refundsCount: sessionMovements.filter(m => m.type === 'refund').length,
+            expenses: sumByType('expense'),
+            expensesCount: sessionMovements.filter(m => m.type === 'expense').length,
+            deposits: sumByType('deposit'),
+            withdrawals: sumByType('withdrawal'),
+            transfersToSafe: sumByType('transfer_to_safe'),
+            transfersToProvisions: sumByType('transfer_to_provision'),
+        };
 
-        const cashSales = sales.filter(m => !m.paymentMethod || m.paymentMethod === 'cash').reduce((s, m) => s + m.amount, 0);
-        const cardSales = sales.filter(m => m.paymentMethod === 'card').reduce((s, m) => s + m.amount, 0);
-        const dahabiaSales = sales.filter(m => m.paymentMethod === 'dahabia').reduce((s, m) => s + m.amount, 0);
-        const creditSales = sales.filter(m => m.paymentMethod === 'credit').reduce((s, m) => s + m.amount, 0);
+        const t = sqlTotals ?? fallback;
 
         return {
             date: new Date(currentSession.openedAt),
             openingBalance: currentSession.openingBalance,
-            totalSales,
-            salesCount,
-            averageTicket: salesCount > 0 ? Math.round(totalSales / salesCount) : 0,
-            cashSales,
-            cardSales,
-            dahabiaSales,
-            creditSales,
-            refunds: refunds.reduce((s, m) => s + m.amount, 0),
-            refundsCount: refunds.length,
-            expenses: expenses.reduce((s, m) => s + m.amount, 0),
-            expensesCount: expenses.length,
-            deposits: deposits.reduce((s, m) => s + m.amount, 0),
-            withdrawals: withdrawals.reduce((s, m) => s + m.amount, 0),
-            transfersToSafe: toSafe.reduce((s, m) => s + m.amount, 0),
-            transfersToProvisions: toProvisions.reduce((s, m) => s + m.amount, 0),
+            totalSales: t.totalSales,
+            salesCount: t.salesCount,
+            averageTicket: t.salesCount > 0 ? Math.round(t.totalSales / t.salesCount) : 0,
+            cashSales: t.cashSales,
+            cardSales: t.cardSales,
+            dahabiaSales: t.dahabiaSales,
+            creditSales: t.creditSales,
+            refunds: t.refunds,
+            refundsCount: t.refundsCount,
+            expenses: t.expenses,
+            expensesCount: t.expensesCount,
+            deposits: t.deposits,
+            withdrawals: t.withdrawals,
+            transfersToSafe: t.transfersToSafe,
+            transfersToProvisions: t.transfersToProvisions,
             status: currentSession.status,
             cashierName: currentSession.cashierName,
         };
-    }, [currentSession, movements]);
+    }, [currentSession, movements, sqlTotals]);
 
     // Past closed sessions
     const pastReports = useMemo(() => {

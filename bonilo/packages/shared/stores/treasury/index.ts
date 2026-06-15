@@ -8,6 +8,7 @@
 
 // Individual stores (use for new code)
 export { useCashSessionStore } from './cashSessionStore';
+export type { SessionTotals } from './cashSessionStore';
 export { useSafeStore } from './safeStore';
 export { useSinkingFundsStore } from './sinkingFundsStore';
 export { useExpensesStore } from './expensesStore';

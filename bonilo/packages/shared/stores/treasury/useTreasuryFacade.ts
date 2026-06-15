@@ -590,6 +590,7 @@ export const useTreasuryFacade = () => {
         getSessionMovements: cashSession.getSessionMovements,
         getTodaySales: cashSession.getTodaySales,
         getCurrentBalance: cashSession.getCurrentBalance,
+        getSessionTotals: cashSession.getSessionTotals,
 
         // Safe State & Actions
         safeBalance: safe.safeBalance,

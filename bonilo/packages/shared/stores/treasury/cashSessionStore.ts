@@ -9,6 +9,54 @@ import { create } from 'zustand';
 import type { CashSession, CashMovement } from '@shared/types/treasury';
 import { cashSessionRepo } from '../../db';
 
+// Check if running in Tauri (SQLite available).
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+/** Per-session cash totals, used by the Z-report. */
+export interface SessionTotals {
+    totalSales: number;
+    salesCount: number;
+    cashSales: number;
+    cardSales: number;
+    dahabiaSales: number;
+    creditSales: number;
+    refunds: number;
+    refundsCount: number;
+    expenses: number;
+    expensesCount: number;
+    deposits: number;
+    withdrawals: number;
+    transfersToSafe: number;
+    transfersToProvisions: number;
+}
+
+function emptyTotals(): SessionTotals {
+    return {
+        totalSales: 0, salesCount: 0, cashSales: 0, cardSales: 0, dahabiaSales: 0, creditSales: 0,
+        refunds: 0, refundsCount: 0, expenses: 0, expensesCount: 0, deposits: 0, withdrawals: 0,
+        transfersToSafe: 0, transfersToProvisions: 0,
+    };
+}
+
+/** Fold one movement (amount + type + payment method) into the running totals. */
+function applyToTotals(t: SessionTotals, type: string, amount: number, paymentMethod: string | undefined, count = 1) {
+    switch (type) {
+        case 'sale':
+            t.totalSales += amount; t.salesCount += count;
+            if (!paymentMethod || paymentMethod === 'cash') t.cashSales += amount;
+            else if (paymentMethod === 'card') t.cardSales += amount;
+            else if (paymentMethod === 'dahabia') t.dahabiaSales += amount;
+            else if (paymentMethod === 'credit') t.creditSales += amount;
+            break;
+        case 'refund': t.refunds += amount; t.refundsCount += count; break;
+        case 'expense': t.expenses += amount; t.expensesCount += count; break;
+        case 'deposit': t.deposits += amount; break;
+        case 'withdrawal': t.withdrawals += amount; break;
+        case 'transfer_to_safe': t.transfersToSafe += amount; break;
+        case 'transfer_to_provision': t.transfersToProvisions += amount; break;
+    }
+}
+
 // ============================================
 // STATE INTERFACE
 // ============================================
@@ -33,6 +81,8 @@ interface CashSessionState {
     getSessionMovements: (sessionId: string) => CashMovement[];
     getTodaySales: () => number;
     getCurrentBalance: () => number;
+    /** Z-report totals, aggregated from SQL (falls back to in-memory in the browser). */
+    getSessionTotals: (sessionId: string) => Promise<SessionTotals>;
 }
 
 // ============================================
@@ -179,6 +229,27 @@ export const useCashSessionStore = create<CashSessionState>()(
                 .reduce((sum, m) => sum + m.amount, 0);
 
             return currentSession.openingBalance + totalIn - totalOut;
+        },
+
+        // Z-report source of truth: aggregate the session straight from SQL so
+        // the printed totals match the DB even when the in-memory movement cache
+        // is behind (the money-core commands write movements without always
+        // pushing them into this store). Browser dev falls back to in-memory.
+        getSessionTotals: async (sessionId) => {
+            const totals = emptyTotals();
+
+            if (isTauri()) {
+                const rows = await cashSessionRepo.getSessionMovementTotals(sessionId);
+                for (const r of rows) {
+                    applyToTotals(totals, r.type, r.total, r.payment_method || undefined, r.cnt);
+                }
+                return totals;
+            }
+
+            for (const m of get().movements.filter(m => m.sessionId === sessionId)) {
+                applyToTotals(totals, m.type, m.amount, m.paymentMethod);
+            }
+            return totals;
         },
     })
 );

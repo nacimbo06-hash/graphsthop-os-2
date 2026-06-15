@@ -81,6 +81,27 @@ export const cashSessionRepo = {
         return rows.map(rowToMovement);
     },
 
+    /**
+     * Aggregate a session's cash movements by type and payment method, straight
+     * from SQL. Used by the Z-report so the printed totals match the DB even
+     * when the in-memory movement cache is stale (money-core commands write to
+     * the DB without always pushing into the cash-session store).
+     */
+    async getSessionMovementTotals(
+        sessionId: string,
+    ): Promise<Array<{ type: string; payment_method: string; cnt: number; total: number }>> {
+        return db.select(
+            `SELECT type,
+                    COALESCE(payment_method, '') AS payment_method,
+                    COUNT(*) AS cnt,
+                    COALESCE(SUM(amount), 0) AS total
+               FROM cash_movements
+              WHERE session_id = $1
+              GROUP BY type, payment_method`,
+            [sessionId],
+        );
+    },
+
     async createSession(session: CashSession): Promise<void> {
         await db.insert('cash_sessions', {
             id: session.id,

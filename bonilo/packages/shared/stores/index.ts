@@ -22,6 +22,7 @@ export {
     useSinkingFundsStore,
     useExpensesStore
 } from './treasury';
+export type { SessionTotals } from './treasury';
 
 // Re-export treasury types
 export type {
