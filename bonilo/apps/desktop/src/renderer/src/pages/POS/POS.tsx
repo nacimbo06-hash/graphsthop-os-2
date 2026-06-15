@@ -37,7 +37,7 @@ import {
     useCustomersStore,
     useAuthStore
 } from '@bonilo/shared/stores';
-import { CATEGORIES } from '@bonilo/shared';
+import { CATEGORIES, type PaymentMethod } from '@bonilo/shared';
 import { useToast } from '../../components/feedback/Toast';
 import { ConfirmModal } from '../../components/feedback/ConfirmModal';
 import { useBarcodeScanner } from '../../hooks';
@@ -138,7 +138,7 @@ export const POS: React.FC = () => {
     const [showDiscount, setShowDiscount] = useState(false);
     const [showCustomerSearch, setShowCustomerSearch] = useState(false);
     const [showSalesHistory, setShowSalesHistory] = useState(false);
-    const [selectedPayment, setSelectedPayment] = useState<string>(posSettings.defaultPaymentMethod || 'cash');
+    const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>((posSettings.defaultPaymentMethod as PaymentMethod) || 'cash');
     const [amountReceived, setAmountReceived] = useState<string>('');
     const [discountPercent, setDiscountPercent] = useState<number>(0);
     const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null); // Storing customer ID
@@ -453,7 +453,7 @@ export const POS: React.FC = () => {
                     taxAmount: vatAmount,
                     discountAmount,
                     totalAmount: total,
-                    paymentMethod: selectedPayment as any,
+                    paymentMethod: selectedPayment,
                     customerId: selectedCustomer || undefined,
                     customerName: customerObj?.name || undefined,
                     cashierId: user?.id || 'unknown',
@@ -836,7 +836,7 @@ export const POS: React.FC = () => {
                                 <button
                                     key={m.id}
                                     className={`${styles.methodBtn} ${selectedPayment === m.id ? styles.selected : ''}`}
-                                    onClick={() => setSelectedPayment(m.id)}
+                                    onClick={() => setSelectedPayment(m.id as PaymentMethod)}
                                 >
                                     {m.icon}
                                     <span>{m.label}</span>

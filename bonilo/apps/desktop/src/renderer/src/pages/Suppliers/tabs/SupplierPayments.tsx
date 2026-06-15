@@ -116,7 +116,7 @@ export const SupplierPayments: React.FC = () => {
                 <div className={styles.filters}>
                     <div className={styles.filterGroup}>
                         <Filter size={16} />
-                        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)}>
+                        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as 'all' | 'unpaid' | 'paid')}>
                             <option value="all">Tous les bons</option>
                             <option value="unpaid">À payer (Dettes)</option>
                             <option value="paid">Payés</option>

@@ -18,6 +18,7 @@ const CODE_MESSAGES: Record<string, string> = {
     INVALID_INPUT: 'Données invalides.',
     DB_ERROR: 'Erreur base de données.',
     POOL_NOT_FOUND: 'Erreur de connexion à la base de données.',
+    NOT_SQLITE: 'Erreur de configuration de la base de données.',
 };
 
 /**
