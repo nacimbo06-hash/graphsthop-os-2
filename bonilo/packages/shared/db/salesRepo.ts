@@ -77,14 +77,30 @@ export const salesRepo = {
         if (options?.limit) query += ` LIMIT ${options.limit}`;
 
         const saleRows = await db.select<SaleRow>(query, params);
-        if (!options?.withItems) return saleRows.map(row => rowToSale(row));
-
-        const sales: Sale[] = [];
-        for (const saleRow of saleRows) {
-            const itemRows = await db.select<SaleItemRow>('SELECT * FROM sale_items WHERE sale_id = $1', [saleRow.id]);
-            const items = itemRows.map(rowToSaleItem);
-            sales.push(rowToSale(saleRow, items));
+        if (!options?.withItems || saleRows.length === 0) {
+            return saleRows.map(row => rowToSale(row));
         }
-        return sales;
+
+        // Fetch every line for the loaded sales in a single grouped pass instead
+        // of one query per sale (the old N+1). Chunked to stay under SQLite's
+        // bound-parameter limit, so it scales to large hydration windows.
+        const itemsBySale = new Map<string, SaleItem[]>();
+        const ids = saleRows.map(r => r.id);
+        const CHUNK = 400;
+        for (let i = 0; i < ids.length; i += CHUNK) {
+            const batch = ids.slice(i, i + CHUNK);
+            const placeholders = batch.map((_, j) => `$${j + 1}`).join(', ');
+            const itemRows = await db.select<SaleItemRow>(
+                `SELECT * FROM sale_items WHERE sale_id IN (${placeholders})`,
+                batch
+            );
+            for (const row of itemRows) {
+                const list = itemsBySale.get(row.sale_id);
+                if (list) list.push(rowToSaleItem(row));
+                else itemsBySale.set(row.sale_id, [rowToSaleItem(row)]);
+            }
+        }
+
+        return saleRows.map(row => rowToSale(row, itemsBySale.get(row.id) ?? []));
     }
 };
