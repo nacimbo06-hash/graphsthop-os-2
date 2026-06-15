@@ -151,6 +151,7 @@ interface AuthState {
     deleteUser: (id: string) => Promise<void>;
     getUsers: () => User[];
     changePassword: (userId: string, currentPassword: string, newPassword: string) => Promise<boolean>;
+    resetPassword: (userId: string, newPassword: string) => Promise<boolean>;
 
     // Multi-user session management
     switchUser: (userId: string, password: string) => Promise<boolean>;
@@ -430,6 +431,16 @@ export const useAuthStore = create<AuthState>()(
                 const newHash = await bcrypt.hash(newPassword, 10);
                 await setStoredHash(userId, newHash);
 
+                return true;
+            },
+
+            resetPassword: async (userId: string, newPassword: string) => {
+                const { user: currentUser } = get();
+                if (!currentUser || (currentUser.role !== 'owner' && currentUser.role !== 'manager')) {
+                    return false;
+                }
+                const newHash = await bcrypt.hash(newPassword, 10);
+                await setStoredHash(userId, newHash);
                 return true;
             },
 

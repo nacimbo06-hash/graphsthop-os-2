@@ -317,7 +317,6 @@ export const InventoryHub: React.FC = () => {
             return;
         }
 
-        // Add product to store (will persist in localStorage)
         const newProduct = addProduct({
             barcode: productData.barcode || '',
             sku: productData.sku || '',

@@ -55,6 +55,7 @@ export const DBProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
                 // Hydrate all Zustand stores from SQLite
                 console.log('[DBProvider] Hydrating stores from SQLite...');
+                const { printerManager } = await import('../services/printing');
                 await Promise.all([
                     useAuthStore.getState().hydrate(),
                     useProductsStore.getState().hydrate(),
@@ -67,6 +68,7 @@ export const DBProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                     useExpensesStore.getState().hydrate(),
                     useSafeStore.getState().hydrate(),
                     useSinkingFundsStore.getState().hydrate(),
+                    printerManager.hydrate(),
                 ]);
 
                 setIsReady(true);

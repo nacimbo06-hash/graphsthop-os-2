@@ -74,7 +74,7 @@ const initialFormData: UserFormData = {
 };
 
 export const UsersManagement: React.FC = () => {
-    const { user: currentUser, allUsers, createUser, updateUser, deleteUser, hasPermission } = useAuthStore();
+    const { user: currentUser, allUsers, createUser, updateUser, deleteUser, resetPassword, hasPermission } = useAuthStore();
     const toast = useToast();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -204,7 +204,7 @@ export const UsersManagement: React.FC = () => {
         }
     };
 
-    const handleUpdateUser = () => {
+    const handleUpdateUser = async () => {
         if (!selectedUser) return;
 
         if (!formData.firstName || !formData.lastName || !formData.email) {
@@ -212,22 +212,25 @@ export const UsersManagement: React.FC = () => {
             return;
         }
 
-        updateUser(selectedUser.id, {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone,
-            role: formData.role,
-            isActive: formData.isActive,
-            moduleAccess: formData.useCustomAccess ? formData.moduleAccess : undefined,
-        });
-
-        setShowEditModal(false);
-        setSelectedUser(null);
-        toast.success(`Utilisateur ${formData.firstName} mis à jour`);
+        try {
+            await updateUser(selectedUser.id, {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                phone: formData.phone,
+                role: formData.role,
+                isActive: formData.isActive,
+                moduleAccess: formData.useCustomAccess ? formData.moduleAccess : undefined,
+            });
+            setShowEditModal(false);
+            setSelectedUser(null);
+            toast.success(`Utilisateur ${formData.firstName} mis à jour`);
+        } catch {
+            setError('Erreur lors de la mise à jour');
+        }
     };
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         if (!selectedUser) return;
 
         if (!formData.password || formData.password.length < 6) {
@@ -240,22 +243,33 @@ export const UsersManagement: React.FC = () => {
             return;
         }
 
-        toast.success('Mot de passe modifié avec succès!');
-        setShowPasswordModal(false);
-        setSelectedUser(null);
+        const ok = await resetPassword(selectedUser.id, formData.password);
+        if (ok) {
+            toast.success('Mot de passe modifié avec succès!');
+            setShowPasswordModal(false);
+            setSelectedUser(null);
+        } else {
+            setError('Échec de la modification du mot de passe');
+        }
     };
 
-    const handleDeleteUser = () => {
+    const handleDeleteUser = async () => {
         if (!selectedUser) return;
 
-        deleteUser(selectedUser.id);
-        setShowDeleteConfirm(false);
-        setSelectedUser(null);
-        toast.info('Utilisateur supprimé');
+        try {
+            await deleteUser(selectedUser.id);
+            setShowDeleteConfirm(false);
+            setSelectedUser(null);
+            toast.info('Utilisateur supprimé');
+        } catch {
+            toast.error('Erreur lors de la suppression');
+        }
     };
 
-    const handleToggleActive = (user: User) => {
-        updateUser(user.id, { isActive: !user.isActive });
+    const handleToggleActive = async (user: User) => {
+        await updateUser(user.id, { isActive: !user.isActive }).catch(() => {
+            toast.error('Erreur lors de la mise à jour');
+        });
     };
 
     const getUserModuleCount = (user: User) => {

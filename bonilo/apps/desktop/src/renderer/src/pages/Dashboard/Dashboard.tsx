@@ -93,7 +93,7 @@ export const Dashboard: React.FC = () => {
     // Real data stores
     const { sales, getTodaySales, getWeekSales, getMonthSales, getTodayTotal, getWeekTotal, getMonthTotal } = useSalesStore();
     const { currentSession } = useTreasuryStore();
-    const { products, getLowStockProducts } = useProductsStore();
+    const { products, getLowStockProducts, getOutOfStockProducts } = useProductsStore();
     const { customers } = useCustomersStore();
 
     const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
@@ -154,7 +154,7 @@ export const Dashboard: React.FC = () => {
 
         const avgTicket = periodTransactions > 0 ? Math.round(periodTotal / periodTransactions) : 0;
         const prevAvgTicket = previousPeriodTransactions > 0 ? Math.round(previousPeriodTotal / previousPeriodTransactions) : 0;
-        const lowStockCount = getLowStockProducts().length;
+        const lowStockCount = getLowStockProducts().length + getOutOfStockProducts().length;
 
         const calcChange = (current: number, previous: number): number => {
             if (previous === 0) return current > 0 ? 100 : 0;
@@ -296,19 +296,28 @@ export const Dashboard: React.FC = () => {
     // Compute inventory alerts from real product data & expiry service
     const inventoryAlerts = useMemo(() => {
         const lowStockProducts = getLowStockProducts();
+        const outOfStockProducts = getOutOfStockProducts();
         const expiringAlerts = ExpiryAlertService.getCriticalAlerts();
 
         const combinedAlerts: any[] = [
+            ...outOfStockProducts.map((p, index) => ({
+                id: `out-${p.id}-${index}`,
+                product: `${p.emoji || '📦'} ${p.name}`,
+                type: 'out',
+                stock: 0,
+                min: p.minStock || 5,
+                urgency: 'high',
+                expiryDays: 0
+            })),
             ...lowStockProducts.map((p, index) => {
-                const isOut = p.stock === 0;
                 const isCritical = p.stock <= (p.minStock || 5) * 0.3;
                 return {
                     id: `low-${p.id}-${index}`,
                     product: `${p.emoji || '📦'} ${p.name}`,
-                    type: isOut ? 'out' : isCritical ? 'critical' : 'low',
+                    type: isCritical ? 'critical' : 'low',
                     stock: p.stock,
                     min: p.minStock || 10,
-                    urgency: isOut || isCritical ? 'high' : 'medium',
+                    urgency: isCritical ? 'high' : 'medium',
                     expiryDays: 0
                 };
             }),
@@ -331,7 +340,7 @@ export const Dashboard: React.FC = () => {
                 return 0;
             })
             .slice(0, 5);
-    }, [products, getLowStockProducts]);
+    }, [products, getLowStockProducts, getOutOfStockProducts]);
 
     // Compute recent transactions from real sales
     const recentTransactions = useMemo(() => {

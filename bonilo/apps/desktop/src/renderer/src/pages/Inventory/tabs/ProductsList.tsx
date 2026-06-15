@@ -155,9 +155,6 @@ export const ProductsList: React.FC<ProductsListProps> = ({ onEdit }) => {
     };
 
     const handleBulkPrint = () => {
-        // Navigate to print center with selected IDs in state or query
-        // For now, we'll assume Print Center can read from a simple localStorage key or just mock it
-        // A better way is to pass state via router, but let's try direct navigation for now
         navigate('/print', { state: { selectedProductIds: Array.from(selectedIds) } });
     };
 

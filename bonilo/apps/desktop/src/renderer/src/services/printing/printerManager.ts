@@ -132,8 +132,26 @@ class PrinterManager {
         }
     }
 
+    async hydrate(): Promise<void> {
+        if (!isTauri()) return;
+        try {
+            const { settingsRepo } = await import('@bonilo/shared/db');
+            const saved = await settingsRepo.loadKey<PrinterConfig[]>('printers');
+            if (saved && saved.length > 0) {
+                this.printers = saved;
+            }
+        } catch {
+            // keep localStorage-loaded printers
+        }
+    }
+
     private savePrinters(): void {
         localStorage.setItem('printers', JSON.stringify(this.printers));
+        if (isTauri()) {
+            import('@bonilo/shared/db')
+                .then(({ settingsRepo }) => settingsRepo.saveKey('printers', this.printers))
+                .catch(() => {});
+        }
     }
 
     getPrinters(): PrinterConfig[] {

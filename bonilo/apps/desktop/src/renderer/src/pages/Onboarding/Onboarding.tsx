@@ -55,8 +55,6 @@ export const Onboarding: React.FC = () => {
     const handleComplete = async () => {
         setIsSaving(true);
 
-        // Persist the store identity — this writes to localStorage immediately
-        // and fires a background settingsRepo.save() to SQLite under Tauri.
         updateStoreSettings({
             name: formData.name,
             address: formData.address,
