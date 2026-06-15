@@ -154,6 +154,42 @@ describe('CustomersStore', () => {
         );
     });
 
+    it('should pass the drawer-deposit options on a cash payment', async () => {
+        await useCustomersStore.getState().addCustomer(mockCustomerInput);
+        const customer = useCustomersStore.getState().customers[0];
+
+        await useCustomersStore.getState().updateCredit(
+            customer.id, -2000, 'payment', undefined, 'Règlement espèces',
+            { sessionId: 'sess_1', recordCashMovement: true, createdBy: 'Staff' }
+        );
+
+        expect(invokeMock).toHaveBeenCalledWith(
+            'record_credit_transaction',
+            expect.objectContaining({
+                input: expect.objectContaining({
+                    amount: -2000,
+                    type: 'payment',
+                    recordCashMovement: true,
+                    sessionId: 'sess_1',
+                }),
+            })
+        );
+    });
+
+    it('should default to no drawer deposit when no options are given', async () => {
+        await useCustomersStore.getState().addCustomer(mockCustomerInput);
+        const customer = useCustomersStore.getState().customers[0];
+
+        await useCustomersStore.getState().updateCredit(customer.id, -500, 'payment');
+
+        expect(invokeMock).toHaveBeenCalledWith(
+            'record_credit_transaction',
+            expect.objectContaining({
+                input: expect.objectContaining({ recordCashMovement: false, sessionId: null }),
+            })
+        );
+    });
+
     it('should update credit (payment reduces balance)', async () => {
         await useCustomersStore.getState().addCustomer(mockCustomerInput);
         const customer = useCustomersStore.getState().customers[0];

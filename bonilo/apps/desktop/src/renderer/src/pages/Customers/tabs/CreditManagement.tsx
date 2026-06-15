@@ -10,7 +10,7 @@ import {
     X,
     Calendar,
 } from 'lucide-react';
-import { useCustomersStore, type Customer } from '@bonilo/shared/stores';
+import { useCustomersStore, useTreasuryStore, type Customer } from '@bonilo/shared/stores';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useToast } from '../../../components/feedback/Toast/Toast';
 import styles from './CreditManagement.module.css';
@@ -29,6 +29,7 @@ export const CreditManagement: React.FC = () => {
         getOverdueCustomers,
         getTotalOutstandingCredit,
     } = useCustomersStore();
+    const { currentSession } = useTreasuryStore();
     const { formatCurrency } = useSettings();
     const toast = useToast();
 
@@ -67,9 +68,18 @@ export const CreditManagement: React.FC = () => {
         const amount = parseFloat(paymentAmount);
         if (isNaN(amount) || amount <= 0) return;
 
-        // Negative amount for payment (reduces debt)
-        updateCredit(selectedCustomer.id, -amount, 'payment', undefined, 'Règlement espèces');
+        // Negative amount for payment (reduces debt). Cash settlement, so the
+        // money lands in the drawer too — recorded atomically when a session is
+        // open (otherwise the balance is still reduced).
+        updateCredit(selectedCustomer.id, -amount, 'payment', undefined, 'Règlement espèces', {
+            sessionId: currentSession?.id ?? null,
+            recordCashMovement: true,
+            createdBy: 'Staff',
+        });
         toast.success(`Paiement de ${formatCurrency(amount)} enregistré pour ${selectedCustomer.name}`);
+        if (!currentSession) {
+            toast.warning('Session de caisse fermée — paiement enregistré, caisse non mise à jour.');
+        }
         setShowPaymentModal(false);
         setSelectedCustomer(null);
         setPaymentAmount('');

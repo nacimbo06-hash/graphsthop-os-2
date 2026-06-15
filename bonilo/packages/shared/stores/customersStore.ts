@@ -94,7 +94,20 @@ interface CustomersState {
     deleteCustomer: (id: string) => Promise<void>;
 
     addLoyaltyPoints: (id: string, points: number) => Promise<void>;
-    updateCredit: (id: string, amount: number, type: CreditTransaction['type'], saleId?: string, notes?: string) => Promise<void>;
+    updateCredit: (
+        id: string,
+        amount: number,
+        type: CreditTransaction['type'],
+        saleId?: string,
+        notes?: string,
+        options?: {
+            /** Open cash session; required to post the drawer deposit. */
+            sessionId?: string | null;
+            /** When true and this is a cash payment, also credit the drawer. */
+            recordCashMovement?: boolean;
+            createdBy?: string;
+        }
+    ) => Promise<void>;
 
     // Getters
     getCustomerById: (id: string) => Customer | undefined;
@@ -203,7 +216,7 @@ export const useCustomersStore = create<CustomersState>()(
         // applies the balance as a DELTA and returns the authoritative result —
         // so we never write a stale renderer-computed absolute. In the browser
         // we compute locally and persist to localStorage.
-        updateCredit: async (id, amount, type, saleId, notes) => {
+        updateCredit: async (id, amount, type, saleId, notes, options = {}) => {
             const customer = get().customers.find(c => c.id === id);
             if (!customer) return;
 
@@ -223,6 +236,9 @@ export const useCustomersStore = create<CustomersState>()(
                             saleId: saleId || null,
                             notes: notes || null,
                             createdAt: date,
+                            recordCashMovement: options.recordCashMovement ?? false,
+                            sessionId: options.sessionId ?? null,
+                            createdBy: options.createdBy ?? '',
                         },
                     }
                 );
