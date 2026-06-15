@@ -417,12 +417,110 @@ const MIGRATION_004 = `
 CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_receipt_number ON sales(receipt_number);
 `;
 
+// 005 — money-column CHECK (>= 0) guards. SQLite can't ALTER a CHECK onto an
+// existing table, so each money table is rebuilt (create-new + copy + drop +
+// rename) with the guard, then its indexes are recreated. The runner brackets
+// migrations with foreign_keys OFF and wraps them in a transaction, so the
+// sale_items -> sales cascade can't fire mid-rebuild and a failure rolls back.
+// Amounts here are always magnitudes (the row's `type` carries direction), so
+// >= 0 is correct; signed balances (customers/suppliers/credit_transactions)
+// are intentionally left unconstrained.
+const MIGRATION_005 = `
+CREATE TABLE sales_new (
+  id TEXT PRIMARY KEY,
+  receipt_number TEXT NOT NULL,
+  subtotal REAL NOT NULL DEFAULT 0,
+  tax_amount REAL NOT NULL DEFAULT 0,
+  discount_amount REAL NOT NULL DEFAULT 0,
+  total_amount REAL NOT NULL DEFAULT 0,
+  payment_method TEXT NOT NULL DEFAULT 'cash',
+  customer_id TEXT DEFAULT NULL,
+  customer_name TEXT DEFAULT '',
+  cashier_id TEXT NOT NULL DEFAULT '',
+  cashier_name TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'completed',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (subtotal >= 0 AND tax_amount >= 0 AND discount_amount >= 0 AND total_amount >= 0)
+);
+INSERT INTO sales_new (id, receipt_number, subtotal, tax_amount, discount_amount, total_amount, payment_method, customer_id, customer_name, cashier_id, cashier_name, status, created_at)
+  SELECT id, receipt_number, subtotal, tax_amount, discount_amount, total_amount, payment_method, customer_id, customer_name, cashier_id, cashier_name, status, created_at FROM sales;
+DROP TABLE sales;
+ALTER TABLE sales_new RENAME TO sales;
+CREATE INDEX IF NOT EXISTS idx_sales_created_at ON sales(created_at);
+CREATE INDEX IF NOT EXISTS idx_sales_cashier_id ON sales(cashier_id);
+CREATE INDEX IF NOT EXISTS idx_sales_status ON sales(status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_receipt_number ON sales(receipt_number);
+
+CREATE TABLE sale_items_new (
+  id TEXT PRIMARY KEY,
+  sale_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  product_name TEXT NOT NULL,
+  quantity REAL NOT NULL,
+  unit_price REAL NOT NULL,
+  total REAL NOT NULL,
+  tax_amount REAL DEFAULT 0,
+  discount_percent REAL DEFAULT 0,
+  cost_at_sale REAL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY(sale_id) REFERENCES sales(id) ON DELETE CASCADE,
+  CHECK (quantity >= 0 AND unit_price >= 0 AND total >= 0 AND tax_amount >= 0 AND discount_percent >= 0 AND cost_at_sale >= 0)
+);
+INSERT INTO sale_items_new (id, sale_id, product_id, product_name, quantity, unit_price, total, tax_amount, discount_percent, cost_at_sale, created_at)
+  SELECT id, sale_id, product_id, product_name, quantity, unit_price, total, tax_amount, discount_percent, cost_at_sale, created_at FROM sale_items;
+DROP TABLE sale_items;
+ALTER TABLE sale_items_new RENAME TO sale_items;
+CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id);
+CREATE INDEX IF NOT EXISTS idx_sale_items_product_id ON sale_items(product_id);
+
+CREATE TABLE cash_movements_new (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  amount REAL NOT NULL,
+  reason TEXT DEFAULT '',
+  category TEXT DEFAULT '',
+  reference TEXT DEFAULT '',
+  provision_type TEXT DEFAULT '',
+  created_by TEXT DEFAULT '',
+  payment_method TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY(session_id) REFERENCES cash_sessions(id),
+  CHECK (amount >= 0)
+);
+INSERT INTO cash_movements_new (id, session_id, type, amount, reason, category, reference, provision_type, created_by, payment_method, created_at)
+  SELECT id, session_id, type, amount, reason, category, reference, provision_type, created_by, payment_method, created_at FROM cash_movements;
+DROP TABLE cash_movements;
+ALTER TABLE cash_movements_new RENAME TO cash_movements;
+CREATE INDEX IF NOT EXISTS idx_cash_mov_session ON cash_movements(session_id);
+
+CREATE TABLE expenses_new (
+  id TEXT PRIMARY KEY,
+  category TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  amount REAL NOT NULL,
+  payment_method TEXT DEFAULT 'cash',
+  reference TEXT DEFAULT '',
+  created_by TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  is_paid INTEGER NOT NULL DEFAULT 0,
+  paid_from TEXT DEFAULT NULL,
+  CHECK (amount >= 0)
+);
+INSERT INTO expenses_new (id, category, description, amount, payment_method, reference, created_by, created_at, is_paid, paid_from)
+  SELECT id, category, description, amount, payment_method, reference, created_by, created_at, is_paid, paid_from FROM expenses;
+DROP TABLE expenses;
+ALTER TABLE expenses_new RENAME TO expenses;
+CREATE INDEX IF NOT EXISTS idx_expenses_created ON expenses(created_at);
+`;
+
 // Ordered list of migrations
 const MIGRATIONS = [
   { version: 1, sql: MIGRATION_001 },
   { version: 2, sql: MIGRATION_002 },
   { version: 3, sql: MIGRATION_003 },
   { version: 4, sql: MIGRATION_004 },
+  { version: 5, sql: MIGRATION_005 },
 ];
 
 class BoniloDatabase {
