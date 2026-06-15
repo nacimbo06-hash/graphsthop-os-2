@@ -119,38 +119,6 @@ export interface Toast {
 // SETTINGS & SYNC
 // ===========================================
 
-export interface AppSettings {
-  general: {
-    storeName: string;
-    storeNameAr?: string;
-    currency: string;
-    language: string;
-    timezone: string;
-    dateFormat: string;
-  };
-  pos: {
-    autoPrintReceipt: boolean;
-    allowPriceOverride: boolean;
-    requireCustomer: boolean;
-    defaultPaymentMethod: 'cash' | 'card' | 'dahabia';
-  };
-  loyalty: {
-    pointsPer10DA: number;
-    minRedeemPoints: number;
-    pointsValue: number;
-  };
-  tax: {
-    defaultVatRate: number;
-    foodVatRate: number;
-  };
-  printer: {
-    type: 'escpos' | 'browser';
-    name?: string;
-    connectionType: 'usb' | 'network' | 'bluetooth';
-    ipAddress?: string;
-  };
-}
-
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
 
 export interface PendingOperation {

@@ -9,7 +9,6 @@ export { usePurchasesStore, type PurchaseOrder, type PurchaseItem, type Supplier
 export { useStockMovementsStore, type StockMovement } from './stockMovementsStore';
 export { useNetworkSyncStore } from './networkSyncStore';
 export { useLotsStore, type ProductLot } from './lotsStore';
-export { useSettingsStore } from './settingsStore';
 export { useSyncStore } from './syncStore';
 export { useThemeStore } from './themeStore';
 
