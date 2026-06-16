@@ -24,6 +24,8 @@ log = "0.4"
 tauri = { version = "2.9.5", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 serialport = "4"
 # Borrow tauri-plugin-sql's pool for real single-connection transactions.
 # Features mirror what the plugin enables for sqlite so cargo unifies sqlx to

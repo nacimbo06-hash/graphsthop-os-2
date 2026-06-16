@@ -39,7 +39,10 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { useToast } from '../../components/feedback/Toast';
 import { ConfirmModal } from '../../components/feedback/ConfirmModal';
 import { useNetworkSyncStore } from '@bonilo/shared/stores';
+import type { Update } from '@tauri-apps/plugin-updater';
 import styles from './Settings.module.css';
+
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 // Helper component for debounced inputs
 const SettingInput: React.FC<{
@@ -439,6 +442,45 @@ export const Settings: React.FC = () => {
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [showClearDataConfirm, setShowClearDataConfirm] = useState(false);
     const [showFinalClearConfirm, setShowFinalClearConfirm] = useState(false);
+    const [appVersion, setAppVersion] = useState<string | null>(null);
+    const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
+    const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+    const [isInstallingUpdate, setIsInstallingUpdate] = useState(false);
+
+    useEffect(() => {
+        if (!isTauri()) return;
+        import('@tauri-apps/api/app')
+            .then(({ getVersion }) => getVersion())
+            .then(setAppVersion)
+            .catch(() => {});
+    }, []);
+
+    const handleCheckUpdate = async () => {
+        setIsCheckingUpdate(true);
+        try {
+            const { check } = await import('@tauri-apps/plugin-updater');
+            const update = await check();
+            setPendingUpdate(update);
+            toast.success(update ? `Mise à jour ${update.version} disponible` : 'Vous utilisez déjà la dernière version');
+        } catch (error) {
+            toast.error('Impossible de vérifier les mises à jour');
+        } finally {
+            setIsCheckingUpdate(false);
+        }
+    };
+
+    const handleInstallUpdate = async () => {
+        if (!pendingUpdate) return;
+        setIsInstallingUpdate(true);
+        try {
+            await pendingUpdate.downloadAndInstall();
+            const { relaunch } = await import('@tauri-apps/plugin-process');
+            await relaunch();
+        } catch (error) {
+            toast.error("Échec de l'installation de la mise à jour");
+            setIsInstallingUpdate(false);
+        }
+    };
 
     // Show save confirmation
     const showSaveConfirmation = () => {
@@ -1150,6 +1192,52 @@ export const Settings: React.FC = () => {
                                     <Info size={16} />
                                     Exportez vos paramètres pour les sauvegarder ou les transférer vers un autre appareil
                                 </p>
+                            </section>
+
+                            <section className={styles.section}>
+                                <h3>MISES À JOUR</h3>
+                                <div className={styles.syncStatus}>
+                                    <div className={styles.syncIcon}>
+                                        <RefreshCw size={32} />
+                                    </div>
+                                    <div className={styles.syncInfo}>
+                                        <span className={styles.syncLabel}>VERSION ACTUELLE</span>
+                                        <span className={styles.syncValue}>{appVersion || '—'}</span>
+                                    </div>
+                                </div>
+                                {pendingUpdate && (
+                                    <p className={styles.backupInfo}>
+                                        <Info size={16} />
+                                        Version {pendingUpdate.version} disponible{pendingUpdate.body ? ` — ${pendingUpdate.body}` : ''}
+                                    </p>
+                                )}
+                                <div className={styles.backupActions}>
+                                    {!pendingUpdate ? (
+                                        <button
+                                            className={styles.backupBtn}
+                                            onClick={handleCheckUpdate}
+                                            disabled={isCheckingUpdate || !isTauri()}
+                                        >
+                                            <RefreshCw size={20} />
+                                            {isCheckingUpdate ? 'VÉRIFICATION...' : 'VÉRIFIER LES MISES À JOUR'}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className={styles.backupBtn}
+                                            onClick={handleInstallUpdate}
+                                            disabled={isInstallingUpdate}
+                                        >
+                                            <Download size={20} />
+                                            {isInstallingUpdate ? 'INSTALLATION...' : 'TÉLÉCHARGER ET INSTALLER'}
+                                        </button>
+                                    )}
+                                </div>
+                                {!isTauri() && (
+                                    <p className={styles.backupInfo}>
+                                        <Info size={16} />
+                                        Disponible uniquement dans l'application installée
+                                    </p>
+                                )}
                             </section>
 
                             <section className={styles.section}>
