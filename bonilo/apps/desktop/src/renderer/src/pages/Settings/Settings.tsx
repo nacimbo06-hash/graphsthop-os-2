@@ -40,6 +40,7 @@ import { useToast } from '../../components/feedback/Toast';
 import { ConfirmModal } from '../../components/feedback/ConfirmModal';
 import { useNetworkSyncStore } from '@bonilo/shared/stores';
 import type { Update } from '@tauri-apps/plugin-updater';
+import { SYNC_UI_ENABLED } from '../../config/features';
 import styles from './Settings.module.css';
 
 const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -568,7 +569,7 @@ export const Settings: React.FC = () => {
         { id: 'notifications' as const, label: 'ALERTES', icon: <Bell size={20} /> },
         { id: 'security' as const, label: 'SÉCURITÉ', icon: <Shield size={20} /> },
         { id: 'backup' as const, label: 'SAUVEGARDE', icon: <Database size={20} /> },
-        { id: 'network' as const, label: 'RÉSEAU', icon: <Wifi size={20} /> },
+        ...(SYNC_UI_ENABLED ? [{ id: 'network' as const, label: 'RÉSEAU', icon: <Wifi size={20} /> }] : []),
         { id: 'appearance' as const, label: 'APPARENCE', icon: <Palette size={20} /> },
     ];
 
@@ -1240,6 +1241,7 @@ export const Settings: React.FC = () => {
                                 )}
                             </section>
 
+                            {SYNC_UI_ENABLED && (
                             <section className={styles.section}>
                                 <h3>SYNCHRONISATION CLOUD</h3>
                                 <div className={styles.syncStatus}>
@@ -1254,6 +1256,7 @@ export const Settings: React.FC = () => {
                                     </div>
                                 </div>
                             </section>
+                            )}
 
                             <section className={styles.section}>
                                 <h3>DONNÉES</h3>
@@ -1359,7 +1362,7 @@ export const Settings: React.FC = () => {
                     )}
 
                     {/* NETWORK SETTINGS */}
-                    {activeTab === 'network' && (
+                    {SYNC_UI_ENABLED && activeTab === 'network' && (
                         <NetworkSettingsTab showSaveConfirmation={showSaveConfirmation} />
                     )}
                 </main>
